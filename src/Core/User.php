@@ -1,0 +1,236 @@
+<?php
+namespace App\Core;
+
+class User extends \App\Core\Echidna
+{
+    protected $error = '';
+    protected $id;
+    protected $register_date;
+    protected $restore_date;
+    protected $signin_date;
+    protected $auth_date;
+    protected $user_status;
+    protected $user_token;
+    protected $user_email;
+    protected $user_hash;
+
+    protected const PASS_LEN = 6;
+    protected const PASS_SYMBOLS = '0123456789abcdefghijklmnopqrstuvwxyz';
+    protected const PASS_SALT = '~salt';
+
+    public function __get( string $key ) {
+
+        if( property_exists( $this, $key )) {
+            return $this->$key;
+        }
+        return false;
+    }
+
+    public function __isset( string $key ) {
+
+        if( property_exists( $this, $key )) {
+            return !empty( $this->$key );
+        }
+        return false;
+    }
+
+    public function create_token() : string {
+        do {
+            $user_token = bin2hex( random_bytes( 40 ));
+        } while( $this->exists( 'users', [['user_token', '=', $user_token]] ));
+
+        return $user_token;
+    }
+
+    public function create_pass( $pass_len = self::PASS_LEN, $pass_symbols = self::PASS_SYMBOLS ) : string {
+        $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
+        $user_pass = '';
+        for( $i = 0; $i < $pass_len; $i++ ) {
+            $user_pass .= $pass_symbols[ random_int( 0, $symbols_length ) ];
+        }
+        return $user_pass;
+    }
+
+    public function get_hash( string $value, string $pass_salt = self::PASS_SALT ) : string {
+        return sha1( $pass_salt . $value );
+    }
+
+    // select the user
+    public function get( array $args ) : bool {
+
+        $rows = $this->select( '*', 'users', $args, 1, 0 );
+
+        if ( empty( $rows[0] )) {
+            $this->error = 'user not found';
+    
+        } else {
+            $this->id            = $rows[0]->id;
+            $this->register_date = $rows[0]->register_date;
+            $this->restore_date  = $rows[0]->restore_date;
+            $this->signin_date   = $rows[0]->signin_date;
+            $this->auth_date     = $rows[0]->auth_date;
+            $this->user_status   = $rows[0]->user_status;
+            $this->user_token    = $rows[0]->user_token;
+            $this->user_email    = $rows[0]->user_email;
+            $this->user_hash     = $rows[0]->user_hash;
+        }
+
+        return empty( $this->error );
+    }
+
+    // create a new user
+    public function set( array $data ) : bool {
+
+        if( empty( $data['register_date'] )) {
+            $this->error = 'register_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['register_date'] )) {
+            $this->error = 'register_date is incorrect';
+
+        } elseif( empty( $data['restore_date'] )) {
+            $this->error = 'restore_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['restore_date'] )) {
+            $this->error = 'restore_date is incorrect';
+
+        } elseif( empty( $data['signin_date'] )) {
+            $this->error = 'signin_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['signin_date'] )) {
+            $this->error = 'signin_date is incorrect';
+
+        } elseif( empty( $data['auth_date'] )) {
+            $this->error = 'auth_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['auth_date'] )) {
+            $this->error = 'auth_date is incorrect';
+
+        } elseif( empty( $data['user_status'] )) {
+            $this->error = 'user_status is empty';
+
+        } elseif( !in_array( $data['user_status'], ['pending', 'approved', 'trash'] )) {
+            $this->error = 'user_status is incorrect';
+
+        } elseif( empty( $data['user_token'] )) {
+            $this->error = 'user_token is empty';
+
+        } elseif( strlen( $data['user_token'] ) > 80 ) {
+            $this->error = 'user_token is incorrect';
+
+        } elseif( $this->exists( 'users', [['user_token','=', $data['user_token']]] )) {
+            $this->error = 'user_token is occupied';
+
+        } elseif( empty( $data['user_email'] )) {
+            $this->error = 'user_email is empty';
+
+        } elseif( !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $data['user_email'] )) {
+            $this->error = 'user_email is incorrect';
+
+        } elseif( $this->exists( 'users', [['user_email','=', $data['user_email']]] )) {
+            $this->error = 'user_email is occupied';
+
+        } elseif( !is_string( $data['user_hash'] ) or strlen( $data['user_hash'] ) > 40 ) {
+            $this->error = 'user_hash is incorrect';
+
+        } else {
+            $this->id = $this->insert( 'users', $data );
+
+            if( empty( $this->id )) {
+                $this->error = 'user insert error';
+
+            } else {
+                $this->register_date = $data['register_date'];
+                $this->restore_date  = $data['restore_date'];
+                $this->signin_date   = $data['signin_date'];
+                $this->auth_date     = $data['auth_date'];
+                $this->user_status   = $data['user_status'];
+                $this->user_token    = $data['user_token'];
+                $this->user_email    = $data['user_email'];
+                $this->user_hash     = $data['user_hash'];
+            }
+        }
+
+        return empty( $this->error );
+    }
+
+    // update user by $this->id
+    public function put( array $data ) : bool {
+
+        if( empty( $this->id )) {
+            $this->error = 'id is empty';
+
+        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+            $this->error = 'id is incorrect';
+
+        } elseif( !empty( $data['register_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['register_date'] )) {
+            $this->error = 'register_date is incorrect';
+
+        } elseif( !empty( $data['restore_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['restore_date'] )) {
+            $this->error = 'restore_date is incorrect';
+
+        } elseif( !empty( $data['signin_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['signin_date'] )) {
+            $this->error = 'signin_date is incorrect';
+
+        } elseif( !empty( $data['auth_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['auth_date'] )) {
+            $this->error = 'auth_date is incorrect';
+
+        } elseif( !empty( $data['user_status'] ) and !in_array( $data['user_status'], ['pending', 'approved', 'trash'] )) {
+            $this->error = 'user_status is incorrect';
+
+        } elseif( !empty( $data['user_token'] ) and strlen( $data['user_token'] ) > 80 ) {
+            $this->error = 'user_token is incorrect';
+
+        } elseif( !empty( $data['user_token'] ) and $this->exists( 'users', [['user_token','=', $data['user_token']]] )) {
+            $this->error = 'user_token is occupied';
+
+        } elseif( !empty( $data['user_email'] ) and !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $data['user_email'] )) {
+            $this->error = 'user_email is incorrect';
+
+        } elseif( !empty( $data['user_email'] ) and $this->exists( 'users', [['user_email','=', $data['user_email']]] )) {
+            $this->error = 'user_email is occupied';
+
+        } elseif( !empty( $data['user_hash'] ) and strlen( $data['user_hash'] ) > 40 ) {
+            $this->error = 'user_hash is incorrect';
+
+        } elseif( !$this->update( 'users', [['id', '=', $this->id]], $data )) {
+            $this->error = 'user update error';
+
+        } else {
+            foreach( $data as $key => $value ) {
+                if( !in_array( $key, ['pdo', 'e', 'error'] ) and property_exists( $this, $key )) {
+                    $this->$key = $value;
+                }
+            }
+        }
+
+        return empty( $this->error );
+    }
+
+    // delete user by $this->id
+    public function del() : bool {
+
+        if( empty( $this->id )) {
+            $this->error = 'id is empty';
+
+        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+            $this->error = 'id is incorrect';
+
+        } elseif( !$this->delete( 'users', [['id', '=', $this->id]] )) {
+            $this->error = 'user delete error';
+
+        } else {
+            $this->id            = null;
+            $this->register_date = null;
+            $this->restore_date  = null;
+            $this->signin_date   = null;
+            $this->auth_date     = null;
+            $this->user_status   = null;
+            $this->user_token    = null;
+            $this->user_email    = null;
+            $this->user_hash     = null;
+        }
+
+        return empty( $this->error );
+    }
+
+}

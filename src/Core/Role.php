@@ -1,0 +1,160 @@
+<?php
+namespace App\Core;
+
+class Role extends \App\Core\Echidna
+{
+    protected $error = '';
+
+    protected $id;
+    protected $create_date;
+    protected $update_date;
+    protected $hub_id;
+    protected $user_id;
+    protected $user_role;
+
+    public function __get( string $key ) {
+
+        if( property_exists( $this, $key )) {
+            return $this->$key;
+        }
+        return false;
+    }
+
+    public function __isset( string $key ) {
+
+        if( property_exists( $this, $key )) {
+            return !empty( $this->$key );
+        }
+        return false;
+    }
+
+    public function get( array $args ) : bool {
+
+        $rows = $this->select( '*', 'user_roles', $args, 1, 0 );
+
+        if ( empty( $rows[0] )) {
+            $this->error = 'role not found';
+    
+        } else {
+            $this->id          = $rows[0]->id;
+            $this->create_date = $rows[0]->create_date;
+            $this->update_date = $rows[0]->update_date;
+            $this->hub_id      = $rows[0]->hub_id;
+            $this->user_id     = $rows[0]->user_id;
+            $this->user_role   = $rows[0]->user_role;
+        }
+
+        return empty( $this->error );
+    }
+
+    public function set( array $data ) : bool {
+
+        if( empty( $data['create_date'] )) {
+            $this->error = 'create_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+            $this->error = 'create_date is incorrect';
+
+        } elseif( empty( $data['update_date'] )) {
+            $this->error = 'update_date is empty';
+
+        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+            $this->error = 'update_date is incorrect';
+
+        } elseif( empty( $data['hub_id'] )) {
+            $this->error = 'hub_id is empty';
+    
+        } elseif( !( is_string( $data['hub_id'] ) and ctype_digit( $data['hub_id'] )) and !( is_int( $data['hub_id'] ) and $data['hub_id'] >= 0 )) {
+            $this->error = 'hub_id is incorrect';
+
+        } elseif( empty( $data['user_id'] )) {
+            $this->error = 'user_id is empty';
+    
+        } elseif( !( is_string( $data['user_id'] ) and ctype_digit( $data['user_id'] )) and !( is_int( $data['user_id'] ) and $data['user_id'] >= 0 )) {
+            $this->error = 'user_id is incorrect';
+
+        } elseif( empty( $data['user_role'] )) {
+            $this->error = 'user_role is empty';
+
+        } elseif( !in_array( $data['user_role'], ['admin', 'editor', 'reader', 'invited'] )) {
+            $this->error = 'user_role is incorrect';
+
+        } else {
+            $this->id = $this->insert( 'user_roles', $data );
+
+            if( empty( $this->id )) {
+                $this->error = 'role insert error';
+
+            } else {
+                $this->create_date = $data['create_date'];
+                $this->update_date = $data['update_date'];
+                $this->hub_id      = $data['hub_id'];
+                $this->user_id     = $data['user_id'];
+                $this->user_role   = $data['user_role'];
+            }
+        }
+
+        return empty( $this->error );
+    }
+
+    public function put( array $data ) : bool {
+
+        if( empty( $this->id )) {
+            $this->error = 'id is empty';
+
+        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+            $this->error = 'id is incorrect';
+
+        } elseif( !empty( $data['create_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+            $this->error = 'create_date is incorrect';
+
+        } elseif( !empty( $data['update_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+            $this->error = 'update_date is incorrect';
+
+        } elseif( !empty( $date['hub_id'] ) and !ctype_digit( $date['hub_id'] ) and !( is_int( $date['hub_id'] ) and $date['hub_id'] >= 0 )) {
+            $this->error = 'hub_id is incorrect';
+
+        } elseif( !empty( $date['user_id'] ) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+            $this->error = 'user_id is incorrect';
+
+        } elseif( !empty( $data['user_role'] ) and !in_array( $data['user_role'], ['admin', 'editor', 'reader', 'invited'] )) {
+            $this->error = 'user_role is incorrect';
+
+        } elseif( !$this->update( 'user_roles', [['id', '=', $this->id]], $data )) {
+            $this->error = 'role update error';
+
+        } else {
+            foreach( $data as $key => $value ) {
+                if( !in_array( $key, ['pdo', 'e', 'error'] ) and property_exists( $this, $key )) {
+                    $this->$key = $value;
+                }
+            }
+        }
+
+        return empty( $this->error );
+    }
+
+    public function del() : bool {
+
+        if( empty( $this->id )) {
+            $this->error = 'id is empty';
+
+        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+            $this->error = 'id is incorrect';
+
+        } elseif( !$this->delete( 'user_roles', [['id', '=', $this->id]] )) {
+            $this->error = 'role delete error';
+
+        } else {
+            $this->id          = null;
+            $this->create_date = null;
+            $this->update_date = null;
+            $this->hub_id      = null;
+            $this->user_id     = null;
+            $this->user_role   = null;
+        }
+
+        return empty( $this->error );
+    }
+
+}
