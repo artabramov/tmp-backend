@@ -5,6 +5,37 @@ $user_id = (int) $user_id;
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
+// do
+$master = Flight::user_auth( $user_token );
+$slave = Flight::user_select( $user_id );
+
+// close transaction
+if( Flight::empty( 'error' )) {
+    Flight::get( 'pdo' )->commit();
+
+} else {
+    Flight::get( 'pdo' )->rollBack();
+}
+
+// debug
+if( !Flight::empty( 'e' )) {
+    Flight::debug( Flight::get('e') );
+}
+
+// json
+Flight::json([ 
+    'time'       => Flight::time(),
+    'success'    => Flight::empty( 'error' ) ? 'true' : 'false',
+    'error'      => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
+
+    'user'    => Flight::empty( 'error' ) ? [
+        'id'            => $slave->id, 
+        'register_date' => $slave->register_date, 
+        'auth_date'     => $slave->auth_date, 
+        'user_status'   => $slave->user_status ] : [],
+]);
+
+/*
 // ---- auth ----
 $me = new \App\Core\User( Flight::get( 'pdo' ));
 
@@ -76,3 +107,4 @@ Flight::json([
         'auth_date'     => $user->auth_date, 
         'user_status'   => $user->user_status ],
 ]);
+*/

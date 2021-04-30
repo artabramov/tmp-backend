@@ -32,28 +32,56 @@ class Meta extends \App\Core\Echidna
 
         foreach( $args as $arg ) {
 
-            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            if( $arg[0] == 'id' and empty( $arg[2] )) {
+                $this->error = 'id is empty';
+                break;
+
+            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
+                $this->error = 'create_date is empty';
                 break;
 
             } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'create_date is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'update_date' and empty( $arg[2] )) {
+                $this->error = 'update_date is empty';
+                break;
+
             } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'update_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_id' and empty( $arg[2] )) {
+                $this->error = 'user_id is empty';
                 break;
 
             } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'user_id is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'post_id' and empty( $arg[2] )) {
+                $this->error = 'post_id is empty';
+                break;
+
             } elseif( $arg[0] == 'post_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'post_id is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'meta_key' and empty( $arg[2] )) {
+                $this->error = 'meta_key is empty';
+                break;
+
             } elseif( $arg[0] == 'meta_key' and strlen( $arg[2] ) > 20 ) {
                 $this->error = 'meta_key is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'meta_value' and empty( $arg[2] )) {
+                $this->error = 'meta_value is empty';
                 break;
 
             } elseif( $arg[0] == 'meta_value' and strlen( $arg[2] ) > 255 ) {

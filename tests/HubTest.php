@@ -59,6 +59,51 @@ class HubTest extends TestCase
     }
 
     /**
+     * @dataProvider addGet
+     */
+    public function testGet( $args, $expected ) {
+
+        $this->truncate();
+        $this->insert();
+        $result = $this->hub->get( $args );
+        $this->assertEquals( $result, $expected[0] );
+        $this->assertEquals( $this->hub->error, $expected[1] );
+    }
+
+    public function addGet() {
+        return [
+
+            // correct cases
+            [ [['id', '=', 1]], [ true, '' ] ],
+            [ [['id', '=', '1']], [ true, '' ] ],
+            [ [['create_date', '=', '0001-01-01 00:00:00']], [ true, '' ] ],
+            [ [['update_date', '=', '0001-01-01 00:00:00']], [ true, '' ] ],
+            [ [['user_id', '=', 1]], [ true, '' ] ],
+            [ [['hub_status', '=', 'custom']], [ true, '' ] ],
+            [ [['hub_name', '=', 'hub name']], [ true, '' ] ],
+
+            // incorrect cases
+            [ [['id', '=', 0]], [ false, 'id is empty' ] ],
+            [ [['id', '=', 'a']], [ false, 'id is incorrect' ] ],
+            [ [['create_date', '=', '']], [ false, 'create_date is empty' ] ],
+            [ [['create_date', '=', '00:00:00']], [ false, 'create_date is incorrect' ] ],
+            [ [['update_date', '=', '']], [ false, 'update_date is empty' ] ],
+            [ [['update_date', '=', '00:00:00']], [ false, 'update_date is incorrect' ] ],
+            [ [['user_id', '=', '']], [ false, 'user_id is empty' ] ],
+            [ [['user_id', '=', '0']], [ false, 'user_id is empty' ] ],
+            [ [['user_id', '=', 0]], [ false, 'user_id is empty' ] ],
+            [ [['user_id', '=', 'a']], [ false, 'user_id is incorrect' ] ],
+            [ [['hub_status', '=', '']], [ false, 'hub_status is empty' ] ],
+            [ [['hub_status', '=', 'status']], [ false, 'hub_status is incorrect' ] ],
+            [ [['hub_name', '=', '']], [ false, 'hub_name is empty' ] ],
+            [ [['hub_name', '=', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in']], [ false, 'hub_name is incorrect' ] ],
+            [ [['id', '=', 2]], [ false, 'hub not found' ] ],
+        ];
+    }
+
+
+
+    /**
      * @dataProvider addSet
      */
     public function testSet( $data, $expected ) {
@@ -76,30 +121,6 @@ class HubTest extends TestCase
 
             // incorrect cases
 
-
-        ];
-    }
-
-    /**
-     * @dataProvider addGet
-     */
-    public function testGet( $args, $expected ) {
-
-        $this->truncate();
-        $this->insert();
-        $result = $this->hub->get( $args );
-        $this->assertEquals( $result, $expected );
-
-    }
-
-    public function addGet() {
-        return [
-
-            // correct cases
-            [ [['id', '=', 1]], true ],
-
-            // incorrect cases
-            [ [['id', '=', 2]], false ],
 
         ];
     }

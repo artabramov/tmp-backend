@@ -35,32 +35,64 @@ class Post extends \App\Core\Echidna
 
         foreach( $args as $arg ) {
 
-            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            if( $arg[0] == 'id' and empty( $arg[2] )) {
+                $this->error = 'id is empty';
+                break;
+
+            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
+                $this->error = 'create_date is empty';
                 break;
 
             } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'create_date is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'update_date' and empty( $arg[2] )) {
+                $this->error = 'update_date is empty';
+                break;
+
             } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'update_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'parent_id' and empty( $arg[2] )) {
+                $this->error = 'parent_id is empty';
                 break;
 
             } elseif( $arg[0] == 'parent_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'parent_id is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'user_id' and empty( $arg[2] )) {
+                $this->error = 'user_id is empty';
+                break;
+
             } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'user_id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'hub_id' and empty( $arg[2] )) {
+                $this->error = 'hub_id is empty';
                 break;
 
             } elseif( $arg[0] == 'hub_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'hub_id is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'post_type' and empty( $arg[2] )) {
+                $this->error = 'post_type is empty';
+                break;
+
             } elseif( $arg[0] == 'post_type' and !in_array( $arg[2], ['document', 'comment'] )) {
                 $this->error = 'post_type is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'post_status' and empty( $arg[2] )) {
+                $this->error = 'post_status is empty';
                 break;
 
             } elseif( $arg[0] == 'post_status' and !in_array( $arg[2], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {

@@ -40,37 +40,73 @@ class User extends \App\Core\Echidna
     public function get( array $args ) : bool {
 
         foreach( $args as $arg ) {
+
+            if( $arg[0] == 'id' and empty( $arg[2] )) {
+                $this->error = 'id is empty';
+                break;
             
-            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
                 $this->error = 'id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'register_date' and empty( $arg[2] )) {
+                $this->error = 'register_date is empty';
                 break;
 
             } elseif( $arg[0] == 'register_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'register_date is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'restore_date' and empty( $arg[2] )) {
+                $this->error = 'restore_date is empty';
+                break;
+
             } elseif( $arg[0] == 'restore_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'restore_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'signin_date' and empty( $arg[2] )) {
+                $this->error = 'signin_date is empty';
                 break;
 
             } elseif( $arg[0] == 'signin_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'signin_date is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'auth_date' and empty( $arg[2] )) {
+                $this->error = 'auth_date is empty';
+                break;
+
             } elseif( $arg[0] == 'auth_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
                 $this->error = 'auth_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_status' and empty( $arg[2] )) {
+                $this->error = 'user_status is empty';
                 break;
 
             } elseif( $arg[0] == 'user_status' and !in_array( $arg[2], ['pending', 'approved', 'trash'] )) {
                 $this->error = 'user_status is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'user_token' and empty( $arg[2] )) {
+                $this->error = 'user_token is empty';
+                break;
+
             } elseif( $arg[0] == 'user_token' and strlen( $arg[2] ) > 80 ) {
                 $this->error = 'user_token is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'user_email' and empty( $arg[2] )) {
+                $this->error = 'user_email is empty';
+                break;
+
             } elseif( $arg[0] == 'user_email' and !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $arg[2] )) {
                 $this->error = 'user_email is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_hash' and empty( $arg[2] )) {
+                $this->error = 'user_hash is empty';
                 break;
 
             } elseif( $arg[0] == 'user_hash' and strlen( $arg[2] ) > 40 ) {

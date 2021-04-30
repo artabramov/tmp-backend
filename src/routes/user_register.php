@@ -5,17 +5,10 @@ $user_name  = Flight::request()->query['user_name'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// register user
-$master_token = Flight::token();
-$master = Flight::user_register( $user_email, $master_token );
-
-// insert name
-$master_name = Flight::attribute_insert( $master->id, 'user_name', $user_name, 4, 40 );
-
-// insert hub
+// do
+$master = Flight::user_register( $user_email );
+$master_name = Flight::attribute_insert( $master->id, 'user_name', $user_name );
 $hub = Flight::hub_insert( $master->id, 'private', 'my private hub' );
-
-// insert role
 $master_role = Flight::role_insert( $hub->id, $master->id, 'admin' );
 
 // close transaction

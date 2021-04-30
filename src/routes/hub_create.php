@@ -1,22 +1,18 @@
 <?php
-$user_token = Flight::request()->query['user_token'];
-$hub_status = Flight::request()->query['hub_status'];
-$hub_name = Flight::request()->query['hub_name'];
+$user_token = (string) Flight::request()->query['user_token'];
+$hub_status = (string) Flight::request()->query['hub_status'];
+$hub_name = (string) Flight::request()->query['hub_name'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// user auth
-$master_user = Flight::user_auth( $user_token );
-
-// insert hub
-$hub = Flight::hub_insert( $master_user->id, $hub_status, $hub_name );
-
-// insert role
-$master_role = Flight::role_insert( $hub->id, $master_user->id, 'admin' );
+// do
+$master = Flight::user_auth( $user_token );
+$hub = Flight::hub_insert( $master->id, $hub_status, $hub_name );
+$master_role = Flight::role_insert( $hub->id, $master->id, 'admin' );
 
 // close transaction
-if( empty( Flight::get( 'error' ))) {
+if( Flight::empty( 'error' )) {
     Flight::get( 'pdo' )->commit();
 
 } else {
@@ -24,13 +20,13 @@ if( empty( Flight::get( 'error' ))) {
 }
 
 // debug
-if( !empty( Flight::get( 'e' ))) {
+if( !Flight::empty( 'e' )) {
     Flight::debug( Flight::get('e') );
 }
 
 // json
 Flight::json([ 
-    'time'    => date( 'Y-m-d H:i:s' ),
-    'success' => empty( Flight::get( 'error' )) ? 'true' : 'false',
-    'error'   => !empty( Flight::get( 'error' )) ? Flight::get( 'error' ) : '', 
+    'time'    => Flight::time(),
+    'success' => Flight::empty( 'error' ) ? 'true' : 'false',
+    'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
 ]);

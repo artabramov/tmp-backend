@@ -4,11 +4,9 @@ $user_email = Flight::request()->query['user_email'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// restore user
+// do
 $master_pass = Flight::pass();
 $master = Flight::user_restore( $user_email, $master_pass );
-
-// send email
 Flight::email( $master->user_email, 'User', 'User restore', 'One-time pass: <i>' . $master_pass . '</i>' );
 
 // close transaction

@@ -5,7 +5,7 @@ $user_pass  = (string) Flight::request()->query['user_pass'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// signin
+// do
 $master = Flight::user_signin( $user_email, $user_pass );
 
 // close transaction
