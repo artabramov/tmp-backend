@@ -85,7 +85,7 @@ Flight::map( 'user_register', function( $user_email, $user_token ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
-    if( empty( Flight::get( 'error' ))) {
+    if( Flight::empty( 'error' )) {
 
         $data = [
             'register_date' => Flight::time(),
@@ -113,7 +113,7 @@ Flight::map( 'user_restore', function( $user_email, $user_pass ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
-    if( empty( Flight::get( 'error' ))) {
+    if( Flight::empty( 'error' )) {
 
         if( empty( $user_email )) {
             Flight::set( 'error', 'user_email is empty' );
@@ -145,7 +145,7 @@ Flight::map( 'user_signin', function( $user_email, $user_pass ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
-    if( empty( Flight::get( 'error' ))) {
+    if( Flight::empty( 'error' )) {
 
         if( empty( $user_email )) {
             Flight::set( 'error', 'user_email is empty' );
@@ -172,10 +172,39 @@ Flight::map( 'user_signin', function( $user_email, $user_pass ) {
     return $user;
 });
 
+// user auth
+Flight::map( 'user_auth', function( $user_token ) {
+
+    $user = new \App\Core\User( Flight::get( 'pdo' ));
+
+    if( Flight::empty( 'error' )) {
+
+        if( empty( $user_token )) {
+            Flight::set( 'error', 'user_token is empty' );
+
+        } elseif( !$user->get( [['user_token', '=', $user_token], ['user_status', '=', 'approved']] )) {
+            Flight::set( 'e', $user->e );
+            Flight::set( 'error', $user->error );
+    
+        } elseif( empty( $user->id )) {
+            Flight::set( 'error', 'user not found' );
+
+        } elseif( date( 'U' ) - strtotime( $user->auth_date ) <= 1 ) {
+            Flight::set( 'error', 'wait for 1 second' );
+
+        } elseif( !$user->put( ['auth_date' => Flight::time()] )) {
+            Flight::set( 'e', $user->e );
+            Flight::set( 'error', $user->error );
+        }
+    }
+
+    return $user;
+});
+
 // send email
 Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
 
-    if( empty( Flight::get( 'error' ))) {
+    if( Flight::empty( 'error' )) {
         Flight::get('phpmailer')->addAddress( $user_email, $user_name );
         Flight::get('phpmailer')->Subject = $email_subject;
         Flight::get('phpmailer')->Body = $email_body;
@@ -281,37 +310,6 @@ Flight::map( 'role_insert', function( $hub_id, $user_id, $user_role ) {
     }
 
     return $role;
-});
-
-// user auth
-Flight::map( 'user_auth', function( $user_token ) {
-
-    $user = new \App\Core\User( Flight::get( 'pdo' ));
-
-    if( empty( Flight::get( 'error' ))) {
-        $user->user_status = 'approved';
-        $user->user_token = $user_token;
-        $user->load();
-    
-        if( !empty( $user->error )) {
-            Flight::set( 'e', $user->e );
-            Flight::set( 'error', $user->error );
-    
-        } elseif( empty( $user->id )) {
-            Flight::set( 'error', 'user not found' );
-
-        } else {
-            $user->auth_date = date( 'Y-m-d H:i:s' );
-            $user->save();
-
-            if( !empty( $user->error )) {
-                Flight::set( 'e', $user->e );
-                Flight::set( 'error', $user->error );
-            }
-        }
-    }
-
-    return $user;
 });
 
 // user select

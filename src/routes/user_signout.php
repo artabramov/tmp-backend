@@ -1,6 +1,38 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 
+// open transaction
+Flight::get('pdo')->beginTransaction();
+
+// auth
+$master = Flight::user_auth( $user_token );
+
+
+
+
+
+
+// close transaction
+if( Flight::empty( 'error' )) {
+    Flight::get( 'pdo' )->commit();
+
+} else {
+    Flight::get( 'pdo' )->rollBack();
+}
+
+// debug
+if( !Flight::empty( 'e' )) {
+    Flight::debug( Flight::get('e') );
+}
+
+// json
+Flight::json([ 
+    'time'       => Flight::time(),
+    'success'    => Flight::empty( 'error' ) ? 'true' : 'false',
+    'error'      => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
+]);
+
+/*
 // ---- open transaction ----
 Flight::get('pdo')->beginTransaction();
 
@@ -54,3 +86,4 @@ Flight::json([
     'success' => json_encode( !Flight::has_error()),
     'error'   => Flight::has_error() ? Flight::get( 'error' ) : '', 
 ]);
+*/
