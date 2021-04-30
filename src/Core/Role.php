@@ -33,11 +33,11 @@ class Role extends \App\Core\Echidna
         foreach( $args as $arg ) {
 
             if( $arg[0] == 'id' and empty( $arg[2] )) {
-                $this->error = 'id is empty';
+                $this->error = 'role_id is empty';
                 break;
 
             } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
-                $this->error = 'id is incorrect';
+                $this->error = 'role_id is incorrect';
                 break;
 
             } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
@@ -133,6 +133,9 @@ class Role extends \App\Core\Echidna
         } elseif( !in_array( $data['user_role'], ['admin', 'editor', 'reader', 'invited'] )) {
             $this->error = 'user_role is incorrect';
 
+        } elseif( $this->exists( 'user_roles', [['user_id', '=', $data['user_id']], ['hub_id', '=', $data['hub_id']]] )) {
+            $this->error = 'user_role is already exists';
+
         } else {
             $this->id = $this->insert( 'user_roles', $data );
 
@@ -154,10 +157,10 @@ class Role extends \App\Core\Echidna
     public function put( array $data ) : bool {
 
         if( empty( $this->id )) {
-            $this->error = 'id is empty';
+            $this->error = 'role_id is empty';
 
         } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
-            $this->error = 'id is incorrect';
+            $this->error = 'role_id is incorrect';
 
         } elseif( !empty( $data['create_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
@@ -191,10 +194,10 @@ class Role extends \App\Core\Echidna
     public function del() : bool {
 
         if( empty( $this->id )) {
-            $this->error = 'id is empty';
+            $this->error = 'role_id is empty';
 
         } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
-            $this->error = 'id is incorrect';
+            $this->error = 'role_id is incorrect';
 
         } elseif( !$this->delete( 'user_roles', [['id', '=', $this->id]] )) {
             $this->error = 'role delete error';

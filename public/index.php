@@ -66,6 +66,24 @@ Flight::map( 'time', function() {
     return date( 'Y-m-d H:i:s' );
 });
 
+// send email
+Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
+
+    if( Flight::empty( 'error' )) {
+        Flight::get('phpmailer')->addAddress( $user_email, $user_name );
+        Flight::get('phpmailer')->Subject = $email_subject;
+        Flight::get('phpmailer')->Body = $email_body;
+
+        try {
+            Flight::get('phpmailer')->send();
+
+        } catch( \Exception $e ) {
+            Flight::set( 'e', $e );
+            Flight::set( 'error', 'email send error' );
+        }
+    }
+});
+
 // user register
 Flight::map( 'user_register', function( $user_email ) {
 
@@ -182,7 +200,7 @@ Flight::map( 'user_signout', function( $user ) {
 });
 
 // user select
-Flight::map( 'user_select', function( $user_id ) {
+Flight::map( 'user_select', function( $user_id, $user_statuses = [] ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
@@ -191,28 +209,13 @@ Flight::map( 'user_select', function( $user_id ) {
         if( !$user->get( [['id', '=', $user_id], ['user_status', '=', 'approved']] )) {
             Flight::set( 'e', $user->e );
             Flight::set( 'error', $user->error );
+
+        } elseif( !empty( $user_statuses ) and !in_array( $user->user_status, $user_statuses )) {
+            Flight::set( 'error', 'user not found' );
         }
     }
 
     return $user;
-});
-
-// send email
-Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
-
-    if( Flight::empty( 'error' )) {
-        Flight::get('phpmailer')->addAddress( $user_email, $user_name );
-        Flight::get('phpmailer')->Subject = $email_subject;
-        Flight::get('phpmailer')->Body = $email_body;
-
-        try {
-            Flight::get('phpmailer')->send();
-
-        } catch( \Exception $e ) {
-            Flight::set( 'e', $e );
-            Flight::set( 'error', 'email send error' );
-        }
-    }
 });
 
 // attribute insert
@@ -272,6 +275,25 @@ Flight::map( 'hub_insert', function( $user_id, $hub_status, $hub_name ) {
     return $hub;
 });
 
+// hub select
+Flight::map( 'hub_select', function( $hub_id, $hub_statuses = [] ) {
+
+    $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
+
+    if( Flight::empty( 'error' )) {
+    
+        if( !$hub->get( [['id', '=', $hub_id]] )) {
+            Flight::set( 'e', $hub->e );
+            Flight::set( 'error', $hub->error );
+
+        } elseif( !empty( $hub_statuses ) and !in_array( $hub->hub_status, $hub_statuses )) {
+            Flight::set( 'error', 'hub not found' );
+        }
+    }
+
+    return $hub;
+});
+
 // role insert
 Flight::map( 'role_insert', function( $hub_id, $user_id, $user_role ) {
 
@@ -296,52 +318,18 @@ Flight::map( 'role_insert', function( $hub_id, $user_id, $user_role ) {
     return $role;
 });
 
-
-
-
-
-
-
-
-
-
-
-
-// hub select -
-Flight::map( 'hub_select', function( $hub_id, $hub_statuses ) {
-
-    $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-
-    if( Flight::empty( 'error' )) {
-    
-        if( !$hub->get( [['id', '=', $hub_id]] )) {
-            Flight::set( 'e', $hub->e );
-            Flight::set( 'error', $hub->error );
-    
-        //} elseif( empty( $hub->id ) or !in_array( $hub->hub_status, $hub_statuses )) {
-        //    Flight::set( 'error', 'hub not found' );
-        }
-    }
-
-    return $hub;
-});
-
-// role select -
-Flight::map( 'role_select', function( $hub_id, $user_id, $user_role ) {
+// role select
+Flight::map( 'role_select', function( $hub_id, $user_id, $user_roles = [] ) {
 
     $role = new \App\Core\Role( Flight::get( 'pdo' ));
 
     if( Flight::empty( 'error' )) {
-        $role->hub_id = $hub_id;
-        $role->user_id = $user_id;
-        $role->user_role = $user_role;
-        $role->load();
 
-        if( !empty( $role->error )) {
+        if( !$role->get( [['hub_id', '=', $hub_id], ['user_id', '=', $user_id]] )) {
             Flight::set( 'e', $role->e );
             Flight::set( 'error', $role->error );
 
-        } elseif( empty( $role->id )) {
+        } elseif( !empty( $user_roles ) and !in_array( $role->user_role, $user_roles )) {
             Flight::set( 'error', 'role not found' );
         }
     }
@@ -349,54 +337,14 @@ Flight::map( 'role_select', function( $hub_id, $user_id, $user_role ) {
     return $role;
 });
 
-// role not exists -
-Flight::map( 'role_absent', function( $hub_id, $user_id ) {
-
-    $role = new \App\Core\Role( Flight::get( 'pdo' ));
+// role update
+Flight::map( 'role_update', function( $role, $user_role ) {
 
     if( Flight::empty( 'error' )) {
-        $role->hub_id = $hub_id;
-        $role->user_id = $user_id;
-        $role->load();
 
-        if( !empty( $role->error )) {
+        if( !$role->put( ['update_date' => Flight::time(), 'user_role' => $user_role] )) {
             Flight::set( 'e', $role->e );
             Flight::set( 'error', $role->error );
-
-        } elseif( !empty( $role->id )) {
-            Flight::set( 'error', 'role already exists' );
-        }
-    }
-
-    return $role;
-});
-
-// role update -
-Flight::map( 'role_update', function( $hub_id, $user_id, $user_role ) {
-
-    $role = new \App\Core\Role( Flight::get( 'pdo' ));
-
-    if( Flight::empty( 'error' )) {
-        $role->hub_id = $hub_id;
-        $role->user_id = $user_id;
-        $role->load();
-
-        if( !empty( $role->error )) {
-            Flight::set( 'e', $role->e );
-            Flight::set( 'error', $role->error );
-
-        } elseif( empty( $role->id )) {
-            Flight::set( 'error', 'role not found' );
-
-        } else {
-            $role->update_date = date( 'Y-m-d H:i:s' );
-            $role->user_role = $user_role;
-            $role->save();
-
-            if( !empty( $role->error )) {
-                Flight::set( 'e', $role->e );
-                Flight::set( 'error', $role->error );
-            }
         }
     }
 
