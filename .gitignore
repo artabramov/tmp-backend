@@ -4,6 +4,7 @@
 .xdebug/
 composer-setup.php
 vendor/
+tmp/
 composer.lock
 composer.phar
 
