@@ -30,18 +30,49 @@ class Role extends \App\Core\Echidna
 
     public function get( array $args ) : bool {
 
-        $rows = $this->select( '*', 'user_roles', $args, 1, 0 );
+        foreach( $args as $arg ) {
 
-        if ( empty( $rows[0] )) {
-            $this->error = 'role not found';
-    
-        } else {
-            $this->id          = $rows[0]->id;
-            $this->create_date = $rows[0]->create_date;
-            $this->update_date = $rows[0]->update_date;
-            $this->hub_id      = $rows[0]->hub_id;
-            $this->user_id     = $rows[0]->user_id;
-            $this->user_role   = $rows[0]->user_role;
+            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'create_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'update_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'hub_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'hub_id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'user_id is incorrect';
+                break;
+
+
+            } elseif( $arg[0] == 'user_role' and !in_array( $arg[2], ['admin', 'editor', 'reader', 'invited'] )) {
+                $this->error = 'user_role is incorrect';
+                break;
+            }
+        }
+
+        if( empty( $this->error )) {
+            $rows = $this->select( '*', 'user_roles', $args, 1, 0 );
+
+            if ( empty( $rows[0] )) {
+                $this->error = 'role not found';
+        
+            } else {
+                $this->id          = $rows[0]->id;
+                $this->create_date = $rows[0]->create_date;
+                $this->update_date = $rows[0]->update_date;
+                $this->hub_id      = $rows[0]->hub_id;
+                $this->user_id     = $rows[0]->user_id;
+                $this->user_role   = $rows[0]->user_role;
+            }
         }
 
         return empty( $this->error );

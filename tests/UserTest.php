@@ -100,6 +100,9 @@ class UserTest extends TestCase
 
             // incorrect cases
             [ [['id', '=', 2]], false ],
+            [ [['id', '=', 'a']], false ],
+            [ [['user_status', '=', 'status']], false ],
+            [ [['user_email', '=', 'noreply']], false ],
 
         ];
     }

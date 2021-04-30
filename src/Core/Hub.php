@@ -30,18 +30,48 @@ class Hub extends \App\Core\Echidna
 
     public function get( array $args ) : bool {
 
-        $rows = $this->select( '*', 'hubs', $args, 1, 0 );
+        foreach( $args as $arg ) {
 
-        if ( empty( $rows[0] )) {
-            $this->error = 'hub not found';
-    
-        } else {
-            $this->id          = $rows[0]->id;
-            $this->create_date = $rows[0]->create_date;
-            $this->update_date = $rows[0]->update_date;
-            $this->user_id     = $rows[0]->user_id;
-            $this->hub_status  = $rows[0]->hub_status;
-            $this->hub_name    = $rows[0]->hub_name;
+            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'create_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'update_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'user_id is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'hub_status' and !in_array( $arg[2], ['private', 'custom', 'trash'] )) {
+                $this->error = 'hub_status is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'hub_name' and strlen( $arg[2] ) > 255 ) {
+                $this->error = 'hub_name is incorrect';
+                break;
+            }
+        }
+
+        if( empty( $this->error )) {
+            $rows = $this->select( '*', 'hubs', $args, 1, 0 );
+
+            if ( empty( $rows[0] )) {
+                $this->error = 'hub not found';
+        
+            } else {
+                $this->id          = $rows[0]->id;
+                $this->create_date = $rows[0]->create_date;
+                $this->update_date = $rows[0]->update_date;
+                $this->user_id     = $rows[0]->user_id;
+                $this->hub_status  = $rows[0]->hub_status;
+                $this->hub_name    = $rows[0]->hub_name;
+            }
         }
 
         return empty( $this->error );

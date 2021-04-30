@@ -14,12 +14,14 @@ Flight::set( 'dropbox', require_once( __DIR__ . "/../src/init/dropbox.php" ) );
 
 // error
 Flight::map( 'error', function( Throwable $e ) {
+
     Flight::debug( $e );
     Flight::halt( 500, 'Internal Server Error' );
 });
 
 // debug
 Flight::map( 'debug', function( Throwable $e ) {
+
     Flight::get( 'monolog' )->debug( $e->getMessage(), [
         'method'  => Flight::request()->method,
         'url'     => Flight::request()->url,
@@ -27,6 +29,43 @@ Flight::map( 'debug', function( Throwable $e ) {
         'line'    => $e->getLine()
     ]);
 });
+
+// generate token
+Flight::map( 'token', function() {
+    return sha1( date( 'U' )) . bin2hex( random_bytes( 20 ));
+});
+
+// generate pass
+Flight::map( 'pass', function() {
+
+    $pass_symbols = '0123456789abcdefghijklmnopqrstuvwxyz';
+    $pass_len = 6;
+
+    $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
+    $user_pass = '';
+
+    for( $i = 0; $i < $pass_len; $i++ ) {
+        $user_pass .= $pass_symbols[ random_int( 0, $symbols_length ) ];
+    }
+    return $user_pass;
+
+});
+
+// het hash
+Flight::map( 'hash', function( string $user_pass ) {
+    return sha1( $user_pass . '~salt' );
+});
+
+// get time
+Flight::map( 'time', function() {
+    return date( 'Y-m-d H:i:s' );
+});
+
+// is flight-variable empty?
+Flight::map( 'empty', function( $key ) {
+    return empty( Flight::get( $key ));
+});
+
 
 /*
 // has error?
@@ -38,29 +77,23 @@ Flight::map( 'has_error', function() {
 Flight::map( 'has_e', function() {
     return Flight::has( 'e' ) and !empty( Flight::get( 'e' ));
 });
-
-
-// get time
-Flight::map( 'time', function() {
-    return date( 'Y-m-d H:i:s' );
-});
 */
 
 
 // user register
-Flight::map( 'user_register', function( $user_email ) {
+Flight::map( 'user_register', function( $user_email, $user_token ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
     if( empty( Flight::get( 'error' ))) {
 
         $data = [
-            'register_date' => date( 'Y-m-d H:i:s' ),
+            'register_date' => Flight::time(),
             'restore_date'  => '0001-01-01 00:00:00',
             'signin_date'   => '0001-01-01 00:00:00',
             'auth_date'     => '0001-01-01 00:00:00',
             'user_status'   => 'pending',
-            'user_token'    => $user->create_token(),
+            'user_token'    => $user_token,
             'user_email'    => $user_email,
             'user_hash'     => '',
         ];
@@ -75,8 +108,8 @@ Flight::map( 'user_register', function( $user_email ) {
 
 });
 
-// user restore
-Flight::map( 'user_restore', function( $user_email ) {
+// user restore (get user by user_email, update user_hash and restore_date)
+Flight::map( 'user_restore', function( $user_email, $user_pass ) {
 
     $user = new \App\Core\User( Flight::get( 'pdo' ));
 
@@ -85,18 +118,20 @@ Flight::map( 'user_restore', function( $user_email ) {
         if( empty( $user_email )) {
             Flight::set( 'error', 'user_email is empty' );
 
-        } elseif( !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $user_email )) {
-            Flight::set( 'error', 'user_email is incorrect' );
+        } elseif( empty( $user_pass )) {
+            Flight::set( 'error', 'user_pass is empty' );
 
-        } else {
-            $user->get( [['user_email', '=', $user_email], ['user_status', '<>', 'trash']] );
+        } elseif( !$user->get( [['user_email', '=', $user_email], ['user_status', '<>', 'trash']] )) {
+            Flight::set( 'e', $user->e );
+            Flight::set( 'error', $user->error );
 
-            if( empty( $user->id )) {
-                $user->error = 'user not foud';
-            }
-        }
+        } elseif( empty( $user->id )) {
+            Flight::set( 'error', 'user not found' );
 
-        if( !empty( $user->error )) {
+        } elseif( date( 'U' ) - strtotime( $user->restore_date ) < 30 ) {
+            Flight::set( 'error', 'wait for 30 seconds' );
+
+        } elseif( !$user->put( ['restore_date' => Flight::time(), 'user_hash' => Flight::hash( $user_pass ) ] )) {
             Flight::set( 'e', $user->e );
             Flight::set( 'error', $user->error );
         }
@@ -104,6 +139,68 @@ Flight::map( 'user_restore', function( $user_email ) {
 
     return $user;
 });
+
+// signin user
+Flight::map( 'user_signin', function( $user_email, $user_pass ) {
+
+    $user = new \App\Core\User( Flight::get( 'pdo' ));
+
+    if( empty( Flight::get( 'error' ))) {
+
+        if( empty( $user_email )) {
+            Flight::set( 'error', 'user_email is empty' );
+
+        } elseif( empty( $user_pass )) {
+            Flight::set( 'error', 'user_pass is empty' );
+
+        } elseif( !$user->get( [['user_email', '=', $user_email], ['user_hash', '=', Flight::hash( $user_pass ) ], ['user_status', '<>', 'trash']] )) {
+            Flight::set( 'e', $user->e );
+            Flight::set( 'error', $user->error );
+
+        } elseif( empty( $user->id )) {
+            Flight::set( 'error', 'user not found' );
+
+        } elseif( date( 'U' ) - strtotime( $user->restore_date ) > 60 ) {
+            Flight::set( 'error', 'user_pass is expired' );
+
+        } elseif( !$user->put( ['signin_date' => Flight::time(), 'user_status' => 'approved', 'user_hash' => '' ] )) {
+            Flight::set( 'e', $user->e );
+            Flight::set( 'error', $user->error );
+        }
+    }
+
+    return $user;
+});
+
+// send email
+Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
+
+    if( empty( Flight::get( 'error' ))) {
+        Flight::get('phpmailer')->addAddress( $user_email, $user_name );
+        Flight::get('phpmailer')->Subject = $email_subject;
+        Flight::get('phpmailer')->Body = $email_body;
+
+        try {
+            Flight::get('phpmailer')->send();
+
+        } catch( \Exception $e ) {
+            Flight::set( 'e', $e );
+            Flight::set( 'error', 'email send error' );
+        }
+    }
+});
+
+//---
+
+
+
+
+
+
+
+
+
+
 
 // attribute insert
 Flight::map( 'attribute_insert', function( $user_id, $attribute_key, $attribute_value, $min_len, $max_len ) {
@@ -185,13 +282,6 @@ Flight::map( 'role_insert', function( $hub_id, $user_id, $user_role ) {
 
     return $role;
 });
-
-
-
-
-
-
-
 
 // user auth
 Flight::map( 'user_auth', function( $user_token ) {
@@ -343,21 +433,6 @@ Flight::map( 'role_update', function( $hub_id, $user_id, $user_role ) {
     }
 
     return $role;
-});
-
-// send email
-Flight::map( 'email', function( string $user_email, string $user_name, string $email_subject, string $email_body ) {
-    Flight::get('phpmailer')->addAddress( $user_email, $user_name );
-    Flight::get('phpmailer')->Subject = $email_subject;
-    Flight::get('phpmailer')->Body = $email_body;
-
-    try {
-        Flight::get('phpmailer')->send();
-
-    } catch( \Exception $e ) {
-        Flight::set( 'e', $e );
-        Flight::set( 'error', 'email send error' );
-    }
 });
 
 //================ ROUTES ================

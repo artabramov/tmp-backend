@@ -14,9 +14,11 @@ class User extends \App\Core\Echidna
     protected $user_email;
     protected $user_hash;
 
+    /*
     protected const PASS_LEN = 6;
     protected const PASS_SYMBOLS = '0123456789abcdefghijklmnopqrstuvwxyz';
     protected const PASS_SALT = '~salt';
+    */
 
     public function __get( string $key ) {
 
@@ -34,45 +36,66 @@ class User extends \App\Core\Echidna
         return false;
     }
 
-    public function create_token() : string {
-        do {
-            $user_token = bin2hex( random_bytes( 40 ));
-        } while( $this->exists( 'users', [['user_token', '=', $user_token]] ));
-
-        return $user_token;
-    }
-
-    public function create_pass( $pass_len = self::PASS_LEN, $pass_symbols = self::PASS_SYMBOLS ) : string {
-        $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
-        $user_pass = '';
-        for( $i = 0; $i < $pass_len; $i++ ) {
-            $user_pass .= $pass_symbols[ random_int( 0, $symbols_length ) ];
-        }
-        return $user_pass;
-    }
-
-    public function get_hash( string $value, string $pass_salt = self::PASS_SALT ) : string {
-        return sha1( $pass_salt . $value );
-    }
-
     // select the user
     public function get( array $args ) : bool {
 
-        $rows = $this->select( '*', 'users', $args, 1, 0 );
+        foreach( $args as $arg ) {
+            
+            if( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+                $this->error = 'id is incorrect';
+                break;
 
-        if ( empty( $rows[0] )) {
-            $this->error = 'user not found';
-    
-        } else {
-            $this->id            = $rows[0]->id;
-            $this->register_date = $rows[0]->register_date;
-            $this->restore_date  = $rows[0]->restore_date;
-            $this->signin_date   = $rows[0]->signin_date;
-            $this->auth_date     = $rows[0]->auth_date;
-            $this->user_status   = $rows[0]->user_status;
-            $this->user_token    = $rows[0]->user_token;
-            $this->user_email    = $rows[0]->user_email;
-            $this->user_hash     = $rows[0]->user_hash;
+            } elseif( $arg[0] == 'register_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'register_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'restore_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'restore_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'signin_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'signin_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'auth_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+                $this->error = 'auth_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_status' and !in_array( $arg[2], ['pending', 'approved', 'trash'] )) {
+                $this->error = 'user_status is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_token' and strlen( $arg[2] ) > 80 ) {
+                $this->error = 'user_token is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_email' and !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $arg[2] )) {
+                $this->error = 'user_email is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'user_hash' and strlen( $arg[2] ) > 40 ) {
+                $this->error = 'user_hash is incorrect';
+                break;
+            }
+        }
+
+        if( empty( $this->error )) {
+            $rows = $this->select( '*', 'users', $args, 1, 0 );
+
+            if ( empty( $rows[0] )) {
+                $this->error = 'user not found';
+        
+            } else {
+                $this->id            = $rows[0]->id;
+                $this->register_date = $rows[0]->register_date;
+                $this->restore_date  = $rows[0]->restore_date;
+                $this->signin_date   = $rows[0]->signin_date;
+                $this->auth_date     = $rows[0]->auth_date;
+                $this->user_status   = $rows[0]->user_status;
+                $this->user_token    = $rows[0]->user_token;
+                $this->user_email    = $rows[0]->user_email;
+                $this->user_hash     = $rows[0]->user_hash;
+            }
         }
 
         return empty( $this->error );
