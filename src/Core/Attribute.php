@@ -131,7 +131,7 @@ class Attribute extends \App\Core\Echidna
         } elseif( strlen( $data['attribute_value'] ) > 255 ) {
             $this->error = 'attribute_value is incorrect';
 
-        } elseif( $this->exists( 'user_attributes', [['user_id', '=', $data['user_id']], ['attribute_key', '=', $data['attribute_key']]] )) {
+        } elseif( $this->is_exists( 'user_attributes', [['user_id', '=', $data['user_id']], ['attribute_key', '=', $data['attribute_key']]] )) {
             $this->error = 'attribute is already exists';
 
         } else {
@@ -160,19 +160,34 @@ class Attribute extends \App\Core\Echidna
         } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
             $this->error = 'attribute_id is incorrect';
 
-        } elseif( !empty( $data['create_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and empty( $data['create_date'] )) {
+            $this->error = 'create_date is empty';
+
+        } elseif( array_key_exists('create_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( !empty( $data['update_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and empty( $data['update_date'] )) {
+            $this->error = 'update_date is empty';
+
+        } elseif( array_key_exists('update_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( !empty( $date['user_id'] ) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+        } elseif( array_key_exists('user_id', $data) and empty( $data['user_id'] )) {
+            $this->error = 'user_id is empty';
+
+        } elseif( array_key_exists('user_id', $data) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( !empty( $data['attribute_key'] ) and strlen( $data['attribute_key'] ) > 20 ) {
+        } elseif( array_key_exists('attribute_key', $data) and empty( $data['attribute_key'] )) {
+            $this->error = 'attribute_key is empty';
+
+        } elseif( array_key_exists('attribute_key', $data) and strlen( $data['attribute_key'] ) > 20 ) {
             $this->error = 'attribute_key is incorrect';
 
-        } elseif( !empty( $data['attribute_value'] ) and strlen( $data['attribute_value'] ) > 255 ) {
+        } elseif( array_key_exists('attribute_value', $data) and empty( $data['attribute_value'] )) {
+            $this->error = 'attribute_value is empty';
+
+        } elseif( array_key_exists('attribute_value', $data) and strlen( $data['attribute_value'] ) > 255 ) {
             $this->error = 'attribute_value is incorrect';
 
         } elseif( !$this->update( 'user_attributes', [['id', '=', $this->id]], $data )) {

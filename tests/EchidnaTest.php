@@ -193,7 +193,7 @@ class EchidnaTest extends TestCase
     public function testExists( $table, $args, $expected ) {
         $this->truncate();
         $this->insert();
-        $result = $this->callMethod( $this->echidna, 'exists', [ $table, $args ] );
+        $result = $this->callMethod( $this->echidna, 'is_exists', [ $table, $args ] );
         $this->assertEquals( $expected, $result );
     }
 

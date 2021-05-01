@@ -200,25 +200,43 @@ class Post extends \App\Core\Echidna
         } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
             $this->error = 'post_id is incorrect';
 
-        } elseif( !empty( $data['create_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and empty( $data['create_date'] )) {
+            $this->error = 'create_date is empty';
+
+        } elseif( array_key_exists('create_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( !empty( $data['update_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and empty( $data['update_date'] )) {
+            $this->error = 'update_date is empty';
+
+        } elseif( array_key_exists('update_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( !empty( $date['parent_id'] ) and !ctype_digit( $date['parent_id'] ) and !( is_int( $date['parent_id'] ) and $date['parent_id'] >= 0 )) {
+        } elseif( array_key_exists('parent_id', $data) and !ctype_digit( $date['parent_id'] ) and !( is_int( $date['parent_id'] ) and $date['parent_id'] >= 0 )) {
             $this->error = 'parent_id is incorrect';
 
-        } elseif( !empty( $date['user_id'] ) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+        } elseif( array_key_exists('user_id', $data) and empty( $data['user_id'] )) {
+            $this->error = 'user_id is empty';
+
+        } elseif( array_key_exists('user_id', $data) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( !empty( $date['hub_id'] ) and !ctype_digit( $date['hub_id'] ) and !( is_int( $date['hub_id'] ) and $date['hub_id'] >= 0 )) {
+        } elseif( array_key_exists('hub_id', $data) and empty( $data['hub_id'] )) {
+            $this->error = 'hub_id is empty';
+
+        } elseif( array_key_exists('hub_id', $data) and !ctype_digit( $date['hub_id'] ) and !( is_int( $date['hub_id'] ) and $date['hub_id'] >= 0 )) {
             $this->error = 'hub_id is incorrect';
 
-        } elseif( !empty( $data['post_type'] ) and !in_array( $data['post_type'], ['document', 'comment'] )) {
+        } elseif( array_key_exists('post_type', $data) and empty( $data['post_type'] )) {
+            $this->error = 'post_type is empty';
+
+        } elseif( array_key_exists('post_type', $data) and !in_array( $data['post_type'], ['document', 'comment'] )) {
             $this->error = 'post_type is incorrect';
 
-        } elseif( !empty( $data['post_status'] ) and !in_array( $data['post_status'], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {
+        } elseif( array_key_exists('post_status', $data) and empty( $data['post_status'] )) {
+            $this->error = 'post_status is empty';
+
+        } elseif( array_key_exists('post_status', $data) and !in_array( $data['post_status'], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {
             $this->error = 'post_status is incorrect';
 
         } elseif( !$this->update( 'posts', [['id', '=', $this->id]], $data )) {

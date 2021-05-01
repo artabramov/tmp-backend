@@ -176,7 +176,7 @@ class User extends \App\Core\Echidna
         } elseif( strlen( $data['user_token'] ) > 80 ) {
             $this->error = 'user_token is incorrect';
 
-        } elseif( $this->exists( 'users', [['user_token','=', $data['user_token']]] )) {
+        } elseif( $this->is_exists( 'users', [['user_token','=', $data['user_token']]] )) {
             $this->error = 'user_token is occupied';
 
         } elseif( empty( $data['user_email'] )) {
@@ -185,7 +185,7 @@ class User extends \App\Core\Echidna
         } elseif( !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $data['user_email'] )) {
             $this->error = 'user_email is incorrect';
 
-        } elseif( $this->exists( 'users', [['user_email','=', $data['user_email']]] )) {
+        } elseif( $this->is_exists( 'users', [['user_email','=', $data['user_email']]] )) {
             $this->error = 'user_email is occupied';
 
         } elseif( !is_string( $data['user_hash'] ) or strlen( $data['user_hash'] ) > 40 ) {
@@ -221,34 +221,55 @@ class User extends \App\Core\Echidna
         } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( !empty( $data['register_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['register_date'] )) {
+        } elseif( array_key_exists('register_date', $data) and empty( $data['register_date'] )) {
+            $this->error = 'register_date is empty';
+
+        } elseif( array_key_exists('register_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['register_date'] )) {
             $this->error = 'register_date is incorrect';
 
-        } elseif( !empty( $data['restore_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['restore_date'] )) {
+        } elseif( array_key_exists('restore_date', $data) and empty( $data['restore_date'] )) {
+            $this->error = 'restore_date is empty';
+
+        } elseif( array_key_exists('restore_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['restore_date'] )) {
             $this->error = 'restore_date is incorrect';
 
-        } elseif( !empty( $data['signin_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['signin_date'] )) {
+        } elseif( array_key_exists('signin_date', $data) and empty( $data['signin_date'] )) {
+            $this->error = 'signin_date is empty';
+
+        } elseif( array_key_exists('signin_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['signin_date'] )) {
             $this->error = 'signin_date is incorrect';
 
-        } elseif( !empty( $data['auth_date'] ) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['auth_date'] )) {
+        } elseif( array_key_exists('auth_date', $data) and empty( $data['auth_date'] )) {
+            $this->error = 'auth_date is empty';
+
+        } elseif( array_key_exists('auth_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['auth_date'] )) {
             $this->error = 'auth_date is incorrect';
 
-        } elseif( !empty( $data['user_status'] ) and !in_array( $data['user_status'], ['pending', 'approved', 'trash'] )) {
+        } elseif( array_key_exists('user_status', $data) and empty( $data['user_status'] )) {
+            $this->error = 'user_status is empty';
+
+        } elseif( array_key_exists('user_status', $data) and !in_array( $data['user_status'], ['pending', 'approved', 'trash'] )) {
             $this->error = 'user_status is incorrect';
 
-        } elseif( !empty( $data['user_token'] ) and strlen( $data['user_token'] ) > 80 ) {
+        } elseif( array_key_exists('user_token', $data) and empty( $data['user_token'] )) {
+            $this->error = 'user_token is empty';
+
+        } elseif( array_key_exists('user_token', $data) and strlen( $data['user_token'] ) > 80 ) {
             $this->error = 'user_token is incorrect';
 
-        } elseif( !empty( $data['user_token'] ) and $this->exists( 'users', [['user_token','=', $data['user_token']]] )) {
+        } elseif( array_key_exists('user_token', $data) and $this->is_exists( 'users', [['user_token','=', $data['user_token']]] )) {
             $this->error = 'user_token is occupied';
 
-        } elseif( !empty( $data['user_email'] ) and !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $data['user_email'] )) {
+        } elseif( array_key_exists('user_email', $data) and empty( $data['user_email'] )) {
+            $this->error = 'user_email is empty';
+
+        } elseif( array_key_exists('user_email', $data) and !preg_match("/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $data['user_email'] )) {
             $this->error = 'user_email is incorrect';
 
-        } elseif( !empty( $data['user_email'] ) and $this->exists( 'users', [['user_email','=', $data['user_email']]] )) {
+        } elseif( array_key_exists('user_email', $data) and $this->is_exists( 'users', [['user_email','=', $data['user_email']]] )) {
             $this->error = 'user_email is occupied';
 
-        } elseif( !empty( $data['user_hash'] ) and strlen( $data['user_hash'] ) > 40 ) {
+        } elseif( array_key_exists('user_hash', $data) and strlen( $data['user_hash'] ) > 40 ) {
             $this->error = 'user_hash is incorrect';
 
         } elseif( !$this->update( 'users', [['id', '=', $this->id]], $data )) {

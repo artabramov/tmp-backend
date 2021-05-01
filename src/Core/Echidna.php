@@ -11,6 +11,60 @@ class Echidna
         $this->e = null;
     }
 
+    protected function is_num( mixed $value ) : bool {
+        return ( is_string( $value ) and ctype_digit( $value )) or ( is_int( $value ) and $value >= 0 );
+    }
+
+    protected function is_string( mixed $value, int $len ) : bool {
+        return is_string( $value ) and mb_strlen( $value, 'UTF-8' ) <= $len;
+    }
+
+    protected function is_datetime( mixed $value ) : bool {
+        return is_string( $value ) and preg_match( "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $value );
+    }
+
+    protected function is_email( mixed $value ) : bool {
+        return is_string( $value ) and preg_match( "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $value );
+    }
+
+    protected function is_hex( mixed $value ) : bool {
+        return is_string( $value ) and preg_match( "/^[a-f0-9]+$/", $value );
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    protected function is_exists( string $table, array $args ) : bool {
+
+        $where = '';
+        foreach( $args as $arg ) {
+            $where .= empty( $where ) ? 'WHERE ' : ' AND ';
+            $where .= $arg[0] . $arg[1] . ':' . $arg[0];
+        }
+
+        try {
+            $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' ' . $where . ' LIMIT 1' );
+            foreach( $args as $arg ) {
+
+                if( $arg[0] == 'id' ) {
+                    $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_INT );
+
+                } else {
+                    $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_STR );
+                }
+            }
+
+            $stmt->execute();
+            $rows = $stmt->fetch( $this->pdo::FETCH_OBJ );
+
+        } catch( \Exception $e ) {
+            $this->e = $e;
+        }
+
+        return empty( $this->e ) ? !empty( $rows->id ) : false;
+    }
+
     /**
      * @return int
      * @throws \Exception
@@ -187,40 +241,6 @@ class Echidna
         }
 
         return empty( $this->e ) ? $rows[ 'COUNT(id)' ] : 0;
-    }
-
-    /**
-     * @return bool
-     * @throws \Exception
-     */
-    public function exists( string $table, array $args ) : bool {
-
-        $where = '';
-        foreach( $args as $arg ) {
-            $where .= empty( $where ) ? 'WHERE ' : ' AND ';
-            $where .= $arg[0] . $arg[1] . ':' . $arg[0];
-        }
-
-        try {
-            $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' ' . $where . ' LIMIT 1' );
-            foreach( $args as $arg ) {
-
-                if( $arg[0] == 'id' ) {
-                    $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_INT );
-
-                } else {
-                    $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_STR );
-                }
-            }
-
-            $stmt->execute();
-            $rows = $stmt->fetch( $this->pdo::FETCH_OBJ );
-
-        } catch( \Exception $e ) {
-            $this->e = $e;
-        }
-
-        return empty( $this->e ) ? !empty( $rows->id ) : false;
     }
 
 }

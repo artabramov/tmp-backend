@@ -83,8 +83,8 @@ class HubTest extends TestCase
             [ [['hub_name', '=', 'hub name']], [ true, '' ] ],
 
             // incorrect cases
-            [ [['id', '=', 0]], [ false, 'id is empty' ] ],
-            [ [['id', '=', 'a']], [ false, 'id is incorrect' ] ],
+            [ [['id', '=', 0]], [ false, 'hub_id is empty' ] ],
+            [ [['id', '=', 'a']], [ false, 'hub_id is incorrect' ] ],
             [ [['create_date', '=', '']], [ false, 'create_date is empty' ] ],
             [ [['create_date', '=', '00:00:00']], [ false, 'create_date is incorrect' ] ],
             [ [['update_date', '=', '']], [ false, 'update_date is empty' ] ],
