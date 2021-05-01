@@ -9,7 +9,7 @@ Flight::get('pdo')->beginTransaction();
 $master = Flight::user_auth( $user_token );
 $hub = Flight::hub_select( $hub_id, ['custom'] );
 $master_role = Flight::role_select( $hub->id, $master->id, ['invited'] );
-$master_role = Flight::role_update( $master_role, 'reader' );
+$master_role = Flight::role_update( $master_role, 'reader', ['reader'] );
 
 // close transaction
 if( Flight::empty( 'error' )) {

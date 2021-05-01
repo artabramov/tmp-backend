@@ -174,6 +174,10 @@ class Role extends \App\Core\Echidna
         } elseif( !empty( $date['user_id'] ) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
             $this->error = 'user_id is incorrect';
 
+        // TODO:
+        } elseif( array_key_exists('user_role', $data) and empty( $data['user_role'] )) {
+            $this->error = 'user_role is empty';
+
         } elseif( !empty( $data['user_role'] ) and !in_array( $data['user_role'], ['admin', 'editor', 'reader', 'invited'] )) {
             $this->error = 'user_role is incorrect';
 

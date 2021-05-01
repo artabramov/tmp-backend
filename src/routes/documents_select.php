@@ -1,67 +1,51 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 $hub_id = (int) Flight::request()->query['hub_id'];
+$limit = 10;
+$offset = (int) Flight::request()->query['offset'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// auth
-$me = new \App\Core\User( Flight::get( 'pdo' ));
-if( !$me->auth( $user_token )) {
-    Flight::set( 'e', $me->e );
-    Flight::set( 'error', $me->error );
-}
+// do
+$master = Flight::user_auth( $user_token );
+$hub = Flight::hub_select( $hub_id, ['private', 'custom'] );
+$master_role = Flight::role_select( $hub->id, $master->id, ['admin', 'editor', 'reader'] );
+$documents = Flight::documents_select( $hub->id, $limit, $offset );
 
-// hub
-if( !Flight::has_error()) {
-    $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-    if( !$hub->get( $hub_id )) {
-        Flight::set( 'e', $hub->e );
-        Flight::set( 'error', $hub->error );
-    }
-}
+if( Flight::empty( 'error' )) {
+    $output = [];
 
-// role
-if( !Flight::has_error()) {
-    $my_role = new \App\Core\Role( Flight::get( 'pdo' ));
-    if( !$my_role->get( $hub->id, $me->id )) {
-        Flight::set( 'e', $my_role->e );
-        Flight::set( 'error', $my_role->error );
-    }
-}
-
-// posts
-if( !Flight::has_error()) {
-    $posts = new \App\Core\Collector( Flight::get( 'pdo' ));
-    if( !$posts->get( 'App\Core\Post', 'posts', [['hub_id', '=', $hub->id]], 100, 0 )) {
-        Flight::set( 'e', $my_role->e );
-        Flight::set( 'error', $my_role->error );
+    foreach( $documents->rows as $row ) {
+        $document = [];
+        $document['id']           = $row->id;
+        $document['create_date']  = $row->create_date;
+        $document['update_date']  = $row->update_date;
+        $document['user_id']      = $row->user_id;
+        $document['post_type']    = $row->post_type;
+        $document['post_status']  = $row->post_status;
+        $document['post_content'] = $row->post_content;
+        array_push( $output, $document );
     }
 }
 
 // close transaction
-if( !Flight::has_error()) {
+if( Flight::empty( 'error' )) {
     Flight::get( 'pdo' )->commit();
 
 } else {
     Flight::get( 'pdo' )->rollBack();
 }
 
-// write debug
-if( Flight::has_e()) {
+// debug
+if( !Flight::empty( 'e' )) {
     Flight::debug( Flight::get('e') );
 }
 
-// send json
+// json
 Flight::json([ 
     'time'    => Flight::time(),
-    'success' => json_encode( !Flight::has_error()),
-    'error'   => Flight::has_error() ? Flight::get( 'error' ) : '', 
-    'hub'    => Flight::has_error() ? [] : [ 
-        'id'          => $hub->id, 
-        'create_date' => $hub->create_date, 
-        'update_date' => $hub->update_date, 
-        'hub_status'  => $hub->hub_status,
-        'hub_name'    => $hub->hub_name ],
-    'posts' => Flight::has_error() ? [] : $posts->pull(),
+    'success' => Flight::empty( 'error' ) ? 'true' : 'false',
+    'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
+    'documents' => Flight::empty( 'error' ) ? $output : [],
 ]);

@@ -218,6 +218,8 @@ Flight::map( 'user_select', function( $user_id, $user_statuses = [] ) {
     return $user;
 });
 
+// ==== ATTRIBUTES ====
+
 // attribute insert
 Flight::map( 'attribute_insert', function( $user_id, $attribute_key, $attribute_value ) {
 
@@ -250,6 +252,8 @@ Flight::map( 'attribute_insert', function( $user_id, $attribute_key, $attribute_
 
     return $attribute;
 });
+
+// ==== HUBS ====
 
 // hub insert
 Flight::map( 'hub_insert', function( $user_id, $hub_status, $hub_name ) {
@@ -294,6 +298,22 @@ Flight::map( 'hub_select', function( $hub_id, $hub_statuses = [] ) {
     return $hub;
 });
 
+// hub update
+Flight::map( 'hub_rename', function( $hub, $hub_name ) {
+
+    if( Flight::empty( 'error' )) {
+
+        if( !$hub->put( ['update_date' => Flight::time(), 'hub_name' => $hub_name] )) {
+            Flight::set( 'e', $hub->e );
+            Flight::set( 'error', $hub->error );
+        }
+    }
+
+    return $hub;
+});
+
+// ==== ROLES ====
+
 // role insert
 Flight::map( 'role_insert', function( $hub_id, $user_id, $user_role ) {
 
@@ -337,18 +357,80 @@ Flight::map( 'role_select', function( $hub_id, $user_id, $user_roles = [] ) {
     return $role;
 });
 
-// role update
-Flight::map( 'role_update', function( $role, $user_role ) {
+// role update (update $role->user_role to user_role if it in $user_roles)
+Flight::map( 'role_update', function( $role, $user_role, $user_roles = [] ) {
 
     if( Flight::empty( 'error' )) {
 
         if( !$role->put( ['update_date' => Flight::time(), 'user_role' => $user_role] )) {
             Flight::set( 'e', $role->e );
             Flight::set( 'error', $role->error );
+
+        } elseif( !empty( $user_roles ) and !in_array( $user_role, $user_roles )) {
+            Flight::set( 'error', 'user_role is incorrect' );
         }
     }
 
     return $role;
+});
+
+// role delete
+Flight::map( 'role_delete', function( $role ) {
+
+    if( Flight::empty( 'error' )) {
+
+        if( !$role->del()) {
+            Flight::set( 'e', $role->e );
+            Flight::set( 'error', $role->error );
+        }
+    }
+
+    return $role;
+});
+
+// ==== DOCUMENTS ====
+
+// document insert
+Flight::map( 'document_insert', function( $user_id, $hub_id, $post_status, $post_content ) {
+
+    $post = new \App\Core\Post( Flight::get( 'pdo' ));
+
+    if( Flight::empty( 'error' )) {
+
+        $data = [
+            'create_date'  => date( 'Y-m-d H:i:s' ),
+            'update_date'  => '0001-01-01 00:00:00',
+            'parent_id'    => 0,
+            'user_id'      => $user_id,
+            'hub_id'       => $hub_id,
+            'post_type'    => 'document',
+            'post_status'  => $post_status,
+            'post_content' => $post_content,
+        ];
+    
+        if( !$post->set( $data )) {
+            Flight::set( 'e', $post->e );
+            Flight::set( 'error', $post->error );
+        }
+    }
+
+    return $post;
+});
+
+// documents (!) select
+Flight::map( 'documents_select', function( $hub_id, $limit, $offset ) {
+
+    $posts = new \App\Core\Collector( Flight::get( 'pdo' ));
+
+    if( Flight::empty( 'error' )) {
+
+        if( !$posts->get( 'App\Core\Post', 'posts', [['hub_id', '=', $hub_id]], $limit, $offset )) {
+            Flight::set( 'e', $posts->e );
+            Flight::set( 'error', $posts->error );
+        }
+    }
+
+    return $posts;
 });
 
 //================ ROUTES ================
@@ -427,9 +509,9 @@ Flight::route( 'POST /hub', function() {
     require_once( '../src/routes/hub_create.php' );
 });
 
-// get documents
-Flight::route( 'GET /documents', function() {
-    require_once( '../src/routes/documents_select.php' );
+// hub rename
+Flight::route( 'PUT /hub', function() {
+    require_once( '../src/routes/hub_rename.php' );
 });
 
 // role invite
@@ -442,9 +524,14 @@ Flight::route( 'GET /role', function() {
     require_once( '../src/routes/role_approve.php' );
 });
 
-// change role
+// role update
 Flight::route( 'PUT /role', function() {
     require_once( '../src/routes/role_update.php' );
+});
+
+// role delete
+Flight::route( 'DELETE /role', function() {
+    require_once( '../src/routes/role_delete.php' );
 });
 
 // create document
@@ -452,15 +539,23 @@ Flight::route( 'POST /document', function() {
     require_once( '../src/routes/document_create.php' );
 });
 
-// create comment
-Flight::route( 'POST /comment', function() {
-    require_once( '../src/routes/comment_create.php' );
+// documents (!) select
+Flight::route( 'GET /documents', function() {
+    require_once( '../src/routes/documents_select.php' );
 });
 
 
 
 
 
+
+
+
+
+// create comment
+Flight::route( 'POST /comment', function() {
+    require_once( '../src/routes/comment_create.php' );
+});
 
 // Post file
 Flight::route( 'POST /upload', function() {

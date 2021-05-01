@@ -1,25 +1,20 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 $hub_id = (int) Flight::request()->query['hub_id'];
-$user_id = (int) Flight::request()->query['user_id'];
-$user_role = (string) Flight::request()->query['user_role'];
+$hub_name = (string) Flight::request()->query['hub_name'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
 // do
 $master = Flight::user_auth( $user_token );
-$slave = Flight::user_select( $user_id, ['approved'] );
-$hub = Flight::hub_select( $hub_id, ['custom'] );
+$hub = Flight::hub_select( $hub_id, ['private', 'custom'] );
 
-if( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
-    Flight::set( 'error', 'user_id not available' );
+if( Flight::empty( 'error' ) and $hub->user_id != $master->id ) {
+    Flight::set( 'error', 'hub_id not available' );
 }
 
-$master_role = Flight::role_select( $hub->id, $master->id, ['admin'] );
-$slave_role = Flight::role_select( $hub->id, $slave->id, ['admin', 'editor', 'reader'] );
-
-$slave_role = Flight::role_update( $slave_role, $user_role, ['admin', 'editor', 'reader'] );
+Flight::hub_rename( $hub, $hub_name );
 
 // close transaction
 if( Flight::empty( 'error' )) {

@@ -9,9 +9,7 @@ Flight::get('pdo')->beginTransaction();
 // do
 $master_user = Flight::user_auth( $user_token );
 $slave_user = Flight::user_select( $user_id, ['approved'] );
-
 $hub = Flight::hub_select( $hub_id, ['custom'] );
-
 $master_role = Flight::role_select( $hub->id, $master_user->id, ['admin'] );
 $slave_role = Flight::role_insert( $hub->id, $slave_user->id, 'invited' );
 

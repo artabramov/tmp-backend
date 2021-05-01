@@ -2,7 +2,6 @@
 $user_token = (string) Flight::request()->query['user_token'];
 $hub_id = (int) Flight::request()->query['hub_id'];
 $user_id = (int) Flight::request()->query['user_id'];
-$user_role = (string) Flight::request()->query['user_role'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
@@ -19,7 +18,7 @@ if( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
 $master_role = Flight::role_select( $hub->id, $master->id, ['admin'] );
 $slave_role = Flight::role_select( $hub->id, $slave->id, ['admin', 'editor', 'reader'] );
 
-$slave_role = Flight::role_update( $slave_role, $user_role, ['admin', 'editor', 'reader'] );
+Flight::role_delete( $slave_role );
 
 // close transaction
 if( Flight::empty( 'error' )) {

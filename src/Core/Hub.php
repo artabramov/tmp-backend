@@ -171,6 +171,10 @@ class Hub extends \App\Core\Echidna
         } elseif( !empty( $data['hub_status'] ) and !in_array( $data['hub_status'], ['private', 'custom', 'trash'] )) {
             $this->error = 'hub_status is incorrect';
 
+        // TODO
+        } elseif( array_key_exists('hub_name', $data) and empty( $data['hub_name'] )) {
+            $this->error = 'hub_name is empty';
+
         } elseif( !empty( $data['hub_name'] ) and strlen( $data['hub_name'] ) > 255 ) {
             $this->error = 'hub_name is incorrect';
 
