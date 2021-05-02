@@ -127,6 +127,7 @@ class HubTest extends TestCase
             [ [['hub_status', '=', ' ']], [ false, 'hub_status is empty' ] ],
             [ [['hub_status', '=', 0]], [ false, 'hub_status is empty' ] ],
             [ [['hub_status', '=', '0']], [ false, 'hub_status is empty' ] ],
+            [ [['hub_status', '=', 1]], [ false, 'hub_status is incorrect' ] ],
             [ [['hub_status', '=', -1]], [ false, 'hub_status is incorrect' ] ],
             [ [['hub_status', '=', 'Lorem ipsum dolor sit']], [ false, 'hub_status is incorrect' ] ],
 
@@ -135,6 +136,8 @@ class HubTest extends TestCase
             [ [['hub_name', '=', ' ']], [ false, 'hub_name is empty' ] ],
             [ [['hub_name', '=', 0]], [ false, 'hub_name is empty' ] ],
             [ [['hub_name', '=', '0']], [ false, 'hub_name is empty' ] ],
+            [ [['hub_name', '=', 1]], [ false, 'hub_name is incorrect' ] ],
+            [ [['hub_name', '=', -1]], [ false, 'hub_name is incorrect' ] ],
             [ [['hub_name', '=', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in']], [ false, 'hub_name is incorrect' ] ],
 
             [ [['id', '=', 2]], [ false, 'hub not found' ] ],
@@ -164,15 +167,23 @@ class HubTest extends TestCase
             [ ['create_date' => null, 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
             [ ['create_date' => '', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
             [ ['create_date' => ' ', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
-            [ ['create_date' => '0', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
             [ ['create_date' => 0, 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
+            [ ['create_date' => '0', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is empty'] ],
+            [ ['create_date' => 1, 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is incorrect'] ],
+            [ ['create_date' => '1', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is incorrect'] ],
+            [ ['create_date' => -1, 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is incorrect'] ],
+            [ ['create_date' => '-1', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is incorrect'] ],
             [ ['create_date' => 'A001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'create_date is incorrect'] ],
 
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => null, 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => ' ', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
-            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => 0, 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is empty'] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => 1, 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is incorrect'] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '1', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is incorrect'] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => -1, 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is incorrect'] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '-1', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is incorrect'] ],            
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => 'A001-01-01 00:00:00', 'user_id' => '1', 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'update_date is incorrect'] ],
 
             [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => null, 'hub_status' => 'private', 'hub_name' => 'hub name'], [false, 'user_id is empty'] ],
@@ -216,7 +227,6 @@ class HubTest extends TestCase
         $result = $this->hub->put( $data );
         $this->assertEquals( $result, $expected[0] );
         $this->assertEquals( $this->hub->error, $expected[1] );
-
     }
 
     public function addPut() {
@@ -278,13 +288,11 @@ class HubTest extends TestCase
 
     // Delete
     public function testDel() {
-
         $this->truncate();
         $this->insert();
         $this->setProperty( $this->hub, 'id', 1 );
         $result = $this->hub->del();
         $this->assertEquals( $result, true );
     }
-
 
 }

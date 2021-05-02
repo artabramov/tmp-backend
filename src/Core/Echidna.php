@@ -31,10 +31,6 @@ class Echidna
         return is_string( $value ) and preg_match( "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $value );
     }
 
-    protected function is_hex( mixed $value ) : bool {
-        return is_string( $value ) and preg_match( "/^[a-f0-9]+$/", $value );
-    }
-
     /**
      * @return bool
      * @throws \Exception
