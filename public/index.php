@@ -273,6 +273,9 @@ Flight::map( 'hub_insert', function( $user_id, $hub_status, $hub_name ) {
         if( !$hub->set( $data )) {
             Flight::set( 'e', $hub->e );
             Flight::set( 'error', $hub->error );
+
+        } elseif( !in_array( $hub_status, ['private', 'custom', 'trash'] )) {
+            Flight::set( 'error', 'hub_status not available' );
         }
     }
 

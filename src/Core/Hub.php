@@ -3,7 +3,7 @@ namespace App\Core;
 
 class Hub extends \App\Core\Echidna
 {
-    protected const HUB_STATUSES = [ 'private', 'custom', 'trash' ];
+    //protected const HUB_STATUSES = [ 'private', 'custom', 'trash' ];
 
     protected $error;
 
@@ -34,51 +34,51 @@ class Hub extends \App\Core\Echidna
 
         foreach( $args as $arg ) {
 
-            if( $arg[0] == 'id' and empty( $arg[2] )) {
+            if( $arg[0] == 'id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'hub_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'hub_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'create_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'create_date is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'update_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'update_date is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'user_id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'user_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'user_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'user_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'hub_status' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'hub_status' and $this->is_empty( $arg[2] )) {
                 $this->error = 'hub_status is empty';
                 break;
 
-            } elseif( $arg[0] == 'hub_status' and !in_array( $arg[2], self::HUB_STATUSES )) {
+            } elseif( $arg[0] == 'hub_status' and !$this->is_string( $arg[2], 20 )) {
                 $this->error = 'hub_status is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'hub_name' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'hub_name' and $this->is_empty( $arg[2] )) {
                 $this->error = 'hub_name is empty';
                 break;
 
-            } elseif( $arg[0] == 'hub_name' and strlen( $arg[2] ) > 255 ) {
+            } elseif( $arg[0] == 'hub_name' and !$this->is_string( $arg[2], 255 )) {
                 $this->error = 'hub_name is incorrect';
                 break;
             }
@@ -105,34 +105,34 @@ class Hub extends \App\Core\Echidna
 
     public function set( array $data ) : bool {
 
-        if( empty( $data['create_date'] )) {
+        if( !array_key_exists('create_date', $data) or $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( empty( $data['update_date'] )) {
+        } elseif( !array_key_exists('update_date', $data) or $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( empty( $data['user_id'] )) {
+        } elseif( !array_key_exists('user_id', $data) or $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
     
-        } elseif( !( is_string( $data['user_id'] ) and ctype_digit( $data['user_id'] )) and !( is_int( $data['user_id'] ) and $data['user_id'] >= 0 )) {
+        } elseif( !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( empty( $data['hub_status'] )) {
+        } elseif( !array_key_exists('hub_status', $data) or $this->is_empty( $data['hub_status'] )) {
             $this->error = 'hub_status is empty';
 
-        } elseif( !in_array( $data['hub_status'], self::HUB_STATUSES )) {
+        } elseif( !$this->is_string( $data['hub_status'], 20 )) {
             $this->error = 'hub_status is incorrect';
 
-        } elseif( empty( $data['hub_name'] )) {
+        } elseif( !array_key_exists('hub_name', $data) or $this->is_empty( $data['hub_name'] )) {
             $this->error = 'hub_name is empty';
 
-        } elseif( strlen( $data['hub_name'] ) > 255 ) {
+        } elseif( !$this->is_string( $data['hub_name'], 255 )) {
             $this->error = 'hub_name is incorrect';
 
         } else {
@@ -155,40 +155,40 @@ class Hub extends \App\Core\Echidna
 
     public function put( array $data ) : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'hub_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'hub_id is incorrect';
 
-        } elseif( array_key_exists('create_date', $data) and empty( $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( array_key_exists('create_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( array_key_exists('update_date', $data) and empty( $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( array_key_exists('update_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( array_key_exists('user_id', $data) and empty( $data['user_id'] )) {
+        } elseif( array_key_exists('user_id', $data) and $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
 
-        } elseif( array_key_exists('user_id', $data) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+        } elseif( array_key_exists('user_id', $data) and !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( array_key_exists('hub_status', $data) and empty( $data['hub_status'] )) {
+        } elseif( array_key_exists('hub_status', $data) and $this->is_empty( $data['hub_status'] )) {
             $this->error = 'hub_status is empty';
 
-        } elseif( array_key_exists('hub_status', $data) and !in_array( $data['hub_status'], self::HUB_STATUSES )) {
+        } elseif( array_key_exists('hub_status', $data) and !$this->is_string( $data['hub_status'], 20 )) {
             $this->error = 'hub_status is incorrect';
 
-        } elseif( array_key_exists('hub_name', $data) and empty( $data['hub_name'] )) {
+        } elseif( array_key_exists('hub_name', $data) and $this->is_empty( $data['hub_name'] )) {
             $this->error = 'hub_name is empty';
 
-        } elseif( array_key_exists('hub_name', $data) and strlen( $data['hub_name'] ) > 255 ) {
+        } elseif( array_key_exists('hub_name', $data) and !$this->is_string( $data['hub_name'], 255 )) {
             $this->error = 'hub_name is incorrect';
 
         } elseif( !$this->update( 'hubs', [['id', '=', $this->id]], $data )) {
@@ -207,14 +207,14 @@ class Hub extends \App\Core\Echidna
 
     public function del() : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'hub_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'hub_id is incorrect';
 
         } elseif( !$this->delete( 'hubs', [['id', '=', $this->id]] )) {
-            $this->error = 'attribute delete error';
+            $this->error = 'hub delete error';
 
         } else {
             $this->id          = null;

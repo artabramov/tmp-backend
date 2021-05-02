@@ -11,6 +11,10 @@ class Echidna
         $this->e = null;
     }
 
+    protected function is_empty( mixed $value ) : bool {
+        return ( is_string( $value ) and empty( trim( $value ))) or empty( $value );
+    }
+
     protected function is_num( mixed $value ) : bool {
         return ( is_string( $value ) and ctype_digit( $value )) or ( is_int( $value ) and $value >= 0 );
     }
