@@ -3,10 +3,7 @@ namespace App\Core;
 
 class Hub extends \App\Core\Echidna
 {
-    //protected const HUB_STATUSES = [ 'private', 'custom', 'trash' ];
-
     protected $error;
-
     protected $id;
     protected $create_date;
     protected $update_date;
@@ -227,6 +224,4 @@ class Hub extends \App\Core\Echidna
 
         return empty( $this->error );
     }
-
-
 }
