@@ -106,7 +106,7 @@ Flight::map( 'save', function( $instance, $data ) {
 });
 
 // load
-Flight::map( 'save', function( $instance, $args ) {
+Flight::map( 'load', function( $instance, $args ) {
 
     if( Flight::empty( 'error' )) {
 
