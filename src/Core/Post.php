@@ -4,7 +4,6 @@ namespace App\Core;
 class Post extends \App\Core\Echidna
 {
     protected $error;
-
     protected $id;
     protected $create_date;
     protected $update_date;
@@ -35,68 +34,68 @@ class Post extends \App\Core\Echidna
 
         foreach( $args as $arg ) {
 
-            if( $arg[0] == 'id' and empty( $arg[2] )) {
+            if( $arg[0] == 'id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'post_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'post_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'create_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'create_date is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'update_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'update_date is incorrect';
-                break;
 
-            } elseif( $arg[0] == 'parent_id' and empty( $arg[2] )) {
-                $this->error = 'parent_id is empty';
-                break;
-
-            } elseif( $arg[0] == 'parent_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            // parent_id can be empty
+            } elseif( $arg[0] == 'parent_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'parent_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'user_id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'user_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'user_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'user_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'hub_id' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'hub_id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'hub_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'hub_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'hub_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'hub_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'post_type' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'post_type' and $this->is_empty( $arg[2] )) {
                 $this->error = 'post_type is empty';
                 break;
 
-            } elseif( $arg[0] == 'post_type' and !in_array( $arg[2], ['document', 'comment'] )) {
+            } elseif( $arg[0] == 'post_type' and !$this->is_string( $arg[2], 20 )) {
                 $this->error = 'post_type is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'post_status' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'post_status' and $this->is_empty( $arg[2] )) {
                 $this->error = 'post_status is empty';
                 break;
 
-            } elseif( $arg[0] == 'post_status' and !in_array( $arg[2], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {
+            } elseif( $arg[0] == 'post_status' and !$this->is_string( $arg[2], 20 )) {
                 $this->error = 'post_status is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'post_content' and $this->is_empty( $arg[2] )) {
+                $this->error = 'post_content is empty';
                 break;
             }
         }
@@ -125,51 +124,51 @@ class Post extends \App\Core\Echidna
 
     public function set( array $data ) : bool {
 
-        if( empty( $data['create_date'] )) {
+        if( !array_key_exists('create_date', $data) or $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( empty( $data['update_date'] )) {
+        } elseif( !array_key_exists('update_date', $data) or $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
         // parent_id can be empty
-        //} elseif( empty( $data['parent_id'] )) {
-        //    $this->error = 'parent_id is empty';
-    
-        } elseif( !empty( $data['parent_id'] ) and !( is_string( $data['parent_id'] ) and ctype_digit( $data['parent_id'] )) and !( is_int( $data['parent_id'] ) and $data['parent_id'] >= 0 )) {
+        } elseif( array_key_exists('parent_id', $data) and !$this->is_num( $data['parent_id'] )) {
             $this->error = 'parent_id is incorrect';
 
-        } elseif( empty( $data['user_id'] )) {
+        } elseif( !array_key_exists('user_id', $data) or $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
     
-        } elseif( !( is_string( $data['user_id'] ) and ctype_digit( $data['user_id'] )) and !( is_int( $data['user_id'] ) and $data['user_id'] >= 0 )) {
+        } elseif( !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( empty( $data['hub_id'] )) {
+        } elseif( !array_key_exists('hub_id', $data) or $this->is_empty( $data['hub_id'] )) {
             $this->error = 'hub_id is empty';
     
-        } elseif( !( is_string( $data['hub_id'] ) and ctype_digit( $data['hub_id'] )) and !( is_int( $data['hub_id'] ) and $data['hub_id'] >= 0 )) {
+        } elseif( !$this->is_num( $data['hub_id'] )) {
             $this->error = 'hub_id is incorrect';
 
-        } elseif( empty( $data['post_type'] )) {
+        } elseif( !array_key_exists('post_type', $data) or $this->is_empty( $data['post_type'] )) {
             $this->error = 'post_type is empty';
-
-        } elseif( !in_array( $data['post_type'], ['document', 'comment'] )) {
+    
+        } elseif( !$this->is_string( $data['post_type'], 20 )) {
             $this->error = 'post_type is incorrect';
 
-        } elseif( empty( $data['post_status'] )) {
+        } elseif( !array_key_exists('post_status', $data) or $this->is_empty( $data['post_status'] )) {
             $this->error = 'post_status is empty';
-
-        } elseif( !in_array( $data['post_status'], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {
+    
+        } elseif( !$this->is_string( $data['post_status'], 20 )) {
             $this->error = 'post_status is incorrect';
 
-        } elseif( empty( $data['post_content'] )) {
+        } elseif( !array_key_exists('post_content', $data) or $this->is_empty( $data['post_content'] )) {
             $this->error = 'post_content is empty';
+
+        } elseif( !$this->is_string( $data['post_content'], 0 )) {
+            $this->error = 'post_content is incorrect';
 
         } else {
             $this->id = $this->insert( 'posts', $data );
@@ -194,49 +193,50 @@ class Post extends \App\Core\Echidna
 
     public function put( array $data ) : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'post_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'post_id is incorrect';
 
-        } elseif( array_key_exists('create_date', $data) and empty( $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( array_key_exists('create_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( array_key_exists('update_date', $data) and empty( $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( array_key_exists('update_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( array_key_exists('parent_id', $data) and !ctype_digit( $date['parent_id'] ) and !( is_int( $date['parent_id'] ) and $date['parent_id'] >= 0 )) {
+        // parent_id can be empty
+        } elseif( array_key_exists('parent_id', $data) and !$this->is_num( $data['parent_id'] )) {
             $this->error = 'parent_id is incorrect';
 
-        } elseif( array_key_exists('user_id', $data) and empty( $data['user_id'] )) {
+        } elseif( array_key_exists('user_id', $data) and $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
 
-        } elseif( array_key_exists('user_id', $data) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+        } elseif( array_key_exists('user_id', $data) and !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( array_key_exists('hub_id', $data) and empty( $data['hub_id'] )) {
+        } elseif( array_key_exists('hub_id', $data) and $this->is_empty( $data['hub_id'] )) {
             $this->error = 'hub_id is empty';
 
-        } elseif( array_key_exists('hub_id', $data) and !ctype_digit( $date['hub_id'] ) and !( is_int( $date['hub_id'] ) and $date['hub_id'] >= 0 )) {
+        } elseif( array_key_exists('hub_id', $data) and !$this->is_num( $data['hub_id'] )) {
             $this->error = 'hub_id is incorrect';
 
-        } elseif( array_key_exists('post_type', $data) and empty( $data['post_type'] )) {
+        } elseif( array_key_exists('post_type', $data) and $this->is_empty( $data['post_type'] )) {
             $this->error = 'post_type is empty';
 
-        } elseif( array_key_exists('post_type', $data) and !in_array( $data['post_type'], ['document', 'comment'] )) {
+        } elseif( array_key_exists('post_type', $data) and !$this->is_string( $data['post_type'], 20 )) {
             $this->error = 'post_type is incorrect';
 
-        } elseif( array_key_exists('post_status', $data) and empty( $data['post_status'] )) {
+        } elseif( array_key_exists('post_status', $data) and $this->is_empty( $data['post_status'] )) {
             $this->error = 'post_status is empty';
 
-        } elseif( array_key_exists('post_status', $data) and !in_array( $data['post_status'], ['draft', 'todo', 'doing', 'done', 'inherit', 'trash'] )) {
+        } elseif( array_key_exists('post_status', $data) and !$this->is_string( $data['post_status'], 20 )) {
             $this->error = 'post_status is incorrect';
 
         } elseif( !$this->update( 'posts', [['id', '=', $this->id]], $data )) {
@@ -255,10 +255,10 @@ class Post extends \App\Core\Echidna
 
     public function del() : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'post_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'post_id is incorrect';
 
         } elseif( !$this->delete( 'posts', [['id', '=', $this->id]] )) {
