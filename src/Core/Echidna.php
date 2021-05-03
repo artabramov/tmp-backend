@@ -20,7 +20,12 @@ class Echidna
     }
 
     protected function is_string( mixed $value, int $len ) : bool {
-        return is_string( $value ) and mb_strlen( $value, 'UTF-8' ) <= $len;
+        if( $len > 0 ) {
+            return is_string( $value ) and mb_strlen( $value, 'UTF-8' ) <= $len;
+
+        } else {
+            return is_string( $value );
+        }
     }
 
     protected function is_datetime( mixed $value ) : bool {

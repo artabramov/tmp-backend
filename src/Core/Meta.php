@@ -32,59 +32,59 @@ class Meta extends \App\Core\Echidna
 
         foreach( $args as $arg ) {
 
-            if( $arg[0] == 'id' and empty( $arg[2] )) {
+            if( $arg[0] == 'id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'meta_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'meta_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'create_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'create_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'create_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'create_date is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and $this->is_empty( $arg[2] )) {
                 $this->error = 'update_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'update_date' and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $arg[2] )) {
+            } elseif( $arg[0] == 'update_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'update_date is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'user_id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'user_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'user_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'user_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'user_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'post_id' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'post_id' and $this->is_empty( $arg[2] )) {
                 $this->error = 'post_id is empty';
                 break;
 
-            } elseif( $arg[0] == 'post_id' and !( is_string( $arg[2] ) and ctype_digit( $arg[2] )) and !( is_int( $arg[2] ) and $arg[2] >= 0 )) {
+            } elseif( $arg[0] == 'post_id' and !$this->is_num( $arg[2] )) {
                 $this->error = 'post_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'meta_key' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'meta_key' and $this->is_empty( $arg[2] )) {
                 $this->error = 'meta_key is empty';
                 break;
 
-            } elseif( $arg[0] == 'meta_key' and strlen( $arg[2] ) > 20 ) {
+            } elseif( $arg[0] == 'meta_key' and !$this->is_string( $arg[2], 20 )) {
                 $this->error = 'meta_key is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'meta_value' and empty( $arg[2] )) {
+            } elseif( $arg[0] == 'meta_value' and $this->is_empty( $arg[2] )) {
                 $this->error = 'meta_value is empty';
                 break;
 
-            } elseif( $arg[0] == 'meta_value' and strlen( $arg[2] ) > 255 ) {
+            } elseif( $arg[0] == 'meta_value' and !$this->is_string( $arg[2], 255 )) {
                 $this->error = 'meta_value is incorrect';
                 break;
             }
@@ -112,40 +112,40 @@ class Meta extends \App\Core\Echidna
 
     public function set( array $data ) : bool {
 
-        if( empty( $data['create_date'] )) {
+        if( !array_key_exists('create_date', $data) or $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( empty( $data['update_date'] )) {
+        } elseif( !array_key_exists('update_date', $data) or $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( empty( $data['user_id'] )) {
+        } elseif( !array_key_exists('user_id', $data) or $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
     
-        } elseif( !( is_string( $data['user_id'] ) and ctype_digit( $data['user_id'] )) and !( is_int( $data['user_id'] ) and $data['user_id'] >= 0 )) {
+        } elseif( !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( empty( $data['post_id'] )) {
+        } elseif( !array_key_exists('post_id', $data) or $this->is_empty( $data['post_id'] )) {
             $this->error = 'post_id is empty';
     
-        } elseif( !( is_string( $data['post_id'] ) and ctype_digit( $data['post_id'] )) and !( is_int( $data['post_id'] ) and $data['post_id'] >= 0 )) {
+        } elseif( !$this->is_num( $data['post_id'] )) {
             $this->error = 'post_id is incorrect';
 
-        } elseif( empty( $data['meta_key'] )) {
+        } elseif( !array_key_exists('meta_key', $data) or $this->is_empty( $data['meta_key'] )) {
             $this->error = 'meta_key is empty';
-
-        } elseif( strlen( $data['meta_key'] ) > 20 ) {
+    
+        } elseif( !$this->is_string( $data['meta_key'], 20 )) {
             $this->error = 'meta_key is incorrect';
 
-        } elseif( empty( $data['meta_value'] )) {
+        } elseif( !array_key_exists('meta_value', $data) or $this->is_empty( $data['meta_value'] )) {
             $this->error = 'meta_value is empty';
-
-        } elseif( strlen( $data['meta_value'] ) > 255 ) {
+    
+        } elseif( !$this->is_string( $data['meta_value'], 255 )) {
             $this->error = 'meta_value is incorrect';
 
         } else {
@@ -169,46 +169,46 @@ class Meta extends \App\Core\Echidna
 
     public function put( array $data ) : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'meta_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'meta_id is incorrect';
 
-        } elseif( array_key_exists('create_date', $data) and empty( $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
 
-        } elseif( array_key_exists('create_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['create_date'] )) {
+        } elseif( array_key_exists('create_date', $data) and !$this->is_datetime( $data['create_date'] )) {
             $this->error = 'create_date is incorrect';
 
-        } elseif( array_key_exists('update_date', $data) and empty( $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
-        } elseif( array_key_exists('update_date', $data) and !preg_match("/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $data['update_date'] )) {
+        } elseif( array_key_exists('update_date', $data) and !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
 
-        } elseif( array_key_exists('user_id', $data) and empty( $data['user_id'] )) {
+        } elseif( array_key_exists('user_id', $data) and $this->is_empty( $data['user_id'] )) {
             $this->error = 'user_id is empty';
 
-        } elseif( array_key_exists('user_id', $data) and !ctype_digit( $date['user_id'] ) and !( is_int( $date['user_id'] ) and $date['user_id'] >= 0 )) {
+        } elseif( array_key_exists('user_id', $data) and !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( array_key_exists('post_id', $data) and empty( $data['post_id'] )) {
+        } elseif( array_key_exists('post_id', $data) and $this->is_empty( $data['post_id'] )) {
             $this->error = 'post_id is empty';
 
-        } elseif( array_key_exists('post_id', $data) and !ctype_digit( $date['post_id'] ) and !( is_int( $date['post_id'] ) and $date['post_id'] >= 0 )) {
+        } elseif( array_key_exists('post_id', $data) and !$this->is_num( $data['post_id'] )) {
             $this->error = 'post_id is incorrect';
 
-        } elseif( array_key_exists('meta_key', $data) and empty( $data['meta_key'] )) {
+        } elseif( array_key_exists('meta_key', $data) and $this->is_empty( $data['meta_key'] )) {
             $this->error = 'meta_key is empty';
 
-        } elseif( array_key_exists('meta_key', $data) and strlen( $data['meta_key'] ) > 20 ) {
+        } elseif( array_key_exists('meta_key', $data) and !$this->is_string( $data['meta_key'], 20 )) {
             $this->error = 'meta_key is incorrect';
 
-        } elseif( array_key_exists('meta_value', $data) and empty( $data['meta_value'] )) {
+        } elseif( array_key_exists('meta_value', $data) and $this->is_empty( $data['meta_value'] )) {
             $this->error = 'meta_value is empty';
 
-        } elseif( array_key_exists('meta_value', $data) and strlen( $data['meta_value'] ) > 255 ) {
+        } elseif( array_key_exists('meta_value', $data) and !$this->is_string( $data['meta_value'], 255 )) {
             $this->error = 'meta_value is incorrect';
 
         } elseif( !$this->update( 'post_meta', [['id', '=', $this->id]], $data )) {
@@ -227,10 +227,10 @@ class Meta extends \App\Core\Echidna
 
     public function del() : bool {
 
-        if( empty( $this->id )) {
+        if( $this->is_empty( $this->id )) {
             $this->error = 'meta_id is empty';
 
-        } elseif( !( is_string( $this->id ) and ctype_digit( $this->id )) and !( is_int( $this->id ) and $this->id >= 0 )) {
+        } elseif( !$this->is_num( $this->id )) {
             $this->error = 'meta_id is incorrect';
 
         } elseif( !$this->delete( 'post_meta', [['id', '=', $this->id]] )) {

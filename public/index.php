@@ -584,14 +584,6 @@ Flight::route( 'GET /documents', function() {
     require_once( '../src/routes/documents_select.php' );
 });
 
-
-
-
-
-
-
-
-
 // create comment
 Flight::route( 'POST /comment', function() {
     require_once( '../src/routes/comment_create.php' );
