@@ -84,6 +84,43 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
     }
 });
 
+// save
+Flight::map( 'save', function( $instance, $data ) {
+
+    if( Flight::empty( 'error' )) {
+        
+        if( empty( $instance->id )) {
+            $result = $instance->set( $data );
+
+        else {
+            $result = $instance->put( $data );
+        }
+
+        if( !$result ) {
+            Flight::set( 'e', $instance->e );
+            Flight::set( 'error', $instance->error );
+        }
+    }
+
+    return $instance;
+});
+
+// load
+Flight::map( 'save', function( $instance, $args ) {
+
+    if( Flight::empty( 'error' )) {
+
+        if( !$instance->get( $args )) {
+            Flight::set( 'e', $instance->e );
+            Flight::set( 'error', $instance->error );
+        }
+    }
+    
+    return $instance;
+});
+
+//--------
+
 // user register
 Flight::map( 'user_register', function( $user_email ) {
 

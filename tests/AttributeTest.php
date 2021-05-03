@@ -65,14 +65,15 @@ class AttributeTest extends TestCase
 
         $this->truncate();
         $result = $this->attribute->set( $data );
-        $this->assertEquals( $result, $expected );
+        $this->assertEquals( $result, $expected[0] );
+        $this->assertEquals( $this->attribute->error, $expected[1] );
     }
 
     public function addSet() {
         return [
 
             // correct cases
-            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'attribute_key' => 'key', 'attribute_value' => 'value'], true ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'attribute_key' => 'key', 'attribute_value' => 'value'], [true, ''] ],
 
             // incorrect cases
 
