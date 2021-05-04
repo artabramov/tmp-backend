@@ -1,20 +1,36 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
-$hub_id = (int) Flight::request()->query['hub_id'];
+$hub_id = (int) $hub_id;
 $hub_name = (string) Flight::request()->query['hub_name'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// do
-$master = Flight::user_auth( $user_token );
-$hub = Flight::hub_select( $hub_id, ['private', 'custom'] );
+// auth user
+$doer = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $doer, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
 
-if( Flight::empty( 'error' ) and $hub->user_id != $master->id ) {
-    Flight::set( 'error', 'hub_id not available' );
-}
+// update auth date
+Flight::save( $doer, [ 
+    'auth_date' => Flight::time()
+]);
 
-Flight::hub_rename( $hub, $hub_name );
+// hub
+$hub = new \App\Core\Hub( Flight::get( 'pdo' ));
+Flight::load( $hub, [
+    ['id', '=', $hub_id], 
+    ['user_id', '=', $doer->id],
+    ['hub_status', '<>', 'trash'],
+]);
+
+// rename
+Flight::save( $hub, [
+    'update_date' => Flight::time(),
+    'hub_name' => $hub_name,
+]);
 
 // close transaction
 if( Flight::empty( 'error' )) {

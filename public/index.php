@@ -92,7 +92,7 @@ Flight::map( 'save', function( $instance, $data ) {
         if( empty( $instance->id )) {
             $result = $instance->set( $data );
 
-        else {
+        } else {
             $result = $instance->put( $data );
         }
 
@@ -101,8 +101,6 @@ Flight::map( 'save', function( $instance, $data ) {
             Flight::set( 'error', $instance->error );
         }
     }
-
-    return $instance;
 });
 
 // load
@@ -115,11 +113,22 @@ Flight::map( 'load', function( $instance, $args ) {
             Flight::set( 'error', $instance->error );
         }
     }
-    
-    return $instance;
+});
+
+// delete
+Flight::map( 'delete', function( $instance ) {
+
+    if( Flight::empty( 'error' )) {
+        if( !$instance->del()) {
+            Flight::set( 'e', $instance->e );
+            Flight::set( 'error', $instance->error );
+        }
+    }
 });
 
 //--------
+
+/*
 
 // user register
 Flight::map( 'user_register', function( $user_email ) {
@@ -472,6 +481,7 @@ Flight::map( 'documents_select', function( $hub_id, $limit, $offset ) {
 
     return $posts;
 });
+*/
 
 //================ ROUTES ================
 
@@ -550,8 +560,8 @@ Flight::route( 'POST /hub', function() {
 });
 
 // hub rename
-Flight::route( 'PUT /hub', function() {
-    require_once( '../src/routes/hub_rename.php' );
+Flight::route( 'PUT /hub/@hub_id', function( $hub_id ) {
+    require_once( '../src/routes/hub_update.php' );
 });
 
 // role invite

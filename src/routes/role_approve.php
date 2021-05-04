@@ -5,11 +5,37 @@ $hub_id = (int) Flight::request()->query['hub_id'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// do
-$master = Flight::user_auth( $user_token );
-$hub = Flight::hub_select( $hub_id, ['custom'] );
-$master_role = Flight::role_select( $hub->id, $master->id, ['invited'] );
-$master_role = Flight::role_update( $master_role, 'reader', ['reader'] );
+// master auth
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $master, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
+
+Flight::save( $master, [ 
+    'auth_date' => Flight::time()
+]);
+
+// hub
+$hub = new \App\Core\Hub( Flight::get( 'pdo' ));
+Flight::load( $hub, [
+    ['id', '=', $hub_id], 
+    ['hub_status', '=', 'custom'],
+]);
+
+// master role
+$master_role = new \App\Core\Role( Flight::get( 'pdo' ));
+Flight::load( $master_role, [
+    ['user_id', '=', $master->id], 
+    ['hub_id', '=', $hub->id], 
+    ['user_role', '=', 'invited']
+]);
+
+// update master role
+Flight::save( $master_role, [ 
+    'update_date' => Flight::time(),
+    'user_role' => 'reader',
+]);
 
 // close transaction
 if( Flight::empty( 'error' )) {

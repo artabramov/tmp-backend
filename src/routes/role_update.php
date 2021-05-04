@@ -7,19 +7,60 @@ $user_role = (string) Flight::request()->query['user_role'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// do
-$master = Flight::user_auth( $user_token );
-$slave = Flight::user_select( $user_id, ['approved'] );
-$hub = Flight::hub_select( $hub_id, ['custom'] );
+// master auth
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $master, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
 
-if( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
+Flight::save( $master, [ 
+    'auth_date' => Flight::time()
+]);
+
+// hub
+$hub = new \App\Core\Hub( Flight::get( 'pdo' ));
+Flight::load( $hub, [
+    ['id', '=', $hub_id], 
+    ['hub_status', '=', 'custom'],
+]);
+
+// master role
+$master_role = new \App\Core\Role( Flight::get( 'pdo' ));
+Flight::load( $master_role, [
+    ['user_id', '=', $master->id], 
+    ['hub_id', '=', $hub->id], 
+    ['user_role', '=', 'admin']
+]);
+
+// slave user
+$slave = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $slave, [
+    ['id', '=', $user_id], 
+    ['user_status', '=', 'approved']
+]);
+
+// slave role
+$slave_role = new \App\Core\Role( Flight::get( 'pdo' ));
+Flight::load( $slave_role, [
+    ['user_id', '=', $slave->id], 
+    ['hub_id', '=', $hub->id], 
+    ['user_role', '<>', 'invited']
+]);
+
+// update the slave role
+Flight::save( $slave_role, [
+    'update_date' => date( 'Y-m-d H:i:s' ),
+    'user_role'   => $user_role,
+]);
+
+// check the slave role
+if( Flight::empty( 'error' ) and !in_array( $user_role, ['admin', 'editor', 'reader'] )) {
+    Flight::set( 'error', 'user_role not available' );
+
+} elseif( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
     Flight::set( 'error', 'user_id not available' );
 }
-
-$master_role = Flight::role_select( $hub->id, $master->id, ['admin'] );
-$slave_role = Flight::role_select( $hub->id, $slave->id, ['admin', 'editor', 'reader'] );
-
-$slave_role = Flight::role_update( $slave_role, $user_role, ['admin', 'editor', 'reader'] );
 
 // close transaction
 if( Flight::empty( 'error' )) {

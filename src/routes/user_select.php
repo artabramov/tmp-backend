@@ -5,9 +5,24 @@ $user_id = (int) $user_id;
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// do
-$master = Flight::user_auth( $user_token );
-$slave = Flight::user_select( $user_id );
+// auth user
+$doer = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $doer, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
+
+// update auth date
+Flight::save( $doer, [ 
+    'auth_date' => Flight::time()
+]);
+
+// select user
+$user = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $user, [
+    ['id', '=', $user_id], 
+    ['user_status', '=', 'approved']
+]);
 
 // close transaction
 if( Flight::empty( 'error' )) {
@@ -29,10 +44,10 @@ Flight::json([
     'error'      => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
 
     'user'    => Flight::empty( 'error' ) ? [
-        'id'            => $slave->id, 
-        'register_date' => $slave->register_date, 
-        'auth_date'     => $slave->auth_date, 
-        'user_status'   => $slave->user_status ] : [],
+        'id'            => $user->id, 
+        'register_date' => $user->register_date, 
+        'auth_date'     => $user->auth_date, 
+        'user_status'   => $user->user_status ] : [],
 ]);
 
 /*
