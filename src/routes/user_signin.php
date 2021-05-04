@@ -1,25 +1,25 @@
 <?php
 $user_email = (string) Flight::request()->query['user_email'];
-$user_pass  = (string) Flight::request()->query['user_pass'];
+$user_pass = (string) Flight::request()->query['user_pass'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// signin user
-$doer = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $doer, [
+// login
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $master, [
     ['user_email', '=', $user_email], 
     ['user_hash', '=', Flight::hash( $user_pass ) ], 
     ['user_status', '<>', 'trash']
 ]);
 
-// check signin date
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $doer->restore_date ) > 300 ) {
+// is expires
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) > 60 ) {
     Flight::set( 'error', 'user_pass is expired' );
 }
 
-// update signin date, status and hash
-Flight::save( $doer, [
+// update master
+Flight::save( $master, [
     'signin_date' => Flight::time(), 
     'user_status' => 'approved', 
     'user_hash'   => '' 
@@ -43,5 +43,5 @@ Flight::json([
     'time'       => Flight::time(),
     'success'    => Flight::empty( 'error' ) ? 'true' : 'false',
     'error'      => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
-    'user_token' => Flight::empty( 'error' ) ? $doer->user_token : '',
+    'user_token' => Flight::empty( 'error' ) ? $master->user_token : '',
 ]);

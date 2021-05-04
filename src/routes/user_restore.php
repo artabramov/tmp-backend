@@ -5,26 +5,26 @@ $user_email = Flight::request()->query['user_email'];
 Flight::get('pdo')->beginTransaction();
 
 // restore user
-$doer = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $doer, [
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $master, [
     ['user_email', '=', $user_email], 
     ['user_status', '<>', 'trash']
 ]);
 
-// check restore date
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $doer->restore_date ) < 30 ) {
-    Flight::set( 'error', 'wait for 30 seconds' );
+// delay
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) < 60 ) {
+    Flight::set( 'error', 'wait for 60 seconds' );
 }
 
-// update pass and signin date
-$doer_pass = Flight::pass();
-Flight::save( $doer, [
+// update master
+$user_pass = Flight::pass();
+Flight::save( $master, [
     'restore_date' => Flight::time(),
-    'user_hash'    => Flight::hash( $doer_pass ),
+    'user_hash' => Flight::hash( $user_pass ),
 ]);
 
 // send email
-Flight::email( $doer->user_email, 'User', 'User restore', 'One-time pass: <i>' . $doer_pass . '</i>' );
+Flight::email( $master->user_email, 'User', 'User restore', 'One-time pass: <i>' . $user_pass . '</i>' );
 
 // close transaction
 if( Flight::empty( 'error' )) {

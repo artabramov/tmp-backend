@@ -1,13 +1,13 @@
 <?php
 $user_email = Flight::request()->query['user_email'];
-$user_name  = Flight::request()->query['user_name'];
+$user_name = Flight::request()->query['user_name'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// register user
-$doer = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::save( $doer, [
+// register
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::save( $master, [
     'register_date' => Flight::time(),
     'restore_date'  => '0001-01-01 00:00:00',
     'signin_date'   => '0001-01-01 00:00:00',
@@ -15,17 +15,8 @@ Flight::save( $doer, [
     'user_status'   => 'pending',
     'user_token'    => Flight::token(),
     'user_email'    => $user_email,
+    'user_name'     => $user_name,
     'user_hash'     => '',
-]);
-
-// doer name
-$name = new \App\Core\Attribute( Flight::get( 'pdo' ));
-Flight::save( $name, [
-    'create_date'     => date( 'Y-m-d H:i:s' ),
-    'update_date'     => '0001-01-01 00:00:00',
-    'user_id'         => $doer->id,
-    'attribute_key'   => 'user_name',
-    'attribute_value' => $user_name,
 ]);
 
 // hub
@@ -33,18 +24,18 @@ $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
 Flight::save( $hub, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
-    'user_id'     => $doer->id,
+    'user_id'     => $master->id,
     'hub_status'  => 'private',
     'hub_name'    => 'my private hub',
 ]);
 
-// doer role
-$role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::save( $role, [
+// master role
+$master_role = new \App\Core\Role( Flight::get( 'pdo' ));
+Flight::save( $master_role, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'hub_id'      => $hub->id,
-    'user_id'     => $doer->id,
+    'user_id'     => $master->id,
     'user_role'   => 'admin',
 ]);
 

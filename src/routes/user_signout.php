@@ -4,15 +4,20 @@ $user_token = (string) Flight::request()->query['user_token'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// auth user
-$doer = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $doer, [
+// auth
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::load( $master, [
     ['user_token', '=', $user_token], 
     ['user_status', '=', 'approved']
 ]);
 
-// update auth date and token
-Flight::save( $doer, [ 
+// delay and expires
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->auth_date ) > 24 * 60 * 60 ) {
+    Flight::set( 'error', 'user_token is expired' );
+}
+
+// update master
+Flight::save( $master, [ 
     'auth_date' => Flight::time(),
     'user_token' => Flight::token() 
 ]);
@@ -32,7 +37,7 @@ if( !Flight::empty( 'e' )) {
 
 // json
 Flight::json([ 
-    'time'       => Flight::time(),
-    'success'    => Flight::empty( 'error' ) ? 'true' : 'false',
-    'error'      => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
+    'time'    => Flight::time(),
+    'success' => Flight::empty( 'error' ) ? 'true' : 'false',
+    'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
 ]);

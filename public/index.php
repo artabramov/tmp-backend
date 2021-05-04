@@ -43,7 +43,7 @@ Flight::map( 'token', function() {
 // generate pass
 Flight::map( 'pass', function() {
 
-    $pass_symbols = '0123456789abcdefghijklmnopqrstuvwxyz';
+    $pass_symbols = '23456789abcdefghjkmnpqrstuvwxyz';
     $pass_len = 6;
 
     $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;

@@ -12,6 +12,7 @@ class User extends \App\Core\Echidna
     protected $user_status;
     protected $user_token;
     protected $user_email;
+    protected $user_name;
     protected $user_hash;
 
     public function __get( string $key ) {
@@ -98,6 +99,14 @@ class User extends \App\Core\Echidna
                 $this->error = 'user_email is incorrect';
                 break;
 
+            } elseif( $arg[0] == 'user_name' and $this->is_empty( $arg[2] )) {
+                $this->error = 'user_name is empty';
+                break;
+
+            } elseif( $arg[0] == 'user_name' and !$this->is_string( $arg[2], 128 )) {
+                $this->error = 'user_name is incorrect';
+                break;
+
             } elseif( $arg[0] == 'user_hash' and $this->is_empty( $arg[2] )) {
                 $this->error = 'user_hash is empty';
                 break;
@@ -123,6 +132,7 @@ class User extends \App\Core\Echidna
                 $this->user_status   = $rows[0]->user_status;
                 $this->user_token    = $rows[0]->user_token;
                 $this->user_email    = $rows[0]->user_email;
+                $this->user_name     = $rows[0]->user_name;
                 $this->user_hash     = $rows[0]->user_hash;
             }
         }
@@ -180,6 +190,12 @@ class User extends \App\Core\Echidna
         } elseif( $this->is_exists( 'users', [['user_email','=', $data['user_email']]] )) {
             $this->error = 'user_email is occupied';
 
+        } elseif( !array_key_exists('user_name', $data) or $this->is_empty( $data['user_name'] )) {
+            $this->error = 'user_name is empty';
+
+        } elseif( !$this->is_string( $data['user_status'], 20 )) {
+            $this->error = 'user_status is incorrect';
+
         } elseif( !$this->is_string( $data['user_hash'], 40 )) {
             $this->error = 'user_hash is incorrect';
 
@@ -197,6 +213,7 @@ class User extends \App\Core\Echidna
                 $this->user_status   = $data['user_status'];
                 $this->user_token    = $data['user_token'];
                 $this->user_email    = $data['user_email'];
+                $this->user_name     = $data['user_name'];
                 $this->user_hash     = $data['user_hash'];
             }
         }
@@ -260,6 +277,12 @@ class User extends \App\Core\Echidna
         } elseif( array_key_exists('user_email', $data) and $this->is_exists( 'users', [['user_email','=', $data['user_email']]] )) {
             $this->error = 'user_email is occupied';
 
+        } elseif( array_key_exists('user_name', $data) and $this->is_empty( $data['user_name'] )) {
+            $this->error = 'user_name is empty';
+
+        } elseif( array_key_exists('user_name', $data) and !$this->is_string( $data['user_name'], 128 )) {
+            $this->error = 'user_name is incorrect';
+
         } elseif( array_key_exists('user_hash', $data) and !$this->is_string( $data['user_hash'], 40 )) {
             $this->error = 'user_hash is incorrect';
 
@@ -297,6 +320,7 @@ class User extends \App\Core\Echidna
             $this->user_status   = null;
             $this->user_token    = null;
             $this->user_email    = null;
+            $this->user_name     = null;
             $this->user_hash     = null;
         }
 
