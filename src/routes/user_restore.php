@@ -6,7 +6,7 @@ Flight::get('pdo')->beginTransaction();
 
 // restore user
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
+Flight::select( $master, [
     ['user_email', '=', $user_email], 
     ['user_status', '<>', 'trash']
 ]);
@@ -18,7 +18,7 @@ if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date 
 
 // update master
 $user_pass = Flight::pass();
-Flight::save( $master, [
+Flight::update( $master, [
     'restore_date' => Flight::time(),
     'user_hash' => Flight::hash( $user_pass ),
 ]);

@@ -2,23 +2,23 @@
 use \PHPUnit\Framework\TestCase;
 
 require_once __DIR__.'/../src/Core/Echidna.php';
-require_once __DIR__.'/../src/Core/Attribute.php';
+require_once __DIR__.'/../src/Core/Param.php';
 
-class AttributeTest extends TestCase
+class ParamTest extends TestCase
 {
     private $pdo;
-    private $attribute;
+    private $param;
 
     protected function setUp() : void {
         $this->pdo = require __DIR__ . "/../src/init/pdo.php";
-        $this->attribute = new \App\Core\Attribute( $this->pdo );
+        $this->param = new \App\Core\Param( $this->pdo );
         $this->truncate();
     }
 
     protected function tearDown() : void {
         $this->truncate();
         $this->pdo = null;
-        $this->attribute = null;
+        $this->param = null;
     }
 
     private function callMethod( $object, string $method , array $parameters = [] ) {
@@ -51,11 +51,11 @@ class AttributeTest extends TestCase
     }
 
     protected function truncate() {
-        $stmt = $this->pdo->query( "TRUNCATE TABLE user_attributes;" );
+        $stmt = $this->pdo->query( "TRUNCATE TABLE user_params;" );
     }
 
     protected function insert() {
-        $stmt = $this->pdo->query( "INSERT INTO user_attributes VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 'key', 'value');" );
+        $stmt = $this->pdo->query( "INSERT INTO user_params VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 'key', 'value');" );
     }
 
     /**
@@ -64,16 +64,16 @@ class AttributeTest extends TestCase
     public function testSet( $data, $expected ) {
 
         $this->truncate();
-        $result = $this->attribute->set( $data );
+        $result = $this->param->set( $data );
         $this->assertEquals( $result, $expected[0] );
-        $this->assertEquals( $this->attribute->error, $expected[1] );
+        $this->assertEquals( $this->param->error, $expected[1] );
     }
 
     public function addSet() {
         return [
 
             // correct cases
-            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'attribute_key' => 'key', 'attribute_value' => 'value'], [true, ''] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'param_key' => 'key', 'param_value' => 'value'], [true, ''] ],
 
             // incorrect cases
 
@@ -88,7 +88,7 @@ class AttributeTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $result = $this->attribute->get( $args );
+        $result = $this->param->get( $args );
         $this->assertEquals( $result, $expected );
 
     }
@@ -112,8 +112,8 @@ class AttributeTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $this->setProperty( $this->attribute, 'id', 1 );
-        $result = $this->attribute->put( $data );
+        $this->setProperty( $this->param, 'id', 1 );
+        $result = $this->param->put( $data );
         $this->assertEquals( $result, $expected );
 
     }
@@ -122,7 +122,7 @@ class AttributeTest extends TestCase
         return [
 
             // correct cases
-            [ ['attribute_value' => 'value 2'], true ],
+            [ ['param_value' => 'value 2'], true ],
 
             // incorrect cases
 
@@ -134,8 +134,8 @@ class AttributeTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $this->setProperty( $this->attribute, 'id', 1 );
-        $result = $this->attribute->del();
+        $this->setProperty( $this->param, 'id', 1 );
+        $result = $this->param->del();
         $this->assertEquals( $result, true );
     }
 

@@ -97,6 +97,10 @@ class Post extends \App\Core\Echidna
             } elseif( $arg[0] == 'post_content' and $this->is_empty( $arg[2] )) {
                 $this->error = 'post_content is empty';
                 break;
+
+            } elseif( $arg[0] == 'post_content' and !$this->is_string( $arg[2], 0 )) {
+                $this->error = 'post_content is incorrect';
+                break;
             }
         }
 
@@ -238,6 +242,9 @@ class Post extends \App\Core\Echidna
 
         } elseif( array_key_exists('post_status', $data) and !$this->is_string( $data['post_status'], 20 )) {
             $this->error = 'post_status is incorrect';
+
+        } elseif( array_key_exists('post_content', $data) and !$this->is_string( $data['post_content'], 0 )) {
+            $this->error = 'post_content is incorrect';
 
         } elseif( !$this->update( 'posts', [['id', '=', $this->id]], $data )) {
             $this->error = 'post update error';

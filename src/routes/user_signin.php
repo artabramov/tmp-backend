@@ -2,36 +2,39 @@
 $user_email = (string) Flight::request()->query['user_email'];
 $user_pass = (string) Flight::request()->query['user_pass'];
 
-// open transaction
-Flight::get('pdo')->beginTransaction();
+/**
+ * No transaction!
+ */
 
 // login
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
+Flight::select( $master, [
     ['user_email', '=', $user_email], 
     ['user_hash', '=', Flight::hash( $user_pass ) ], 
     ['user_status', '<>', 'trash']
 ]);
 
-// is expires
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) > 60 ) {
+// update signin date
+Flight::update( $master, [
+    'signin_date' => Flight::time(), 
+]);
+
+// delay, expires and hash check
+if( Flight::empty( 'error' ) and $master->user_hash != Flight::hash( $user_pass )) {
+    Flight::set( 'error', 'user_pass is wrong' );
+
+} elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->signin_date ) < 1 ) {
+    Flight::set( 'error', 'wait for 1 second' );
+
+} elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) > 300 ) {
     Flight::set( 'error', 'user_pass is expired' );
 }
 
-// update master
-Flight::save( $master, [
-    'signin_date' => Flight::time(), 
+// update auth
+Flight::update( $master, [
     'user_status' => 'approved', 
-    'user_hash'   => '' 
+    'user_hash' => '' 
 ]);
-
-// close transaction
-if( Flight::empty( 'error' )) {
-    Flight::get( 'pdo' )->commit();
-
-} else {
-    Flight::get( 'pdo' )->rollBack();
-}
 
 // debug
 if( !Flight::empty( 'e' )) {

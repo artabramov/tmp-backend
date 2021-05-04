@@ -7,7 +7,7 @@ Flight::get('pdo')->beginTransaction();
 
 // auth master
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
+Flight::select( $master, [
     ['user_token', '=', $user_token], 
     ['user_status', '=', 'approved']
 ]);
@@ -16,19 +16,19 @@ Flight::load( $master, [
 if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->auth_date ) < 1 ) {
     Flight::set( 'error', 'wait for 1 second' );
 
-} elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->signin_date ) > 24 * 60 * 60 ) {
+} elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) > 24 * 60 * 60 ) {
     Flight::set( 'error', 'user_token is expired' );
 }
 
 // select user
 $slave = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $slave, [
+Flight::select( $slave, [
     ['id', '=', $user_id], 
     ['user_status', '=', 'approved']
 ]);
 
-// update auth date
-Flight::save( $master, [ 
+// update auth
+Flight::update( $master, [ 
     'auth_date' => Flight::time()
 ]);
 

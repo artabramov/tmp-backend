@@ -1,15 +1,15 @@
 <?php
 namespace App\Core;
 
-class Attribute extends \App\Core\Echidna
+class Param extends \App\Core\Echidna
 {
     protected $error;
     protected $id;
     protected $create_date;
     protected $update_date;
     protected $user_id;
-    protected $attribute_key;
-    protected $attribute_value;
+    protected $param_key;
+    protected $param_value;
 
     public function __get( string $key ) {
 
@@ -32,11 +32,11 @@ class Attribute extends \App\Core\Echidna
         foreach( $args as $arg ) {
 
             if( $arg[0] == 'id' and $this->is_empty( $arg[2] )) {
-                $this->error = 'attribute_id is empty';
+                $this->error = 'param_id is empty';
                 break;
 
             } elseif( $arg[0] == 'id' and !$this->is_num( $arg[2] )) {
-                $this->error = 'attribute_id is incorrect';
+                $this->error = 'param_id is incorrect';
                 break;
 
             } elseif( $arg[0] == 'create_date' and $this->is_empty( $arg[2] )) {
@@ -63,37 +63,37 @@ class Attribute extends \App\Core\Echidna
                 $this->error = 'user_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'attribute_key' and $this->is_empty( $arg[2] )) {
-                $this->error = 'attribute_key is empty';
+            } elseif( $arg[0] == 'param_key' and $this->is_empty( $arg[2] )) {
+                $this->error = 'param_key is empty';
                 break;
 
-            } elseif( $arg[0] == 'attribute_key' and !$this->is_string( $arg[2], 20 )) {
-                $this->error = 'attribute_key is incorrect';
+            } elseif( $arg[0] == 'param_key' and !$this->is_string( $arg[2], 20 )) {
+                $this->error = 'param_key is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'attribute_value' and $this->is_empty( $arg[2] )) {
-                $this->error = 'attribute_value is empty';
+            } elseif( $arg[0] == 'param_value' and $this->is_empty( $arg[2] )) {
+                $this->error = 'param_value is empty';
                 break;
 
-            } elseif( $arg[0] == 'attribute_value' and !$this->is_string( $arg[2], 255 )) {
-                $this->error = 'attribute_value is incorrect';
+            } elseif( $arg[0] == 'param_value' and !$this->is_string( $arg[2], 255 )) {
+                $this->error = 'param_value is incorrect';
                 break;
             }
         }
 
         if( empty( $this->error )) {
-            $rows = $this->select( '*', 'user_attributes', $args, 1, 0 );
+            $rows = $this->select( '*', 'user_params', $args, 1, 0 );
 
             if ( empty( $rows[0] )) {
-                $this->error = 'attribute not found';
+                $this->error = 'param not found';
         
             } else {
-                $this->id              = $rows[0]->id;
-                $this->create_date     = $rows[0]->create_date;
-                $this->update_date     = $rows[0]->update_date;
-                $this->user_id         = $rows[0]->user_id;
-                $this->attribute_key   = $rows[0]->attribute_key;
-                $this->attribute_value = $rows[0]->attribute_value;
+                $this->id          = $rows[0]->id;
+                $this->create_date = $rows[0]->create_date;
+                $this->update_date = $rows[0]->update_date;
+                $this->user_id     = $rows[0]->user_id;
+                $this->param_key   = $rows[0]->param_key;
+                $this->param_value = $rows[0]->param_value;
             }
         }
 
@@ -120,33 +120,33 @@ class Attribute extends \App\Core\Echidna
         } elseif( !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( !array_key_exists('attribute_key', $data) or $this->is_empty( $data['attribute_key'] )) {
-            $this->error = 'attribute_key is empty';
+        } elseif( !array_key_exists('param_key', $data) or $this->is_empty( $data['param_key'] )) {
+            $this->error = 'param_key is empty';
     
-        } elseif( !$this->is_string( $data['attribute_key'], 20 )) {
-            $this->error = 'attribute_key is incorrect';
+        } elseif( !$this->is_string( $data['param_key'], 20 )) {
+            $this->error = 'param_key is incorrect';
 
-        } elseif( !array_key_exists('attribute_value', $data) or $this->is_empty( $data['attribute_value'] )) {
-            $this->error = 'attribute_value is empty';
+        } elseif( !array_key_exists('param_value', $data) or $this->is_empty( $data['param_value'] )) {
+            $this->error = 'param_value is empty';
     
-        } elseif( !$this->is_string( $data['attribute_value'], 255 )) {
-            $this->error = 'attribute_value is incorrect';
+        } elseif( !$this->is_string( $data['param_value'], 255 )) {
+            $this->error = 'param_value is incorrect';
 
-        } elseif( $this->is_exists( 'user_attributes', [['user_id', '=', $data['user_id']], ['attribute_key', '=', $data['attribute_key']]] )) {
-            $this->error = 'attribute_value is occupied';
+        } elseif( $this->is_exists( 'user_params', [['user_id', '=', $data['user_id']], ['param_key', '=', $data['param_key']]] )) {
+            $this->error = 'param_value is occupied';
 
         } else {
-            $this->id = $this->insert( 'user_attributes', $data );
+            $this->id = $this->insert( 'user_params', $data );
 
             if( empty( $this->id )) {
-                $this->error = 'attribute insert error';
+                $this->error = 'param insert error';
 
             } else {
-                $this->create_date     = $data['create_date'];
-                $this->update_date     = $data['update_date'];
-                $this->user_id         = $data['user_id'];
-                $this->attribute_key   = $data['attribute_key'];
-                $this->attribute_value = $data['attribute_value'];
+                $this->create_date = $data['create_date'];
+                $this->update_date = $data['update_date'];
+                $this->user_id     = $data['user_id'];
+                $this->param_key   = $data['param_key'];
+                $this->param_value = $data['param_value'];
             }
         }
 
@@ -156,10 +156,10 @@ class Attribute extends \App\Core\Echidna
     public function put( array $data ) : bool {
 
         if( $this->is_empty( $this->id )) {
-            $this->error = 'attribute_id is empty';
+            $this->error = 'param_id is empty';
 
         } elseif( !$this->is_num( $this->id )) {
-            $this->error = 'attribute_id is incorrect';
+            $this->error = 'param_id is incorrect';
 
         } elseif( array_key_exists('create_date', $data) and $this->is_empty( $data['create_date'] )) {
             $this->error = 'create_date is empty';
@@ -179,20 +179,20 @@ class Attribute extends \App\Core\Echidna
         } elseif( array_key_exists('user_id', $data) and !$this->is_num( $data['user_id'] )) {
             $this->error = 'user_id is incorrect';
 
-        } elseif( array_key_exists('attribute_key', $data) and $this->is_empty( $data['attribute_key'] )) {
-            $this->error = 'attribute_key is empty';
+        } elseif( array_key_exists('param_key', $data) and $this->is_empty( $data['param_key'] )) {
+            $this->error = 'param_key is empty';
 
-        } elseif( array_key_exists('attribute_key', $data) and !$this->is_string( $data['attribute_key'], 20 )) {
-            $this->error = 'attribute_key is incorrect';
+        } elseif( array_key_exists('param_key', $data) and !$this->is_string( $data['param_key'], 20 )) {
+            $this->error = 'param_key is incorrect';
 
-        } elseif( array_key_exists('attribute_value', $data) and $this->is_empty( $data['attribute_value'] )) {
-            $this->error = 'attribute_value is empty';
+        } elseif( array_key_exists('param_value', $data) and $this->is_empty( $data['param_value'] )) {
+            $this->error = 'param_value is empty';
 
-        } elseif( array_key_exists('attribute_value', $data) and !$this->is_string( $data['attribute_value'], 255 )) {
-            $this->error = 'attribute_value is incorrect';
+        } elseif( array_key_exists('param_value', $data) and !$this->is_string( $data['param_value'], 255 )) {
+            $this->error = 'param_value is incorrect';
 
-        } elseif( !$this->update( 'user_attributes', [['id', '=', $this->id]], $data )) {
-            $this->error = 'attribute update error';
+        } elseif( !$this->update( 'user_params', [['id', '=', $this->id]], $data )) {
+            $this->error = 'param update error';
 
         } else {
             foreach( $data as $key => $value ) {
@@ -208,21 +208,21 @@ class Attribute extends \App\Core\Echidna
     public function del() : bool {
 
         if( $this->is_empty( $this->id )) {
-            $this->error = 'attribute_id is empty';
+            $this->error = 'param_id is empty';
 
         } elseif( !$this->is_num( $this->id )) {
-            $this->error = 'attribute_id is incorrect';
+            $this->error = 'param_id is incorrect';
 
-        } elseif( !$this->delete( 'user_attributes', [['id', '=', $this->id]] )) {
-            $this->error = 'attribute delete error';
+        } elseif( !$this->delete( 'user_params', [['id', '=', $this->id]] )) {
+            $this->error = 'param delete error';
 
         } else {
-            $this->id              = null;
-            $this->create_date     = null;
-            $this->update_date     = null;
-            $this->user_id         = null;
-            $this->attribute_key   = null;
-            $this->attribute_value = null;
+            $this->id          = null;
+            $this->create_date = null;
+            $this->update_date = null;
+            $this->user_id     = null;
+            $this->param_key   = null;
+            $this->param_value = null;
         }
 
         return empty( $this->error );

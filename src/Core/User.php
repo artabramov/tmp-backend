@@ -193,8 +193,8 @@ class User extends \App\Core\Echidna
         } elseif( !array_key_exists('user_name', $data) or $this->is_empty( $data['user_name'] )) {
             $this->error = 'user_name is empty';
 
-        } elseif( !$this->is_string( $data['user_status'], 20 )) {
-            $this->error = 'user_status is incorrect';
+        } elseif( !$this->is_string( $data['user_name'], 128 )) {
+            $this->error = 'user_name is incorrect';
 
         } elseif( !$this->is_string( $data['user_hash'], 40 )) {
             $this->error = 'user_hash is incorrect';

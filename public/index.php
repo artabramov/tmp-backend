@@ -84,6 +84,7 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
     }
 });
 
+/*
 // save
 Flight::map( 'save', function( $instance, $data ) {
 
@@ -102,12 +103,34 @@ Flight::map( 'save', function( $instance, $data ) {
         }
     }
 });
+*/
 
-// load
-Flight::map( 'load', function( $instance, $args ) {
+// insert
+Flight::map( 'insert', function( $instance, $data ) {
 
     if( Flight::empty( 'error' )) {
+        if( !$instance->set( $data )) {
+            Flight::set( 'e', $instance->e );
+            Flight::set( 'error', $instance->error );
+        }
+    }
+});
 
+// update
+Flight::map( 'update', function( $instance, $data ) {
+
+    if( Flight::empty( 'error' )) {
+        if( !$instance->put( $data )) {
+            Flight::set( 'e', $instance->e );
+            Flight::set( 'error', $instance->error );
+        }
+    }
+});
+
+// select
+Flight::map( 'select', function( $instance, $args ) {
+
+    if( Flight::empty( 'error' )) {
         if( !$instance->get( $args )) {
             Flight::set( 'e', $instance->e );
             Flight::set( 'error', $instance->error );

@@ -7,7 +7,7 @@ Flight::get('pdo')->beginTransaction();
 
 // register
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::save( $master, [
+Flight::insert( $master, [
     'register_date' => Flight::time(),
     'restore_date'  => '0001-01-01 00:00:00',
     'signin_date'   => '0001-01-01 00:00:00',
@@ -21,7 +21,7 @@ Flight::save( $master, [
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::save( $hub, [
+Flight::insert( $hub, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'user_id'     => $master->id,
@@ -31,12 +31,22 @@ Flight::save( $hub, [
 
 // master role
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::save( $master_role, [
+Flight::insert( $master_role, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'hub_id'      => $hub->id,
     'user_id'     => $master->id,
     'user_role'   => 'admin',
+]);
+
+// test param
+$master_param = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::insert( $master_param, [
+    'create_date' => date( 'Y-m-d H:i:s' ),
+    'update_date' => '0001-01-01 00:00:00',
+    'user_id'     => $master->id,
+    'param_key'   => 'param_key',
+    'param_value' => 'param value!',
 ]);
 
 // close transaction

@@ -26,37 +26,20 @@ CREATE TABLE IF NOT EXISTS project.users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE IF NOT EXISTS project.user_attributes (
-    id              BIGINT(20)   NOT NULL AUTO_INCREMENT,
-    create_date     DATETIME     NOT NULL,
-    update_date     DATETIME     NOT NULL,
-    user_id         BIGINT(20)   NOT NULL,
-    attribute_key   VARCHAR(20)  NOT NULL,
-    attribute_value VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY id              (id),
-            KEY create_date     (create_date),
-            KEY update_date     (update_date),
-            KEY user_id         (user_id),
-            KEY attribute_key   (attribute_key),
-            KEY attribute_value (attribute_value)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-CREATE TABLE IF NOT EXISTS project.hubs (
+CREATE TABLE IF NOT EXISTS project.user_params (
     id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL,
     update_date DATETIME     NOT NULL,
     user_id     BIGINT(20)   NOT NULL,
-    hub_status  VARCHAR(20)  NOT NULL, # private | custom | trash
-    hub_name    VARCHAR(255) NOT NULL,
+    param_key   VARCHAR(20)  NOT NULL,
+    param_value VARCHAR(255) NOT NULL,
 
     PRIMARY KEY id          (id),
             KEY create_date (create_date),
             KEY update_date (update_date),
             KEY user_id     (user_id),
-            KEY hub_status  (hub_status),
-            KEY hub_name    (hub_name)
+            KEY param_key   (param_key),
+            KEY param_value (param_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -74,6 +57,23 @@ CREATE TABLE IF NOT EXISTS project.user_roles (
             KEY hub_id      (hub_id),
             KEY user_id     (user_id),
             KEY user_role   (user_role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS project.hubs (
+    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL,
+    update_date DATETIME     NOT NULL,
+    user_id     BIGINT(20)   NOT NULL,
+    hub_status  VARCHAR(20)  NOT NULL, # private | custom | trash
+    hub_name    VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+            KEY update_date (update_date),
+            KEY user_id     (user_id),
+            KEY hub_status  (hub_status),
+            KEY hub_name    (hub_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS project.post_uploads (
     update_date   DATETIME     NOT NULL,
     user_id       BIGINT(20)   NOT NULL,
     post_id       BIGINT(20)   NOT NULL,
-    upload_status VARCHAR(20)  NOT NULL, # common | favorite
+    upload_status VARCHAR(20)  NOT NULL, # common | favorite | trash
     upload_name   VARCHAR(255) NOT NULL,
     upload_mime   VARCHAR(255) NOT NULL,
     upload_size   BIGINT(20)   NOT NULL,
