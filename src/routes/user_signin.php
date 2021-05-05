@@ -18,12 +18,19 @@ Flight::select( $master, [
     ['user_status', '<>', 'trash']
 ]);
 
-// is pass expired
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) > 120 ) {
+// get restore date
+$master_date = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::select( $master_date, [
+    ['user_id', '=', $master->id], 
+    ['param_key', '=', 'restore_date']
+]);
+
+// delay
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master_date->param_value ) > 120 ) {
     Flight::set( 'error', 'user_pass is expired' );
 }
 
-// update user
+// update master
 Flight::update( $master, [
     'update_date' => Flight::time(), 
     'user_status' => 'approved', 

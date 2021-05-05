@@ -2,27 +2,25 @@ SET sql_mode = '';
 
 
 CREATE TABLE IF NOT EXISTS project.users (
-    id            BIGINT(20)   NOT NULL AUTO_INCREMENT,
-    register_date DATETIME     NOT NULL,
-    restore_date  DATETIME     NOT NULL,
-    auth_date     DATETIME     NOT NULL,
-    update_date   DATETIME     NOT NULL,
-    user_status   VARCHAR(20)  NOT NULL, # pending | approved | trash
-    user_token    VARCHAR(80)  NOT NULL,
-    user_email    VARCHAR(255) NOT NULL,
-    user_name     VARCHAR(128) NOT NULL,
-    user_hash     VARCHAR(40)  NOT NULL,
+    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL,
+    update_date DATETIME     NOT NULL,
+    auth_date   DATETIME     NOT NULL,
+    user_status VARCHAR(20)  NOT NULL, # pending | approved | trash
+    user_token  VARCHAR(80)  NOT NULL,
+    user_email  VARCHAR(255) NOT NULL,
+    user_name   VARCHAR(128) NOT NULL,
+    user_hash   VARCHAR(40)  NOT NULL,
 
-    PRIMARY KEY id            (id),
-            KEY register_date (register_date),
-            KEY restore_date  (restore_date),
-            KEY auth_date     (auth_date),
-            KEY update_date   (update_date),
-            KEY user_status   (user_status),
-    UNIQUE  KEY user_token    (user_token),
-    UNIQUE  KEY user_email    (user_email),
-            KEY user_name     (user_name),
-            KEY user_hash     (user_hash)
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+            KEY update_date (update_date),
+            KEY auth_date   (auth_date),
+            KEY user_status (user_status),
+    UNIQUE  KEY user_token  (user_token),
+    UNIQUE  KEY user_email  (user_email),
+            KEY user_name   (user_name),
+            KEY user_hash   (user_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

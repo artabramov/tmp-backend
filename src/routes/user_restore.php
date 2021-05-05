@@ -11,17 +11,28 @@ Flight::select( $master, [
     ['user_status', '<>', 'trash']
 ]);
 
+// restore date
+$master_date = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::select( $master_date, [
+    ['user_id', '=', $master->id], 
+    ['param_key', '=', 'restore_date']
+]);
+
 // delay
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date ) < 60 ) {
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master_date->param_value ) < 60 ) {
     Flight::set( 'error', 'wait for 60 seconds' );
 }
 
 // update master
 $user_pass = Flight::pass();
 Flight::update( $master, [
-    'restore_date' => Flight::time(),
     'update_date' => Flight::time(),
     'user_hash' => Flight::hash( $user_pass ),
+]);
+
+// update restore date
+Flight::update( $master_date, [
+    'param_value' => Flight::time()
 ]);
 
 // send email

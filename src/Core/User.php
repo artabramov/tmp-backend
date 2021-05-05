@@ -5,10 +5,9 @@ class User extends \App\Core\Echidna
 {
     protected $error;
     protected $id;
-    protected $register_date;
-    protected $restore_date;
-    protected $auth_date;
+    protected $create_date;
     protected $update_date;
+    protected $auth_date;
     protected $user_status;
     protected $user_token;
     protected $user_email;
@@ -43,28 +42,12 @@ class User extends \App\Core\Echidna
                 $this->error = 'user_id is incorrect';
                 break;
 
-            } elseif( $arg[0] == 'register_date' and $this->is_empty( $arg[2] )) {
-                $this->error = 'register_date is empty';
+            } elseif( $arg[0] == 'create_date' and $this->is_empty( $arg[2] )) {
+                $this->error = 'create_date is empty';
                 break;
 
-            } elseif( $arg[0] == 'register_date' and !$this->is_datetime( $arg[2] )) {
-                $this->error = 'register_date is incorrect';
-                break;
-
-            } elseif( $arg[0] == 'restore_date' and $this->is_empty( $arg[2] )) {
-                $this->error = 'restore_date is empty';
-                break;
-
-            } elseif( $arg[0] == 'restore_date' and !$this->is_datetime( $arg[2] )) {
-                $this->error = 'restore_date is incorrect';
-                break;
-
-            } elseif( $arg[0] == 'auth_date' and $this->is_empty( $arg[2] )) {
-                $this->error = 'auth_date is empty';
-                break;
-
-            } elseif( $arg[0] == 'auth_date' and !$this->is_datetime( $arg[2] )) {
-                $this->error = 'auth_date is incorrect';
+            } elseif( $arg[0] == 'create_date' and !$this->is_datetime( $arg[2] )) {
+                $this->error = 'create_date is incorrect';
                 break;
 
             } elseif( $arg[0] == 'update_date' and $this->is_empty( $arg[2] )) {
@@ -73,6 +56,14 @@ class User extends \App\Core\Echidna
 
             } elseif( $arg[0] == 'update_date' and !$this->is_datetime( $arg[2] )) {
                 $this->error = 'update_date is incorrect';
+                break;
+
+            } elseif( $arg[0] == 'auth_date' and $this->is_empty( $arg[2] )) {
+                $this->error = 'auth_date is empty';
+                break;
+
+            } elseif( $arg[0] == 'auth_date' and !$this->is_datetime( $arg[2] )) {
+                $this->error = 'auth_date is incorrect';
                 break;
 
             } elseif( $arg[0] == 'user_status' and $this->is_empty( $arg[2] )) {
@@ -124,16 +115,15 @@ class User extends \App\Core\Echidna
                 $this->error = 'user not found';
         
             } else {
-                $this->id            = $rows[0]->id;
-                $this->register_date = $rows[0]->register_date;
-                $this->restore_date  = $rows[0]->restore_date;
-                $this->auth_date     = $rows[0]->auth_date;
-                $this->update_date   = $rows[0]->update_date;
-                $this->user_status   = $rows[0]->user_status;
-                $this->user_token    = $rows[0]->user_token;
-                $this->user_email    = $rows[0]->user_email;
-                $this->user_name     = $rows[0]->user_name;
-                $this->user_hash     = $rows[0]->user_hash;
+                $this->id          = $rows[0]->id;
+                $this->create_date = $rows[0]->create_date;
+                $this->update_date = $rows[0]->update_date;
+                $this->auth_date   = $rows[0]->auth_date;
+                $this->user_status = $rows[0]->user_status;
+                $this->user_token  = $rows[0]->user_token;
+                $this->user_email  = $rows[0]->user_email;
+                $this->user_name   = $rows[0]->user_name;
+                $this->user_hash   = $rows[0]->user_hash;
             }
         }
 
@@ -142,29 +132,23 @@ class User extends \App\Core\Echidna
 
     public function set( array $data ) : bool {
 
-        if( !array_key_exists('register_date', $data) or $this->is_empty( $data['register_date'] )) {
-            $this->error = 'register_date is empty';
+        if( !array_key_exists('create_date', $data) or $this->is_empty( $data['create_date'] )) {
+            $this->error = 'create_date is empty';
 
-        } elseif( !$this->is_datetime( $data['register_date'] )) {
-            $this->error = 'register_date is incorrect';
-
-        } elseif( !array_key_exists('restore_date', $data) or $this->is_empty( $data['restore_date'] )) {
-            $this->error = 'restore_date is empty';
-
-        } elseif( !$this->is_datetime( $data['restore_date'] )) {
-            $this->error = 'restore_date is incorrect';
-
-        } elseif( !array_key_exists('auth_date', $data) or $this->is_empty( $data['auth_date'] )) {
-            $this->error = 'auth_date is empty';
-
-        } elseif( !$this->is_datetime( $data['auth_date'] )) {
-            $this->error = 'auth_date is incorrect';
+        } elseif( !$this->is_datetime( $data['create_date'] )) {
+            $this->error = 'create_date is incorrect';
 
         } elseif( !array_key_exists('update_date', $data) or $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
         } elseif( !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
+
+        } elseif( !array_key_exists('auth_date', $data) or $this->is_empty( $data['auth_date'] )) {
+            $this->error = 'auth_date is empty';
+
+        } elseif( !$this->is_datetime( $data['auth_date'] )) {
+            $this->error = 'auth_date is incorrect';
 
         } elseif( !array_key_exists('user_status', $data) or $this->is_empty( $data['user_status'] )) {
             $this->error = 'user_status is empty';
@@ -206,15 +190,14 @@ class User extends \App\Core\Echidna
                 $this->error = 'user insert error';
 
             } else {
-                $this->register_date = $data['register_date'];
-                $this->restore_date  = $data['restore_date'];
-                $this->auth_date     = $data['auth_date'];
-                $this->update_date   = $data['update_date'];
-                $this->user_status   = $data['user_status'];
-                $this->user_token    = $data['user_token'];
-                $this->user_email    = $data['user_email'];
-                $this->user_name     = $data['user_name'];
-                $this->user_hash     = $data['user_hash'];
+                $this->create_date = $data['create_date'];
+                $this->update_date = $data['update_date'];
+                $this->auth_date   = $data['auth_date'];
+                $this->user_status = $data['user_status'];
+                $this->user_token  = $data['user_token'];
+                $this->user_email  = $data['user_email'];
+                $this->user_name   = $data['user_name'];
+                $this->user_hash   = $data['user_hash'];
             }
         }
 
@@ -229,29 +212,23 @@ class User extends \App\Core\Echidna
         } elseif( !$this->is_num( $this->id )) {
             $this->error = 'hub_id is incorrect';
 
-        } elseif( array_key_exists('register_date', $data) and $this->is_empty( $data['register_date'] )) {
-            $this->error = 'register_date is empty';
+        } elseif( array_key_exists('create_date', $data) and $this->is_empty( $data['create_date'] )) {
+            $this->error = 'create_date is empty';
 
-        } elseif( array_key_exists('register_date', $data) and !$this->is_datetime( $data['register_date'] )) {
-            $this->error = 'register_date is incorrect';
-
-        } elseif( array_key_exists('restore_date', $data) and $this->is_empty( $data['restore_date'] )) {
-            $this->error = 'restore_date is empty';
-
-        } elseif( array_key_exists('restore_date', $data) and !$this->is_datetime( $data['restore_date'] )) {
-            $this->error = 'restore_date is incorrect';
-
-        } elseif( array_key_exists('auth_date', $data) and $this->is_empty( $data['auth_date'] )) {
-            $this->error = 'auth_date is empty';
-
-        } elseif( array_key_exists('auth_date', $data) and !$this->is_datetime( $data['auth_date'] )) {
-            $this->error = 'auth_date is incorrect';
+        } elseif( array_key_exists('create_date', $data) and !$this->is_datetime( $data['create_date'] )) {
+            $this->error = 'create_date is incorrect';
 
         } elseif( array_key_exists('update_date', $data) and $this->is_empty( $data['update_date'] )) {
             $this->error = 'update_date is empty';
 
         } elseif( array_key_exists('update_date', $data) and !$this->is_datetime( $data['update_date'] )) {
             $this->error = 'update_date is incorrect';
+
+        } elseif( array_key_exists('auth_date', $data) and $this->is_empty( $data['auth_date'] )) {
+            $this->error = 'auth_date is empty';
+
+        } elseif( array_key_exists('auth_date', $data) and !$this->is_datetime( $data['auth_date'] )) {
+            $this->error = 'auth_date is incorrect';
 
         } elseif( array_key_exists('user_status', $data) and $this->is_empty( $data['user_status'] )) {
             $this->error = 'user_status is empty';
@@ -312,16 +289,15 @@ class User extends \App\Core\Echidna
             $this->error = 'user delete error';
 
         } else {
-            $this->id            = null;
-            $this->register_date = null;
-            $this->restore_date  = null;
-            $this->auth_date     = null;
-            $this->update_date   = null;
-            $this->user_status   = null;
-            $this->user_token    = null;
-            $this->user_email    = null;
-            $this->user_name     = null;
-            $this->user_hash     = null;
+            $this->id          = null;
+            $this->creste_date = null;
+            $this->update_date = null;
+            $this->auth_date   = null;
+            $this->user_status = null;
+            $this->user_token  = null;
+            $this->user_email  = null;
+            $this->user_name   = null;
+            $this->user_hash   = null;
         }
 
         return empty( $this->error );
