@@ -7,27 +7,20 @@ $user_role = (string) Flight::request()->query['user_role'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// master auth
+// auth
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
-    ['user_token', '=', $user_token], 
-    ['user_status', '=', 'approved']
-]);
-
-Flight::save( $master, [ 
-    'auth_date' => Flight::time()
-]);
+Flight::auth( $master, $user_token );
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::load( $hub, [
+Flight::select( $hub, [
     ['id', '=', $hub_id], 
     ['hub_status', '=', 'custom'],
 ]);
 
 // master role
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::load( $master_role, [
+Flight::select( $master_role, [
     ['user_id', '=', $master->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', '=', 'admin']
@@ -35,28 +28,28 @@ Flight::load( $master_role, [
 
 // slave user
 $slave = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $slave, [
+Flight::select( $slave, [
     ['id', '=', $user_id], 
     ['user_status', '=', 'approved']
 ]);
 
 // slave role
 $slave_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::load( $slave_role, [
+Flight::select( $slave_role, [
     ['user_id', '=', $slave->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', '<>', 'invited']
 ]);
 
 // update the slave role
-Flight::save( $slave_role, [
+Flight::update( $slave_role, [
     'update_date' => date( 'Y-m-d H:i:s' ),
     'user_role'   => $user_role,
 ]);
 
-// check the slave role
-if( Flight::empty( 'error' ) and !in_array( $user_role, ['admin', 'editor', 'reader'] )) {
-    Flight::set( 'error', 'user_role not available' );
+// additional checks
+if( Flight::empty( 'error' ) and !in_array( $user_role, ['admin', 'editor', 'commenter', 'reader'] )) {
+    Flight::set( 'error', 'user_role must be admin, editor, commenter or reader' );
 
 } elseif( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
     Flight::set( 'error', 'user_id not available' );

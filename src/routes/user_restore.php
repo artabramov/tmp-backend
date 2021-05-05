@@ -20,6 +20,7 @@ if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->restore_date 
 $user_pass = Flight::pass();
 Flight::update( $master, [
     'restore_date' => Flight::time(),
+    'update_date' => Flight::time(),
     'user_hash' => Flight::hash( $user_pass ),
 ]);
 

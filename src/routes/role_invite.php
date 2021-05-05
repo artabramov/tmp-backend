@@ -6,27 +6,20 @@ $user_id = (int) Flight::request()->query['user_id'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// master auth
+// auth
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
-    ['user_token', '=', $user_token], 
-    ['user_status', '=', 'approved']
-]);
-
-Flight::save( $master, [ 
-    'auth_date' => Flight::time()
-]);
+Flight::auth( $master, $user_token );
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::load( $hub, [
+Flight::select( $hub, [
     ['id', '=', $hub_id], 
     ['hub_status', '=', 'custom'],
 ]);
 
 // master role
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::load( $master_role, [
+Flight::select( $master_role, [
     ['user_id', '=', $master->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', '=', 'admin']
@@ -34,25 +27,25 @@ Flight::load( $master_role, [
 
 // slave
 $slave = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $slave, [
+Flight::select( $slave, [
     ['id', '=', $user_id], 
     ['user_status', '=', 'approved']
 ]);
 
-// slave role
+// additional check
+if( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
+    Flight::set( 'error', 'user_id not available' );
+}
+
+// insert role
 $slave_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::save( $slave_role, [
+Flight::insert( $slave_role, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'hub_id'      => $hub->id,
     'user_id'     => $slave->id,
     'user_role'   => 'invited',
 ]);
-
-// additional checks
-if( Flight::empty( 'error' ) and $hub->user_id == $slave->id ) {
-    Flight::set( 'error', 'user_id not available' );
-}
 
 // close transaction
 if( Flight::empty( 'error' )) {

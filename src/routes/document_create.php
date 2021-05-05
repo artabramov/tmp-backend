@@ -3,48 +3,32 @@ $user_token   = (string) Flight::request()->query['user_token'];
 $hub_id       = (int) Flight::request()->query['hub_id'];
 $post_status  = (string) Flight::request()->query['post_status'];
 $post_content = (string) Flight::request()->query['post_content'];
-$post_tags    = (string) Flight::request()->query['post_meta'];
+$post_tags    = (string) Flight::request()->query['post_tags'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// master auth
+// auth
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
-    ['user_token', '=', $user_token], 
-    ['user_status', '=', 'approved']
-]);
-
-// delay for document insert is 5 seconds
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master->auth_date ) < 5 ) {
-    Flight::set( 'error', 'wait for 5 seconds' );
-}
+Flight::auth( $master, $user_token );
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::load( $hub, [
+Flight::select( $hub, [
     ['id', '=', $hub_id], 
-    ['hub_status', '=', 'custom'],
+    ['hub_status', '<>', 'trash'],
 ]);
 
 // master role
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::load( $master_role, [
+Flight::select( $master_role, [
     ['user_id', '=', $master->id], 
     ['hub_id', '=', $hub->id], 
 ]);
 
-// additional checkings
-if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'editor'] ) ) {
-    Flight::set( 'error', 'user_role must be admin or editor' );
-
-} elseif( Flight::empty( 'error' ) and !in_array( $post_status, ['draft', 'todo', 'doing', 'done']) ) {
-    Flight::set( 'error', 'post_status must be draft, todo, doing or done' );
-}
-
 // document insert
 $document = new \App\Core\Post( Flight::get( 'pdo' ));
-Flight::save( $document, [
+Flight::insert( $document, [
     'create_date'  => date( 'Y-m-d H:i:s' ),
     'update_date'  => '0001-01-01 00:00:00',
     'parent_id'    => 0,
@@ -53,28 +37,37 @@ Flight::save( $document, [
     'post_type'    => 'document',
     'post_status'  => $post_status,
     'post_content' => $post_content,
+    'childs_count' => 0
 ]);
+
+// additional checkings
+if( Flight::empty( 'error' ) and $hub->hub_status == 'private' and $master_role->user_role != 'admin' ) {
+    Flight::set( 'error', 'user_role must be admin' );
+
+} elseif( Flight::empty( 'error' ) and $hub->hub_status == 'custom' and !in_array( $master_role->user_role, ['admin', 'editor'] ) ) {
+    Flight::set( 'error', 'user_role must be admin or editor' );
+
+} elseif( Flight::empty( 'error' ) and !in_array( $post_status, ['draft', 'todo', 'doing', 'done']) ) {
+    Flight::set( 'error', 'post_status must be draft, todo, doing or done' );
+}
 
 // insert meta
 if( !empty( $post_tags )) {
+
     $tmp = explode( ',', $post_tags );
     foreach( $tmp as $meta_value ) {
-        $tag = new \App\Core\Meta( Flight::get( 'pdo' ));
-        Flight::save( $tag, [
+
+        $meta = new \App\Core\Meta( Flight::get( 'pdo' ));
+        Flight::insert( $meta, [
             'create_date'  => date( 'Y-m-d H:i:s' ),
             'update_date'  => '0001-01-01 00:00:00',
             'user_id'      => $master->id,
             'post_id'      => $document->id,
             'meta_key'     => 'post_tag',
-            'meta_value'   => trim( $meta_value ),
+            'meta_value'   => trim( mb_strtolower( $meta_value, 'UTF-8' )),
         ]);
     }
 }
-
-// update auth date
-Flight::save( $master, [ 
-    'auth_date' => Flight::time()
-]);
 
 // close transaction
 if( Flight::empty( 'error' )) {

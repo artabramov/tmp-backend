@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS project.users (
     id            BIGINT(20)   NOT NULL AUTO_INCREMENT,
     register_date DATETIME     NOT NULL,
     restore_date  DATETIME     NOT NULL,
-    signin_date   DATETIME     NOT NULL,
     auth_date     DATETIME     NOT NULL,
+    update_date   DATETIME     NOT NULL,
     user_status   VARCHAR(20)  NOT NULL, # pending | approved | trash
     user_token    VARCHAR(80)  NOT NULL,
     user_email    VARCHAR(255) NOT NULL,
@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS project.users (
     PRIMARY KEY id            (id),
             KEY register_date (register_date),
             KEY restore_date  (restore_date),
-            KEY signin_date   (signin_date),
             KEY auth_date     (auth_date),
+            KEY update_date   (update_date),
             KEY user_status   (user_status),
     UNIQUE  KEY user_token    (user_token),
     UNIQUE  KEY user_email    (user_email),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS project.user_roles (
     update_date DATETIME    NOT NULL,
     hub_id      BIGINT(20)  NOT NULL,
     user_id     BIGINT(20)  NOT NULL,
-    user_role   VARCHAR(20) NOT NULL, # admin | editor | reader | invited
+    user_role   VARCHAR(20) NOT NULL, # admin | editor | commenter | reader | invited
 
     PRIMARY KEY id          (id),
             KEY create_date (create_date),
@@ -87,15 +87,17 @@ CREATE TABLE IF NOT EXISTS project.posts (
     post_type    VARCHAR(20) NOT NULL, # document | comment
     post_status  VARCHAR(20) NOT NULL, # draft | todo | doing | done | inherit | trash
     post_content TEXT        NOT NULL,
+    childs_count BIGINT(20)  NOT NULL,
 
-    PRIMARY KEY id          (id),
-            KEY create_date (create_date),
-            KEY update_date (update_date),
-            KEY parent_id   (parent_id),
-            KEY user_id     (user_id),
-            KEY hub_id      (hub_id),
-            KEY post_type   (post_type),
-            KEY post_status (post_status)
+    PRIMARY KEY id           (id),
+            KEY create_date  (create_date),
+            KEY update_date  (update_date),
+            KEY parent_id    (parent_id),
+            KEY user_id      (user_id),
+            KEY hub_id       (hub_id),
+            KEY post_type    (post_type),
+            KEY post_status  (post_status),
+            KEY childs_count (childs_count)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

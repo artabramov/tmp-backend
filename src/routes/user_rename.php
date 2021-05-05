@@ -1,5 +1,6 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
+$user_name = (string) Flight::request()->query['user_name'];
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
@@ -8,11 +9,10 @@ Flight::get('pdo')->beginTransaction();
 $master = new \App\Core\User( Flight::get( 'pdo' ));
 Flight::auth( $master, $user_token );
 
-// update token
+// rename
 Flight::update( $master, [ 
     'update_date' => Flight::time(), 
-    'user_token' => Flight::token(),
-    'user_hash' => ''
+    'user_name' => $user_name
 ]);
 
 // close transaction

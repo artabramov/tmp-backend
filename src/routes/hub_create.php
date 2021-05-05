@@ -6,40 +6,32 @@ $hub_name = (string) Flight::request()->query['hub_name'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// auth user
-$doer = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $doer, [
-    ['user_token', '=', $user_token], 
-    ['user_status', '=', 'approved']
-]);
-
-// update auth date
-Flight::save( $doer, [ 
-    'auth_date' => Flight::time()
-]);
+// auth
+$master = new \App\Core\User( Flight::get( 'pdo' ));
+Flight::auth( $master, $user_token );
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::save( $hub, [
+Flight::insert( $hub, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
-    'user_id'     => $doer->id,
+    'user_id'     => $master->id,
     'hub_status'  => $hub_status,
     'hub_name'    => $hub_name,
 ]);
 
 // check hub status
 if( Flight::empty( 'error' ) and !in_array( $hub_status, ['private', 'custom'] )) {
-    Flight::set( 'error', 'hub_status not available' );
+    Flight::set( 'error', 'hub_status must be private or custom' );
 }
 
 // role
-$role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::save( $role, [
+$master_role = new \App\Core\Role( Flight::get( 'pdo' ));
+Flight::insert( $master_role, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'hub_id'      => $hub->id,
-    'user_id'     => $doer->id,
+    'user_id'     => $master->id,
     'user_role'   => 'admin',
 ]);
 

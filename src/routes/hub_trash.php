@@ -1,5 +1,6 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
+$hub_id = (int) $hub_id;
 
 // open transaction
 Flight::get('pdo')->beginTransaction();
@@ -8,11 +9,18 @@ Flight::get('pdo')->beginTransaction();
 $master = new \App\Core\User( Flight::get( 'pdo' ));
 Flight::auth( $master, $user_token );
 
-// update token
-Flight::update( $master, [ 
-    'update_date' => Flight::time(), 
-    'user_token' => Flight::token(),
-    'user_hash' => ''
+// hub
+$hub = new \App\Core\Hub( Flight::get( 'pdo' ));
+Flight::select( $hub, [
+    ['id', '=', $hub_id], 
+    ['user_id', '=', $master->id],
+    ['hub_status', '<>', 'trash'],
+]);
+
+// rename
+Flight::update( $hub, [
+    'update_date' => Flight::time(),
+    'hub_status' => 'trash',
 ]);
 
 // close transaction

@@ -10,8 +10,8 @@ $master = new \App\Core\User( Flight::get( 'pdo' ));
 Flight::insert( $master, [
     'register_date' => Flight::time(),
     'restore_date'  => '0001-01-01 00:00:00',
-    'signin_date'   => '0001-01-01 00:00:00',
     'auth_date'     => '0001-01-01 00:00:00',
+    'update_date'   => '0001-01-01 00:00:00',
     'user_status'   => 'pending',
     'user_token'    => Flight::token(),
     'user_email'    => $user_email,
@@ -39,15 +39,48 @@ Flight::insert( $master_role, [
     'user_role'   => 'admin',
 ]);
 
-// test param
+// register ip
+$master_param = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::insert( $restore_date, [
+    'create_date' => date( 'Y-m-d H:i:s' ),
+    'update_date' => '0001-01-01 00:00:00',
+    'user_id'     => $master->id,
+    'param_key'   => 'register_ip',
+    'param_value' => substr( Flight::request()->ip, 0, 255 ),
+]);
+
+// register agent
 $master_param = new \App\Core\Param( Flight::get( 'pdo' ));
 Flight::insert( $master_param, [
     'create_date' => date( 'Y-m-d H:i:s' ),
     'update_date' => '0001-01-01 00:00:00',
     'user_id'     => $master->id,
-    'param_key'   => 'param_key',
-    'param_value' => 'param value!',
+    'param_key'   => 'register_agent',
+    'param_value' => substr( Flight::request()->user_agent, 0, 255 ),
 ]);
+
+
+// restore date
+$master_param = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::insert( $master_param, [
+    'create_date' => date( 'Y-m-d H:i:s' ),
+    'update_date' => '0001-01-01 00:00:00',
+    'user_id'     => $master->id,
+    'param_key'   => 'restore_date',
+    'param_value' => date( 'Y-m-d H:i:s' ),
+]);
+
+// auth date
+$master_param = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::insert( $master_param, [
+    'create_date' => date( 'Y-m-d H:i:s' ),
+    'update_date' => '0001-01-01 00:00:00',
+    'user_id'     => $master->id,
+    'param_key'   => 'auth_date',
+    'param_value' => date( 'Y-m-d H:i:s' ),
+]);
+
+
 
 // close transaction
 if( Flight::empty( 'error' )) {

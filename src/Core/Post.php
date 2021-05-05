@@ -13,6 +13,7 @@ class Post extends \App\Core\Echidna
     protected $post_type;
     protected $post_status;
     protected $post_content;
+    protected $childs_count;
 
     public function __get( string $key ) {
 
@@ -101,6 +102,11 @@ class Post extends \App\Core\Echidna
             } elseif( $arg[0] == 'post_content' and !$this->is_string( $arg[2], 0 )) {
                 $this->error = 'post_content is incorrect';
                 break;
+
+            // childs_count can be empty
+            } elseif( $arg[0] == 'childs_count' and !$this->is_num( $arg[2] )) {
+                $this->error = 'childs_count is incorrect';
+                break;
             }
         }
 
@@ -120,6 +126,7 @@ class Post extends \App\Core\Echidna
                 $this->post_type    = $rows[0]->post_type;
                 $this->post_status  = $rows[0]->post_status;
                 $this->post_content = $rows[0]->post_content;
+                $this->childs_count = $rows[0]->childs_count;
             }
         }
 
@@ -174,6 +181,10 @@ class Post extends \App\Core\Echidna
         } elseif( !$this->is_string( $data['post_content'], 0 )) {
             $this->error = 'post_content is incorrect';
 
+        // childs_count can be empty
+        } elseif( !$this->is_num( $data['childs_count'] )) {
+            $this->error = 'childs_count is incorrect';
+
         } else {
             $this->id = $this->insert( 'posts', $data );
 
@@ -189,6 +200,7 @@ class Post extends \App\Core\Echidna
                 $this->post_type    = $data['post_type'];
                 $this->post_status  = $data['post_status'];
                 $this->post_content = $data['post_content'];
+                $this->childs_count = $data['childs_count'];
             }
         }
 
@@ -246,6 +258,10 @@ class Post extends \App\Core\Echidna
         } elseif( array_key_exists('post_content', $data) and !$this->is_string( $data['post_content'], 0 )) {
             $this->error = 'post_content is incorrect';
 
+        // childs_count can be empty
+        } elseif( array_key_exists('childs_count', $data) and !$this->is_num( $data['childs_count'] )) {
+            $this->error = 'childs_count is incorrect';
+
         } elseif( !$this->update( 'posts', [['id', '=', $this->id]], $data )) {
             $this->error = 'post update error';
 
@@ -281,6 +297,7 @@ class Post extends \App\Core\Echidna
             $this->post_type    = null;
             $this->post_status  = null;
             $this->post_content = null;
+            $this->childs_count = null;
         }
 
         return empty( $this->error );

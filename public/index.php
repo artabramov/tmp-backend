@@ -43,7 +43,7 @@ Flight::map( 'token', function() {
 // generate pass
 Flight::map( 'pass', function() {
 
-    $pass_symbols = '23456789abcdefghjkmnpqrstuvwxyz';
+    $pass_symbols = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     $pass_len = 6;
 
     $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
@@ -84,26 +84,25 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
     }
 });
 
-/*
-// save
-Flight::map( 'save', function( $instance, $data ) {
+// auth
+Flight::map( 'auth', function( $user, $user_token ) {
 
-    if( Flight::empty( 'error' )) {
-        
-        if( empty( $instance->id )) {
-            $result = $instance->set( $data );
-
-        } else {
-            $result = $instance->put( $data );
-        }
-
-        if( !$result ) {
-            Flight::set( 'e', $instance->e );
-            Flight::set( 'error', $instance->error );
-        }
+    Flight::select( $user, [
+        ['user_token', '=', $user_token], 
+        ['user_status', '=', 'approved']
+    ]);
+    
+    if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $user->auth_date ) < 1 ) {
+        Flight::set( 'error', 'wait for 1 second' );
+    
+    } elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $user->register_date ) > 24 * 60 * 60 ) {
+        Flight::set( 'error', 'user_token is expired' );
     }
+    
+    Flight::update( $user, [ 
+        'auth_date' => Flight::time()
+    ]);
 });
-*/
 
 // insert
 Flight::map( 'insert', function( $instance, $data ) {
@@ -577,6 +576,11 @@ Flight::route( 'GET /user/@user_id', function( $user_id ) {
     require_once( '../src/routes/user_select.php' );
 });
 
+// user rename
+Flight::route( 'PUT /user', function() {
+    require_once( '../src/routes/user_rename.php' );
+});
+
 // hub create
 Flight::route( 'POST /hub', function() {
     require_once( '../src/routes/hub_create.php' );
@@ -585,6 +589,11 @@ Flight::route( 'POST /hub', function() {
 // hub rename
 Flight::route( 'PUT /hub/@hub_id', function( $hub_id ) {
     require_once( '../src/routes/hub_update.php' );
+});
+
+// hub trash
+Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
+    require_once( '../src/routes/hub_trash.php' );
 });
 
 // role invite

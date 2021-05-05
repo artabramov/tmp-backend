@@ -5,34 +5,27 @@ $hub_id = (int) Flight::request()->query['hub_id'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// master auth
+// auth
 $master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::load( $master, [
-    ['user_token', '=', $user_token], 
-    ['user_status', '=', 'approved']
-]);
-
-Flight::save( $master, [ 
-    'auth_date' => Flight::time()
-]);
+Flight::auth( $master, $user_token );
 
 // hub
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::load( $hub, [
+Flight::select( $hub, [
     ['id', '=', $hub_id], 
     ['hub_status', '=', 'custom'],
 ]);
 
 // master role
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
-Flight::load( $master_role, [
+Flight::select( $master_role, [
     ['user_id', '=', $master->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', '=', 'invited']
 ]);
 
 // update master role
-Flight::save( $master_role, [ 
+Flight::update( $master_role, [ 
     'update_date' => Flight::time(),
     'user_role' => 'reader',
 ]);
