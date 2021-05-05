@@ -12,14 +12,14 @@ Flight::select( $master, [
 ]);
 
 // restore date
-$master_date = new \App\Core\Param( Flight::get( 'pdo' ));
-Flight::select( $master_date, [
+$restore_date = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::select( $restore_date, [
     ['user_id', '=', $master->id], 
     ['param_key', '=', 'restore_date']
 ]);
 
 // delay
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master_date->param_value ) < 60 ) {
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $restore_date->param_value ) < 60 ) {
     Flight::set( 'error', 'wait for 60 seconds' );
 }
 
@@ -31,7 +31,7 @@ Flight::update( $master, [
 ]);
 
 // update restore date
-Flight::update( $master_date, [
+Flight::update( $restore_date, [
     'param_value' => Flight::time()
 ]);
 

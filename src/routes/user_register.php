@@ -5,12 +5,11 @@ $user_name = Flight::request()->query['user_name'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// register
+// user register
 $master = new \App\Core\User( Flight::get( 'pdo' ));
 Flight::insert( $master, [
     'create_date' => Flight::time(),
     'update_date' => '0001-01-01 00:00:00',
-    'auth_date'   => '0001-01-01 00:00:00',
     'user_status' => 'pending',
     'user_token'  => Flight::token(),
     'user_email'  => $user_email,
@@ -18,7 +17,7 @@ Flight::insert( $master, [
     'user_hash'   => '',
 ]);
 
-// hub
+// hub insert
 $hub = new \App\Core\Hub( Flight::get( 'pdo' ));
 Flight::insert( $hub, [
     'create_date' => Flight::time(),
@@ -28,7 +27,7 @@ Flight::insert( $hub, [
     'hub_name'    => 'my private hub',
 ]);
 
-// master role
+// role insert
 $master_role = new \App\Core\Role( Flight::get( 'pdo' ));
 Flight::insert( $master_role, [
     'create_date' => Flight::time(),
@@ -38,6 +37,7 @@ Flight::insert( $master_role, [
     'user_role'   => 'admin',
 ]);
 
+/*
 // register ip
 $master_param = new \App\Core\Param( Flight::get( 'pdo' ));
 Flight::insert( $master_param, [
@@ -57,6 +57,7 @@ Flight::insert( $master_param, [
     'param_key'   => 'register_agent',
     'param_value' => substr( Flight::request()->user_agent, 0, 255 ),
 ]);
+*/
 
 // restore date
 $master_param = new \App\Core\Param( Flight::get( 'pdo' ));
@@ -65,6 +66,16 @@ Flight::insert( $master_param, [
     'update_date' => '0001-01-01 00:00:00',
     'user_id'     => $master->id,
     'param_key'   => 'restore_date',
+    'param_value' => '0001-01-01 00:00:00',
+]);
+
+// auth date
+$master_param = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::insert( $master_param, [
+    'create_date' => Flight::time(),
+    'update_date' => '0001-01-01 00:00:00',
+    'user_id'     => $master->id,
+    'param_key'   => 'auth_date',
     'param_value' => '0001-01-01 00:00:00',
 ]);
 

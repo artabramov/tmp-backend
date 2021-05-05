@@ -26,6 +26,7 @@ Flight::select( $master_role, [
     ['hub_id', '=', $hub->id], 
 ]);
 
+/*
 // document insert
 $document = new \App\Core\Post( Flight::get( 'pdo' ));
 Flight::insert( $document, [
@@ -37,8 +38,14 @@ Flight::insert( $document, [
     'post_type'    => 'document',
     'post_status'  => $post_status,
     'post_content' => $post_content,
-    'childs_count' => 0
 ]);
+*/
+
+//$a = Flight::request()->files;
+foreach( Flight::request()->files as $file ) {
+    Flight::upload( $file, '/echidna/' . $master->id . '/' );
+}
+
 
 // additional checkings
 if( Flight::empty( 'error' ) and $hub->hub_status == 'private' and $master_role->user_role != 'admin' ) {

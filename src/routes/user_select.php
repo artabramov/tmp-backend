@@ -16,6 +16,12 @@ Flight::select( $slave, [
     ['user_status', '=', 'approved']
 ]);
 
+$slave_auth_date = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::select( $slave_auth_date, [
+    ['user_id', '=', $slave->id], 
+    ['param_key', '=', 'auth_date']
+]);
+
 // close transaction
 if( Flight::empty( 'error' )) {
     Flight::get( 'pdo' )->commit();
@@ -35,8 +41,8 @@ Flight::json([
     'success' => Flight::empty( 'error' ) ? 'true' : 'false',
     'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
     'user' => Flight::empty( 'error' ) ? [
-        'id'            => $slave->id, 
-        'register_date' => $slave->register_date, 
-        'auth_date'     => $slave->auth_date, 
-        'user_name'     => $slave->user_name ] : [],
+        'id'          => $slave->id, 
+        'create_date' => $slave->create_date, 
+        'auth_date'   => $slave_auth_date->param_value, 
+        'user_name'   => $slave->user_name ] : [],
 ]);

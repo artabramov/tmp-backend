@@ -5,28 +5,28 @@ $user_pass = (string) Flight::request()->query['user_pass'];
 // open transaction
 Flight::get('pdo')->beginTransaction();
 
-// is pass empty
+// is pass empty?
 if( Flight::empty( 'error' ) and empty( $user_pass )) {
     Flight::set( 'error', 'user_pass is empty' );
 }
 
-// login
+// user select
 $master = new \App\Core\User( Flight::get( 'pdo' ));
 Flight::select( $master, [
     ['user_email', '=', $user_email], 
-    ['user_hash', '=', Flight::hash( $user_pass ) ], 
+    ['user_hash', '=', Flight::hash( $user_pass )], 
     ['user_status', '<>', 'trash']
 ]);
 
 // get restore date
-$master_date = new \App\Core\Param( Flight::get( 'pdo' ));
-Flight::select( $master_date, [
+$restore_date = new \App\Core\Param( Flight::get( 'pdo' ));
+Flight::select( $restore_date, [
     ['user_id', '=', $master->id], 
     ['param_key', '=', 'restore_date']
 ]);
 
-// delay
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $master_date->param_value ) > 120 ) {
+// is pass expired?
+if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $restore_date->param_value ) > 300 ) {
     Flight::set( 'error', 'user_pass is expired' );
 }
 
