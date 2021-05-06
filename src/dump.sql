@@ -1,4 +1,88 @@
 SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS project.users (
+    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_status VARCHAR(20)  NOT NULL, # pending | approved | trash
+    user_token  VARCHAR(80)  NOT NULL,
+    user_email  VARCHAR(255) NOT NULL,
+    user_name   VARCHAR(128) NOT NULL,
+    user_hash   VARCHAR(40)  NOT NULL,
+
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+            KEY update_date (update_date),
+            KEY user_status (user_status),
+    UNIQUE  KEY user_token  (user_token),
+    UNIQUE  KEY user_email  (user_email),
+            KEY user_name   (user_name),
+            KEY user_hash   (user_hash)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS project.user_meta (
+    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id     BIGINT(20)   NOT NULL,
+    meta_key    VARCHAR(20)  NOT NULL,
+    meta_value  VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+            KEY update_date (update_date),
+    FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+            KEY meta_key    (meta_key),
+            KEY meta_value  (meta_value)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TRIGGER project.user_meta_insert
+AFTER INSERT 
+ON project.user_meta 
+FOR EACH ROW
+INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(NEW.user_id, 'user_meta', NEW.id, 'INSERT');
+
+CREATE TRIGGER project.user_meta_update
+AFTER UPDATE 
+ON project.user_meta 
+FOR EACH ROW
+INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(OLD.user_id, 'user_meta', OLD.id, 'UPDATE');
+
+
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS project.user_events (
+    id           BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id      BIGINT(20)   NOT NULL,
+    parent_type  VARCHAR(20)  NOT NULL,
+    parent_id    BIGINT(20)   NOT NULL,
+    event_name   VARCHAR(20)  NOT NULL,
+
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+    FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+            KEY parent_type (parent_type),
+            KEY parent_id   (parent_id),
+            KEY event_name  (event_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+
+INSERT INTO project.users (user_status, user_token, user_email, user_name, user_hash) VALUES ('pending', 'token', 'noreply@noreply.no', 'art abramov', '');
+UPDATE project.users SET user_status='approved' WHERE id=1;
+SELECT * FROM project.users;
+INSERT INTO project.user_meta (user_id, meta_key, meta_value) VALUES (1, 'key', 'value');
+UPDATE project.users SET user_status='approved' WHERE id=1;
+UPDATE project.user_meta SET meta_value='value 2' WHERE id=7;
+
+SELECT * FROM project.users; SELECT * FROM project.user_meta; SELECT * FROM project.user_events;
+
+
+# ============================================
 
 # users +
 CREATE TABLE IF NOT EXISTS project.users (
