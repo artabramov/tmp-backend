@@ -82,7 +82,7 @@ class Role extends \App\Core\Echidna
         }
 
         if( empty( $this->error )) {
-            $rows = $this->select( '*', 'user_roles', $args, 1, 0 );
+            $rows = $this->select( '*', 'roles', $args, 1, 0 );
 
             if ( empty( $rows[0] )) {
                 $this->error = 'role not found';
@@ -132,11 +132,11 @@ class Role extends \App\Core\Echidna
         } elseif( !$this->is_string( $data['user_role'], 20 )) {
             $this->error = 'user_role is incorrect';
 
-        } elseif( $this->is_exists( 'user_roles', [['user_id', '=', $data['user_id']], ['hub_id', '=', $data['hub_id']]] )) {
+        } elseif( $this->is_exists( 'roles', [['user_id', '=', $data['user_id']], ['hub_id', '=', $data['hub_id']]] )) {
             $this->error = 'user_role is occupied';
 
         } else {
-            $this->id = $this->insert( 'user_roles', $data );
+            $this->id = $this->insert( 'roles', $data );
 
             if( empty( $this->id )) {
                 $this->error = 'role insert error';
@@ -191,7 +191,7 @@ class Role extends \App\Core\Echidna
         } elseif( array_key_exists('user_role', $data) and !$this->is_string( $data['user_role'], 20 )) {
             $this->error = 'user_role is incorrect';
 
-        } elseif( !$this->update( 'user_roles', [['id', '=', $this->id]], $data )) {
+        } elseif( !$this->update( 'roles', [['id', '=', $this->id]], $data )) {
             $this->error = 'role update error';
 
         } else {
@@ -213,7 +213,7 @@ class Role extends \App\Core\Echidna
         } elseif( !$this->is_num( $this->id )) {
             $this->error = 'role_id is incorrect';
 
-        } elseif( !$this->delete( 'user_roles', [['id', '=', $this->id]] )) {
+        } elseif( !$this->delete( 'roles', [['id', '=', $this->id]] )) {
             $this->error = 'role delete error';
 
         } else {

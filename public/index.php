@@ -64,7 +64,7 @@ Flight::map( 'hash', function( string $user_pass ) {
     return sha1( $user_pass . '~salt' );
 });
 
-// get time
+// TODO: rename to datetime()
 Flight::map( 'time', function() {
     return date( 'Y-m-d H:i:s' );
 });
@@ -94,17 +94,9 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
 });
 
 // upload the file
-Flight::map( 'upload', function( $file, $path ) {
+Flight::map( 'upload', function( $file, $upload_file ) {
 
     if( Flight::empty( 'error' )) {
-
-        /*
-        $name = $file['name'];
-        $type = $file['type'];
-        $tmp_name = $file['tmp_name'];
-        $error = $file['error'];
-        $size = $file['size'];
-        */
 
         //Configure Dropbox Application
         $app_key = 'ir3ndpahsbnyru0';
@@ -112,18 +104,20 @@ Flight::map( 'upload', function( $file, $path ) {
         $access_token = 'WSpPvkMfiVEAAAAAAAAAAe-DJD3Ot3stp7ci2Mpvi_hZhvdbYJjSrtfYTdKPD3Rm';
         $dropbox_app = new DropboxApp( $app_key, $app_secret, $access_token );
 
-        //Configure Dropbox service
-        $dropbox = new Dropbox( $dropbox_app );
+        try{
+            //Configure Dropbox service
+            $dropbox = new Dropbox( $dropbox_app );
 
-        // create Dropbox file
-        $dropbox_file = new DropboxFile( $file['tmp_name'] ); 
+            // create Dropbox file
+            $dropbox_file = new DropboxFile( $file['tmp_name'] ); 
 
-        // upload
-        $tmp = explode('.', $file['name']);
-        $ext = array_key_exists(1, $tmp) ? '.' . end( $tmp ) : '';
-        $result = $dropbox->simpleUpload( $dropbox_file, $path . Flight::timestamp() . '-' . sha1( $file['name'] ) . $ext, ['autorename' => true] );
-        $a = 1;
+            // dropbox upload
+            $dropbox_upload = $dropbox->simpleUpload( $dropbox_file, $upload_file, ['autorename' => true] );
 
+        } catch( \Exception $e ) {
+            Flight::set( 'e', $e );
+            Flight::set( 'error', 'upload error' );
+        }
     }
 });
 
@@ -302,6 +296,13 @@ Flight::route( 'POST /document', function() {
     require_once( '../src/routes/document_create.php' );
 });
 
+// select the document
+Flight::route( 'GET /document/@post_id', function( $post_id ) {
+    require_once( '../src/routes/document_select.php' );
+});
+
+
+
 // documents (!) select
 Flight::route( 'GET /documents', function() {
     require_once( '../src/routes/documents_select.php' );
@@ -330,6 +331,12 @@ Flight::route( 'POST /upload', function() {
         'success' => 'unknown', 
         'error' => 'unknown'
     ]);
+});
+
+// ---- META ----
+
+Flight::route( 'POST /meta', function() {
+    require_once( '../src/routes/meta_post.php' );
 });
 
 //================ START ================

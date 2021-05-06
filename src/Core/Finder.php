@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class Collector extends \App\Core\Echidna
+class Finder extends \App\Core\Echidna
 {
     public $rows = [];
 
@@ -21,7 +21,7 @@ class Collector extends \App\Core\Echidna
         return false;
     }
 
-    public function get( $model, $table, $args, $limit, $offset ) {
+    public function find( $model, $table, $args, $limit, $offset ) {
         $rows = $this->select( 'id', $table, $args, $limit, $offset );
 
         foreach( $rows as $row ) {

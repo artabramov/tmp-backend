@@ -2,23 +2,23 @@
 use \PHPUnit\Framework\TestCase;
 
 require_once __DIR__.'/../src/Core/Echidna.php';
-require_once __DIR__.'/../src/Core/Param.php';
+require_once __DIR__.'/../src/Core/Upload.php';
 
-class ParamTest extends TestCase
+class UploadTest extends TestCase
 {
     private $pdo;
-    private $param;
+    private $upload;
 
     protected function setUp() : void {
         $this->pdo = require __DIR__ . "/../src/init/pdo.php";
-        $this->param = new \App\Core\Param( $this->pdo );
+        $this->upload = new \App\Core\Upload( $this->pdo );
         $this->truncate();
     }
 
     protected function tearDown() : void {
         $this->truncate();
         $this->pdo = null;
-        $this->param = null;
+        $this->upload = null;
     }
 
     private function callMethod( $object, string $method , array $parameters = [] ) {
@@ -51,11 +51,11 @@ class ParamTest extends TestCase
     }
 
     protected function truncate() {
-        $stmt = $this->pdo->query( "TRUNCATE TABLE user_params;" );
+        $stmt = $this->pdo->query( "TRUNCATE TABLE uploads;" );
     }
 
     protected function insert() {
-        $stmt = $this->pdo->query( "INSERT INTO user_params VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 'key', 'value');" );
+        $stmt = $this->pdo->query( "INSERT INTO uploads VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 'filename.jpeg', 'image/jpeg', 1000, 'path/filename.jpeg');" );
     }
 
     /**
@@ -64,16 +64,16 @@ class ParamTest extends TestCase
     public function testSet( $data, $expected ) {
 
         $this->truncate();
-        $result = $this->param->set( $data );
+        $result = $this->upload->set( $data );
         $this->assertEquals( $result, $expected[0] );
-        $this->assertEquals( $this->param->error, $expected[1] );
+        $this->assertEquals( $this->upload->error, $expected[1] );
     }
 
     public function addSet() {
         return [
 
             // correct cases
-            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => '1', 'param_key' => 'key', 'param_value' => 'value'], [true, ''] ],
+            [ ['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'post_id' => 1, 'upload_name' => 'filename-2.jpeg', 'upload_mime' => 'image/jpeg', 'upload_size' => 1000, 'upload_file' => 'path/filename-2.jpeg'], [true, ''] ],
 
             // incorrect cases
 
@@ -88,7 +88,7 @@ class ParamTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $result = $this->param->get( $args );
+        $result = $this->upload->get( $args );
         $this->assertEquals( $result, $expected );
 
     }
@@ -112,8 +112,8 @@ class ParamTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $this->setProperty( $this->param, 'id', 1 );
-        $result = $this->param->put( $data );
+        $this->setProperty( $this->upload, 'id', 1 );
+        $result = $this->upload->put( $data );
         $this->assertEquals( $result, $expected );
 
     }
@@ -122,7 +122,7 @@ class ParamTest extends TestCase
         return [
 
             // correct cases
-            [ ['param_value' => 'value 2'], true ],
+            [ ['upload_name' => 'filename-3.jpeg'], true ],
 
             // incorrect cases
 
@@ -134,8 +134,8 @@ class ParamTest extends TestCase
 
         $this->truncate();
         $this->insert();
-        $this->setProperty( $this->param, 'id', 1 );
-        $result = $this->param->del();
+        $this->setProperty( $this->upload, 'id', 1 );
+        $result = $this->upload->del();
         $this->assertEquals( $result, true );
     }
 

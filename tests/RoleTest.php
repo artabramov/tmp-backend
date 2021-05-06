@@ -51,11 +51,11 @@ class RoleTest extends TestCase
     }
 
     protected function truncate() {
-        $stmt = $this->pdo->query( "TRUNCATE TABLE user_roles;" );
+        $stmt = $this->pdo->query( "TRUNCATE TABLE roles;" );
     }
 
     protected function insert() {
-        $stmt = $this->pdo->query( "INSERT INTO user_roles VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 1, 'admin');" );
+        $stmt = $this->pdo->query( "INSERT INTO roles VALUES (1, '0001-01-01 00:00:00', '0001-01-01 00:00:00', 1, 1, 'admin');" );
     }
 
     /**

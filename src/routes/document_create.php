@@ -26,7 +26,7 @@ Flight::select( $master_role, [
     ['hub_id', '=', $hub->id], 
 ]);
 
-/*
+
 // document insert
 $document = new \App\Core\Post( Flight::get( 'pdo' ));
 Flight::insert( $document, [
@@ -39,11 +39,30 @@ Flight::insert( $document, [
     'post_status'  => $post_status,
     'post_content' => $post_content,
 ]);
-*/
 
-//$a = Flight::request()->files;
+// upload the files
 foreach( Flight::request()->files as $file ) {
-    Flight::upload( $file, '/echidna/' . $master->id . '/' );
+
+    $tmp = explode( '.', $file['name'] );
+    $ext = count( $tmp ) > 0 ? '.' . end( $tmp ) : '';
+    $upload_mime = mime_content_type( $file['tmp_name'] );
+    $upload_name = $file['name'];
+    $upload_file = '/echidna/' . $master->id . '/' . sha1( Flight::timestamp() . $file['name'] ) . $ext;
+
+    $upload = new \App\Core\Upload( Flight::get( 'pdo' ));
+    Flight::insert( $upload, [
+        'create_date'   => date( 'Y-m-d H:i:s' ),
+        'update_date'   => '0001-01-01 00:00:00',
+        'user_id'       => $master->id,
+        'post_id'       => $document->id,
+        'upload_status' => 'common',
+        'upload_name'   => mb_substr( $upload_name, 0, 255, 'UTF-8' ),
+        'upload_mime'   => mb_substr( $upload_mime, 0, 255, 'UTF-8' ),
+        'upload_size'   => $file['size'],
+        'upload_file'   => mb_substr( $upload_file, 0, 255, 'UTF-8' ),
+    ]);
+
+    Flight::upload( $file, $upload->upload_file );
 }
 
 
