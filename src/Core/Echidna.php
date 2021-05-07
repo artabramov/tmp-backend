@@ -236,4 +236,21 @@ class Echidna
         return empty( $this->e ) ? $rows[ 'COUNT(id)' ] : 0;
     }
 
+    protected function query( string $query, array $data = [] ) {
+
+        try {
+            $stmt = $this->pdo->prepare( $query );
+            foreach( $data as $key=>$value ) {
+                $stmt->bindParam( ':' . $key, $data[ $key ] );
+            }
+            $stmt->execute();
+            $rows = $stmt->fetchAll( $this->pdo::FETCH_OBJ );
+
+        } catch( \Exception $e ) {
+            $this->e = $e;
+        }
+
+        return $rows;
+    }
+
 }

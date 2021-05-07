@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS project.users (
     user_token  VARCHAR(80)  NOT NULL,
     user_email  VARCHAR(255) NOT NULL,
     user_name   VARCHAR(128) NOT NULL,
-    user_hash   VARCHAR(40)  NOT NULL,
+    user_hash   VARCHAR(40)  NOT NULL DEFAULT '',
 
     PRIMARY KEY id          (id),
             KEY create_date (create_date),
@@ -37,37 +37,43 @@ CREATE TABLE IF NOT EXISTS project.user_meta (
             KEY meta_value  (meta_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TRIGGER project.user_meta_insert
-AFTER INSERT 
-ON project.user_meta 
-FOR EACH ROW
-INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(NEW.user_id, 'user_meta', NEW.id, 'INSERT');
-
-CREATE TRIGGER project.user_meta_update
-AFTER UPDATE 
-ON project.user_meta 
-FOR EACH ROW
-INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(OLD.user_id, 'user_meta', OLD.id, 'UPDATE');
-
-
-
 
 SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS project.user_events (
-    id           BIGINT(20)   NOT NULL AUTO_INCREMENT,
-    create_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    user_id      BIGINT(20)   NOT NULL,
-    parent_type  VARCHAR(20)  NOT NULL,
-    parent_id    BIGINT(20)   NOT NULL,
-    event_name   VARCHAR(20)  NOT NULL,
+CREATE TABLE IF NOT EXISTS project.repos (
+    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id     BIGINT(20)   NOT NULL,
+    repo_status VARCHAR(20)  NOT NULL, # private | custom | trash
+    repo_name   VARCHAR(128) NOT NULL,
 
     PRIMARY KEY id          (id),
             KEY create_date (create_date),
+            KEY update_date (update_date),
     FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
-            KEY parent_type (parent_type),
-            KEY parent_id   (parent_id),
-            KEY event_name  (event_name)
+            KEY repo_status (repo_status),
+            KEY repo_name   (repo_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS project.user_roles (
+    id          BIGINT(20)  NOT NULL AUTO_INCREMENT,
+    create_date DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    repo_id     BIGINT(20)  NOT NULL,
+    user_id     BIGINT(20)  NOT NULL,
+    user_role   VARCHAR(20) NOT NULL, # admin | author | editor | reader | none
+
+    PRIMARY KEY id          (id),
+            KEY create_date (create_date),
+            KEY update_date (update_date),
+    FOREIGN KEY (repo_id) REFERENCES project.repos (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+            KEY user_role   (user_role)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
 
 
 
@@ -218,3 +224,16 @@ CREATE TABLE IF NOT EXISTS project.meta (
             KEY meta_key    (meta_key),
             KEY meta_value  (meta_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TRIGGER project.user_meta_insert
+AFTER INSERT 
+ON project.user_meta 
+FOR EACH ROW
+INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(NEW.user_id, 'user_meta', NEW.id, 'INSERT');
+
+CREATE TRIGGER project.user_meta_update
+AFTER UPDATE 
+ON project.user_meta 
+FOR EACH ROW
+INSERT INTO project.user_events(user_id, parent_type, parent_id, event_name) VALUES(OLD.user_id, 'user_meta', OLD.id, 'UPDATE');

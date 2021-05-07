@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class Basic extends \App\Core\Echidna
+class Model extends \App\Core\Echidna
 {
     protected $error;
     protected $table;
@@ -95,14 +95,15 @@ class Basic extends \App\Core\Echidna
         if( empty( $this->error )) {
 
             if( empty( $this->data['id'] ) ) {
-                if( !$this->insert( $this->table, $this->data )) {
+                $id = $this->insert( $this->table, $this->data );
+                if( $id > 0 ) {
+                    $this->data['id'] = $id;
+                } else {
                     $this->error = 'insert error';
                 }
     
-            } else {
-                if( !$this->update( $this->table, [['id', '=', $this->data['id']]], $this->data )) {
-                    $this->error = 'update error';
-                }
+            } elseif( !$this->update( $this->table, [['id', '=', $this->data['id']]], $this->data )) {
+                $this->error = 'update error';
             }
         }
 

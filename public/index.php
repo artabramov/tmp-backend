@@ -64,14 +64,11 @@ Flight::map( 'hash', function( string $user_pass ) {
     return sha1( $user_pass . '~salt' );
 });
 
-// TODO: rename to datetime()
-Flight::map( 'time', function() {
-    return date( 'Y-m-d H:i:s' );
-});
-
-// get timestamp
-Flight::map( 'timestamp', function() {
-    return date( 'U' );
+// datetime
+Flight::map( 'datetime', function() {
+    $timer = new \App\Core\Timer( Flight::get( 'pdo' ));
+    return $timer->datetime;
+    //return date( 'Y-m-d H:i:s' );
 });
 
 // send email
@@ -121,122 +118,173 @@ Flight::map( 'upload', function( $file, $upload_file ) {
     }
 });
 
-// auth
-Flight::map( 'auth', function( $user, $user_token ) {
+// create the user model
+Flight::map( 'user', function( $data = [] ) {
 
-    Flight::select( $user, [
-        ['user_token', '=', $user_token], 
-        ['user_status', '=', 'approved']
+    $user = new \App\Core\Model( Flight::get( 'pdo' ), 
+        'users', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'user_status' => [ "/^pending$|^approved$|^trash$/", false ],
+        'user_token'  => [ "/^[0-9a-f]{80}$/", true ],
+        'user_email'  => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
+        'user_name'   => [ "/^.{1,128}$/", false ],
+        'user_hash'   => [ "/^$|^[0-9a-f]{40}$/", false ],
     ]);
 
-    $restore_date = new \App\Core\Param( Flight::get( 'pdo' ));
-    Flight::select( $restore_date, [
-        ['user_id', '=', $user->id], 
-        ['param_key', '=', 'restore_date']
+    foreach( $data as $key=>$value ) {
+        $user->$key = $value;
+    }
+
+    return $user;
+});
+
+// usermeta
+Flight::map( 'usermeta', function( $data = [] ) {
+
+    $meta = new \App\Core\Model( Flight::get( 'pdo' ), 
+        'user_meta', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'meta_key'    => [ "/^[a-z0-9_]{1,20}$/", false ],
+        'meta_value'  => [ "/^.{0,255}$/", false ],
     ]);
 
-    $auth_date = new \App\Core\Param( Flight::get( 'pdo' ));
-    Flight::select( $auth_date, [
-        ['user_id', '=', $user->id], 
-        ['param_key', '=', 'auth_date']
+    foreach( $data as $key=>$value ) {
+        $meta->$key = $value;
+    }
+
+    return $meta;
+});
+
+// repo
+Flight::map( 'repo', function( $data = [] ) {
+
+    $repo = new \App\Core\Model( Flight::get( 'pdo' ), 
+        'repos', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'repo_status' => [ "/^private$|^custom$|^trash$/", false ],
+        'repo_name'   => [ "/^.{1,128}$/", false ],
     ]);
-    
-    if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $auth_date->param_value ) < 1 ) {
-        Flight::set( 'error', 'wait for 1 second' );
-    
-    } elseif( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $restore_date->param_value ) > 24 * 60 * 60 ) {
-        Flight::set( 'error', 'user_token is expired' );
+
+    foreach( $data as $key=>$value ) {
+        $repo->$key = $value;
     }
-    
-    Flight::update( $auth_date, [
-        'param_value' => Flight::time()
+
+    return $repo;
+});
+
+// role
+Flight::map( 'role', function( $data = [] ) {
+
+    $role = new \App\Core\Model( Flight::get( 'pdo' ), 
+        'user_roles', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'repo_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'user_role'   => [ "/^admin$|^author$|^editor$|^reader$|^none$/", false ],
     ]);
-});
 
-// insert
-Flight::map( 'insert', function( $instance, $data ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$instance->set( $data )) {
-            Flight::set( 'e', $instance->e );
-            Flight::set( 'error', $instance->error );
-        }
+    foreach( $data as $key=>$value ) {
+        $role->$key = $value;
     }
+
+    return $role;
 });
 
-// update
-Flight::map( 'update', function( $instance, $data ) {
+// save
+Flight::map( 'save', function( \App\Core\Model $obj, $data = [] ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$instance->put( $data )) {
-            Flight::set( 'e', $instance->e );
-            Flight::set( 'error', $instance->error );
-        }
-    }
-});
-
-// select
-Flight::map( 'select', function( $instance, $args ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$instance->get( $args )) {
-            Flight::set( 'e', $instance->e );
-            Flight::set( 'error', $instance->error );
-        }
-    }
-});
-
-// delete
-Flight::map( 'delete', function( $instance ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$instance->del()) {
-            Flight::set( 'e', $instance->e );
-            Flight::set( 'error', $instance->error );
-        }
-    }
-});
-
-/*
-// documents (!) select
-Flight::map( 'documents_select', function( $hub_id, $limit, $offset ) {
-
-    $posts = new \App\Core\Collector( Flight::get( 'pdo' ));
-
-    if( Flight::empty( 'error' )) {
-
-        if( !$posts->get( 'App\Core\Post', 'posts', [['hub_id', '=', $hub_id]], $limit, $offset )) {
-            Flight::set( 'e', $posts->e );
-            Flight::set( 'error', $posts->error );
+        if( !$obj->save( $data )) {
+            Flight::set( 'e', $obj->e );
+            Flight::set( 'error', $obj->error );
         }
     }
 
-    return $posts;
 });
-*/
+
+// load
+Flight::map( 'load', function( \App\Core\Model $obj, $args = [] ) {
+
+    if( Flight::empty( 'error' )) {
+        if( !$obj->load( $args )) {
+            Flight::set( 'e', $obj->e );
+            Flight::set( 'error', $obj->error );
+        }
+    }
+}); 
+
+// ==== FILTERING ====
+
+// before route
+Flight::before('start', function(&$params, &$output){
+    Flight::get('pdo')->beginTransaction();
+});
+
+// after route
+Flight::after('stop', function(&$params, &$output){
+
+    // close transaction
+    if( Flight::empty( 'error' )) {
+        Flight::get( 'pdo' )->commit();
+    } else {
+        Flight::get( 'pdo' )->rollBack();
+    }
+
+    // debug
+    if( !Flight::empty( 'e' )) {
+        Flight::debug( Flight::get('e') );
+    }
+});
+
+// json
+Flight::before('json', function(&$params, &$output){
+    $params[0]['time']    = Flight::datetime();
+    $params[0]['success'] = Flight::empty( 'error' ) ? 'true' : 'false';
+    $params[0]['error']   = Flight::empty( 'error' ) ? '' : Flight::get( 'error' );
+});
 
 //================ ROUTES ================
 
 
 Flight::route( 'GET /', function() {
 
-    // type, length, unique
-
     /*
-    $pdo = require __DIR__ . "/../src/init/pdo.php";
-    $tag = new \App\Core\Basic( $pdo, 'tags', [
-        'id'          => ['integer', 20,  false],
-        'create_date' => ['string',  19,  false],
-        'update_date' => ['string',  19,  false],
-        'post_id'     => ['integer', 20,  false],
-        'tag_key'     => ['string',  20,  true],
-        'tag_value'   => ['string',  255, false],
+    $user = new \App\Core\Model( Flight::get( 'pdo' ), 
+        'users', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
+        'user_status' => [ "/^pending$|^approved$|^trash$/",  false ],
+        'user_token'  => [ "/^[0-9a-f]{80}$/",  false ],
+        'user_email'  => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
+        'user_name'   => [ "/^.{0,128}$/", false ],
+        'user_hash'   => [ "/^[0-9a-f]{40}$/",  false ],
     ]);
     */
 
+    /*
+    $user->user_status = 'pending';
+    $user->user_token  = sha1('1') . sha1('1');
+    $user->user_email  = 'noreply@noreply.no';
+    $user->user_name   = 'art abramov';
+    $user->user_hash   = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    $user->save();
+    */
 
+
+    /*
     $pdo = require __DIR__ . "/../src/init/pdo.php";
-    $tag = new \App\Core\Basic( $pdo, 'tags', [
+    $tag = new \App\Core\Model( $pdo, 'tags', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
         'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
@@ -244,6 +292,7 @@ Flight::route( 'GET /', function() {
         'tag_key'     => [ "/^[a-z0-9_-]{1,20}$/",  true ],
         'tag_value'   => [ "/^.{0,255}$/", false ],
     ]);
+    */
 
     /*
     $tag->post_id = 1;
@@ -252,10 +301,27 @@ Flight::route( 'GET /', function() {
     $result = $tag->save();
     */
 
-    $tag->load( [['id', '=', 5]] );
+    //$tag->load( [['id', '=', 5]] );
 
+    /*
+    $user = Flight::user();
+    $user->user_status = 'pending';
+    $user->user_token  = sha1( rand(0,1000) ) . sha1( rand(0,1000) );
+    $user->user_email  = Flight::request()->query['user_email'];
+    $user->user_name   = Flight::request()->query['user_name'];
+    $user->user_hash   = '';
+    $user->save();
+    */
 
-    Flight::json([ 'error' => $tag->error ]);
+    $user = Flight::user([
+        'user_status' => 'pending',
+        'user_token'  => Flight::token(),
+        'user_email'  => Flight::request()->query['user_email'],
+        'user_name'   => Flight::request()->query['user_name'],
+    ]);
+    Flight::save( $user );
+
+    Flight::json([ 'error' => $user->error ]);
 
     /*
     $pdo = require __DIR__ . "/../src/init/pdo.php";
