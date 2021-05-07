@@ -267,7 +267,7 @@ class User extends \App\Core\Echidna
 
         } else {
             $this->id          = null;
-            $this->creste_date = null;
+            $this->create_date = null;
             $this->update_date = null;
             $this->user_status = null;
             $this->user_token  = null;

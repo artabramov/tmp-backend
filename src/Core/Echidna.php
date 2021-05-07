@@ -11,31 +11,6 @@ class Echidna
         $this->e = null;
     }
 
-    protected function is_empty( mixed $value ) : bool {
-        return ( is_string( $value ) and empty( trim( $value ))) or empty( $value );
-    }
-
-    protected function is_num( mixed $value ) : bool {
-        return ( is_string( $value ) and ctype_digit( $value )) or ( is_int( $value ) and $value >= 0 );
-    }
-
-    protected function is_string( mixed $value, int $len ) : bool {
-        if( $len > 0 ) {
-            return is_string( $value ) and mb_strlen( $value, 'UTF-8' ) <= $len;
-
-        } else {
-            return is_string( $value );
-        }
-    }
-
-    protected function is_datetime( mixed $value ) : bool {
-        return is_string( $value ) and preg_match( "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", $value );
-    }
-
-    protected function is_email( mixed $value ) : bool {
-        return is_string( $value ) and preg_match( "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", $value );
-    }
-
     /**
      * @return bool
      * @throws \Exception
@@ -51,13 +26,16 @@ class Echidna
         try {
             $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' ' . $where . ' LIMIT 1' );
             foreach( $args as $arg ) {
+                $stmt->bindParam( ':' . $arg[0], $arg[2]  );
 
+                /*
                 if( $arg[0] == 'id' ) {
                     $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_INT );
 
                 } else {
                     $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_STR );
                 }
+                */
             }
 
             $stmt->execute();
@@ -86,7 +64,9 @@ class Echidna
         try {
             $stmt = $this->pdo->prepare( 'INSERT INTO ' . $table . ' ( ' . $keys . ' ) VALUES ( ' . $values . ' )' );
             foreach( $data as $key=>$value ) {
-                $stmt->bindParam( ':' . $key, $data[ $key ], $this->pdo::PARAM_STR );
+                $stmt->bindParam( ':' . $key, $data[ $key ] );
+
+                //$stmt->bindParam( ':' . $key, $data[ $key ], $this->pdo::PARAM_STR );
             }
 
             $stmt->execute();
@@ -121,12 +101,16 @@ class Echidna
             $stmt = $this->pdo->prepare( 'UPDATE ' . $table . ' ' . $set . ' ' . $where . ' LIMIT 1' );
 
             foreach( $args as $arg ) {
+                $stmt->bindParam( ':' . $arg[0], $arg[2] );
+
+                /*
                 if( $arg[0] == 'id' ) {
                     $stmt->bindParam( ':id', $arg[2], $this->pdo::PARAM_INT );
 
                 } else {
                     $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_STR );
                 }
+                */
             }
 
             foreach( $data as $key=>&$value ) {
@@ -159,12 +143,16 @@ class Echidna
             $stmt = $this->pdo->prepare( 'SELECT ' . $fields . ' FROM ' . $table . ' ' . $where . ' LIMIT :limit OFFSET :offset' );
 
             foreach( $args as $arg ) {
+                $stmt->bindParam( ':' . $arg[0], $arg[2] );
+
+                /*
                 if( $arg[0] == 'id' ) {
                     $stmt->bindParam( ':id', $arg[2], $this->pdo::PARAM_INT );
 
                 } else {
                     $stmt->bindParam( ':' . $arg[0], $arg[2], $this->pdo::PARAM_STR );
                 }
+                */
             }
 
             $stmt->bindValue( ':limit', $limit, $this->pdo::PARAM_INT );

@@ -162,11 +162,12 @@ CREATE TABLE IF NOT EXISTS project.posts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 # tags +
+SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.tags (
     id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
-    create_date DATETIME     NOT NULL,
-    update_date DATETIME     NOT NULL,
-    post_id     BIGINT(20)   NOT NULL,
+    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    post_id     BIGINT(20)   NOT NULL DEFAULT 0,
     tag_key     VARCHAR(20)  NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
 
@@ -174,7 +175,7 @@ CREATE TABLE IF NOT EXISTS project.tags (
             KEY create_date (create_date),
             KEY update_date (update_date),
             KEY post_id     (post_id),
-            KEY tag_key     (tag_key),
+    UNIQUE KEY tag_key     (tag_key),
             KEY tag_value   (tag_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

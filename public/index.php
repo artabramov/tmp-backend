@@ -217,14 +217,54 @@ Flight::map( 'documents_select', function( $hub_id, $limit, $offset ) {
 
 //================ ROUTES ================
 
-/*
+
 Flight::route( 'GET /', function() {
+
+    // type, length, unique
+
+    /*
+    $pdo = require __DIR__ . "/../src/init/pdo.php";
+    $tag = new \App\Core\Basic( $pdo, 'tags', [
+        'id'          => ['integer', 20,  false],
+        'create_date' => ['string',  19,  false],
+        'update_date' => ['string',  19,  false],
+        'post_id'     => ['integer', 20,  false],
+        'tag_key'     => ['string',  20,  true],
+        'tag_value'   => ['string',  255, false],
+    ]);
+    */
+
+
+    $pdo = require __DIR__ . "/../src/init/pdo.php";
+    $tag = new \App\Core\Basic( $pdo, 'tags', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
+        'post_id'     => [ "/^[0-9]{0,20}$/",  false ],
+        'tag_key'     => [ "/^[a-z0-9_-]{1,20}$/",  true ],
+        'tag_value'   => [ "/^.{0,255}$/", false ],
+    ]);
+
+    /*
+    $tag->post_id = 1;
+    $tag->tag_key = 'tag-2';
+    $tag->tag_value = 'just a tag';
+    $result = $tag->save();
+    */
+
+    $tag->load( [['id', '=', 5]] );
+
+
+    Flight::json([ 'error' => $tag->error ]);
+
+    /*
     $pdo = require __DIR__ . "/../src/init/pdo.php";
     $attribute = new \App\Core\Attribute( $pdo );
     $attribute->set(['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => 1, 'attribute_key' => 'key', 'attribute_value' => 'value']);
-    $a = 1;
+    
+    */
 });
-*/
+
 
 // user register
 Flight::route( 'POST /user', function() {
