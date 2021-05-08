@@ -1,59 +1,28 @@
 <?php
 $user_email = Flight::request()->query['user_email'];
 
-// open transaction
-Flight::get('pdo')->beginTransaction();
-
-// restore user
-$master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::select( $master, [
+// select the self user
+$me = Flight::user();
+Flight::select( $me, [
     ['user_email', '=', $user_email], 
-    ['user_status', '<>', 'trash']
-]);
-
-// restore date
-$restore_date = new \App\Core\Param( Flight::get( 'pdo' ));
-Flight::select( $restore_date, [
-    ['user_id', '=', $master->id], 
-    ['param_key', '=', 'restore_date']
+    ['user_status', '<>', 'trash']    
 ]);
 
 // delay
-if( Flight::empty( 'error' ) and date( 'U' ) - strtotime( $restore_date->param_value ) < 60 ) {
+$now = Flight::datetime();
+if( Flight::empty( 'error' ) and strtotime( $now ) - strtotime( $me->restore_date ) < 60 ) {
     Flight::set( 'error', 'wait for 60 seconds' );
 }
 
 // update master
-$user_pass = Flight::pass();
-Flight::update( $master, [
-    'update_date' => Flight::time(),
-    'user_hash' => Flight::hash( $user_pass ),
-]);
-
-// update restore date
-Flight::update( $restore_date, [
-    'param_value' => Flight::time()
+$me_pass = Flight::pass();
+Flight::update( $me, [
+    'restore_date' => $now,
+    'user_hash' => Flight::hash( $me_pass ),
 ]);
 
 // send email
-Flight::email( $master->user_email, 'User', 'User restore', 'One-time pass: <i>' . $user_pass . '</i>' );
-
-// close transaction
-if( Flight::empty( 'error' )) {
-    Flight::get( 'pdo' )->commit();
-
-} else {
-    Flight::get( 'pdo' )->rollBack();
-}
-
-// debug
-if( !Flight::empty( 'e' )) {
-    Flight::debug( Flight::get('e') );
-}
+Flight::email( $me->user_email, 'User', 'User restore', 'One-time pass: <i>' . $me_pass . '</i>' );
 
 // json
-Flight::json([ 
-    'time'    => Flight::time(),
-    'success' => Flight::empty( 'error' ) ? 'true' : 'false',
-    'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
-]);
+Flight::json();

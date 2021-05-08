@@ -47,7 +47,7 @@ Flight::map( 'token', function() {
 Flight::map( 'pass', function() {
 
     $pass_symbols = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    $pass_len = 8;
+    $pass_len = 10;
 
     $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
     $user_pass = '';
@@ -118,19 +118,20 @@ Flight::map( 'upload', function( $file, $upload_file ) {
     }
 });
 
-// create the user model
+// create the user
 Flight::map( 'user', function( $data = [] ) {
 
-    $user = new \App\Core\Model( Flight::get( 'pdo' ), 
+    $user = new \App\Core\Record( Flight::get( 'pdo' ), 
         'users', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'user_status' => [ "/^pending$|^approved$|^trash$/", false ],
-        'user_token'  => [ "/^[0-9a-f]{80}$/", true ],
-        'user_email'  => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
-        'user_name'   => [ "/^.{1,128}$/", false ],
-        'user_hash'   => [ "/^$|^[0-9a-f]{40}$/", false ],
+        'id'           => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'restore_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'user_status'  => [ "/^pending$|^approved$|^trash$/", false ],
+        'user_token'   => [ "/^[0-9a-f]{80}$/", true ],
+        'user_email'   => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
+        'user_name'    => [ "/^.{1,128}$/", false ],
+        'user_hash'    => [ "/^$|^[0-9a-f]{40}$/", false ],
     ]);
 
     foreach( $data as $key=>$value ) {
@@ -143,7 +144,7 @@ Flight::map( 'user', function( $data = [] ) {
 // usermeta
 Flight::map( 'usermeta', function( $data = [] ) {
 
-    $meta = new \App\Core\Model( Flight::get( 'pdo' ), 
+    $meta = new \App\Core\Record( Flight::get( 'pdo' ), 
         'user_meta', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -163,7 +164,7 @@ Flight::map( 'usermeta', function( $data = [] ) {
 // repo
 Flight::map( 'repo', function( $data = [] ) {
 
-    $repo = new \App\Core\Model( Flight::get( 'pdo' ), 
+    $repo = new \App\Core\Record( Flight::get( 'pdo' ), 
         'repos', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -183,7 +184,7 @@ Flight::map( 'repo', function( $data = [] ) {
 // role
 Flight::map( 'role', function( $data = [] ) {
 
-    $role = new \App\Core\Model( Flight::get( 'pdo' ), 
+    $role = new \App\Core\Record( Flight::get( 'pdo' ), 
         'user_roles', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -200,28 +201,66 @@ Flight::map( 'role', function( $data = [] ) {
     return $role;
 });
 
-// save
-Flight::map( 'save', function( \App\Core\Model $obj, $data = [] ) {
+// insert
+Flight::map( 'insert', function( $record, $data ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$obj->save( $data )) {
-            Flight::set( 'e', $obj->e );
-            Flight::set( 'error', $obj->error );
+        if( !$record->set( $data )) {
+            Flight::set( 'e', $record->e );
+            Flight::set( 'error', $record->error );
         }
     }
-
 });
 
-// load
-Flight::map( 'load', function( \App\Core\Model $obj, $args = [] ) {
+// update
+Flight::map( 'update', function( $record, $data ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$obj->load( $args )) {
-            Flight::set( 'e', $obj->e );
-            Flight::set( 'error', $obj->error );
+        if( !$record->put( $data )) {
+            Flight::set( 'e', $record->e );
+            Flight::set( 'error', $record->error );
         }
     }
-}); 
+});
+
+// select
+Flight::map( 'select', function( $record, $args ) {
+
+    if( Flight::empty( 'error' )) {
+        if( !$record->get( $args )) {
+            Flight::set( 'e', $record->e );
+            Flight::set( 'error', $record->error );
+        }
+    }
+});
+
+// delete
+Flight::map( 'delete', function( $record ) {
+
+    if( Flight::empty( 'error' )) {
+        if( !$record->del()) {
+            Flight::set( 'e', $record->e );
+            Flight::set( 'error', $record->error );
+        }
+    }
+});
+
+// auth
+Flight::map( 'auth', function( $user_token ) {
+
+    $user = Flight::user();
+    Flight::select( $user, [
+        ['user_token', '=', $user_token], 
+        ['user_status', '=', 'approved']   
+    ]);
+
+    $now = Flight::datetime();
+    if( Flight::empty( 'error' ) and strtotime( $now ) - strtotime( $user->restore_date ) > 60 * 60 * 24 * 1 ) {
+        Flight::set( 'error', 'user_token is expired' );
+    }
+
+    return $user;
+});
 
 // ==== FILTERING ====
 
@@ -259,7 +298,7 @@ Flight::before('json', function(&$params, &$output){
 Flight::route( 'GET /', function() {
 
     /*
-    $user = new \App\Core\Model( Flight::get( 'pdo' ), 
+    $user = new \App\Core\Record( Flight::get( 'pdo' ), 
         'users', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
@@ -284,7 +323,7 @@ Flight::route( 'GET /', function() {
 
     /*
     $pdo = require __DIR__ . "/../src/init/pdo.php";
-    $tag = new \App\Core\Model( $pdo, 'tags', [
+    $tag = new \App\Core\Record( $pdo, 'tags', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
         'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
