@@ -2,7 +2,7 @@
 $user_email = (string) Flight::request()->query['user_email'];
 $user_pass = (string) Flight::request()->query['user_pass'];
 
-// select me
+// me
 $me = Flight::user();
 Flight::select( $me, [
     ['user_email', '=', $user_email], 

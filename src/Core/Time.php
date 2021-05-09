@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class Timer extends \App\Core\Echidna
+class Time extends \App\Core\Echidna
 {
 
     public function __get( string $key ) {

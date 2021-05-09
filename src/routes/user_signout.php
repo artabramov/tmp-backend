@@ -1,7 +1,7 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 
-// auth me
+// me
 $me = Flight::auth( $user_token );
 
 // update me

@@ -10,7 +10,6 @@ $me = Flight::auth( $user_token );
 $repo = Flight::repo();
 Flight::select( $repo, [
     ['id', '=', $repo_id], 
-    ['user_id', '<>', $user_id], 
     ['repo_status', '=', 'custom'],
 ]);
 
@@ -29,15 +28,19 @@ Flight::select( $he, [
     ['user_status', '=', 'approved']
 ]);
 
-// his role
-$his_role = Flight::role();
-Flight::select( $his_role, [
-    ['user_id', '=', $he->id], 
-    ['repo_id', '=', $repo->id], 
-]);
+// his role exists?
+$exist = Flight::exist();
+if( Flight::empty( 'error' ) and $exist->has( 'user_roles', [['user_id', '=', $user_id], ['repo_id', '=', $repo_id]] )) {
+    Flight::set( 'error', 'user_role already exists' );
+}
 
-// delete his role
-Flight::delete( $his_role );
+// insert his role
+$his_role = Flight::role();
+Flight::insert( $his_role, [
+    'repo_id' => $repo->id,
+    'user_id' => $he->id,
+    'user_role' => 'none',
+]);
 
 // json
 Flight::json();

@@ -66,9 +66,8 @@ Flight::map( 'hash', function( string $user_pass ) {
 
 // datetime
 Flight::map( 'datetime', function() {
-    $timer = new \App\Core\Timer( Flight::get( 'pdo' ));
-    return $timer->datetime;
-    //return date( 'Y-m-d H:i:s' );
+    $time = new \App\Core\Time( Flight::get( 'pdo' ));
+    return $time->datetime;
 });
 
 // send email
@@ -91,7 +90,7 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
 });
 
 // upload the file
-Flight::map( 'upload', function( $file, $upload_file ) {
+Flight::map( 'dropbox_upload', function( $file, $upload_file ) {
 
     if( Flight::empty( 'error' )) {
 
@@ -118,10 +117,15 @@ Flight::map( 'upload', function( $file, $upload_file ) {
     }
 });
 
+// exist
+Flight::map( 'exist', function() {
+    return new \App\Core\Exist( Flight::get( 'pdo' ));
+});
+
 // create the user
 Flight::map( 'user', function( $data = [] ) {
 
-    $user = new \App\Core\Record( Flight::get( 'pdo' ), 
+    $user = new \App\Core\Row( Flight::get( 'pdo' ), 
         'users', [
         'id'           => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -144,7 +148,7 @@ Flight::map( 'user', function( $data = [] ) {
 // usermeta
 Flight::map( 'usermeta', function( $data = [] ) {
 
-    $meta = new \App\Core\Record( Flight::get( 'pdo' ), 
+    $meta = new \App\Core\Row( Flight::get( 'pdo' ), 
         'user_meta', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -164,7 +168,7 @@ Flight::map( 'usermeta', function( $data = [] ) {
 // repo
 Flight::map( 'repo', function( $data = [] ) {
 
-    $repo = new \App\Core\Record( Flight::get( 'pdo' ), 
+    $repo = new \App\Core\Row( Flight::get( 'pdo' ), 
         'repos', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -184,7 +188,7 @@ Flight::map( 'repo', function( $data = [] ) {
 // role
 Flight::map( 'role', function( $data = [] ) {
 
-    $role = new \App\Core\Record( Flight::get( 'pdo' ), 
+    $role = new \App\Core\Row( Flight::get( 'pdo' ), 
         'user_roles', [
         'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
         'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
@@ -202,45 +206,45 @@ Flight::map( 'role', function( $data = [] ) {
 });
 
 // insert
-Flight::map( 'insert', function( $record, $data ) {
+Flight::map( 'insert', function( $row, $data ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$record->set( $data )) {
-            Flight::set( 'e', $record->e );
-            Flight::set( 'error', $record->error );
+        if( !$row->set( $data )) {
+            Flight::set( 'e', $row->e );
+            Flight::set( 'error', $row->error );
         }
     }
 });
 
 // update
-Flight::map( 'update', function( $record, $data ) {
+Flight::map( 'update', function( $row, $data ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$record->put( $data )) {
-            Flight::set( 'e', $record->e );
-            Flight::set( 'error', $record->error );
+        if( !$row->put( $data )) {
+            Flight::set( 'e', $row->e );
+            Flight::set( 'error', $row->error );
         }
     }
 });
 
 // select
-Flight::map( 'select', function( $record, $args ) {
+Flight::map( 'select', function( $row, $args ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$record->get( $args )) {
-            Flight::set( 'e', $record->e );
-            Flight::set( 'error', $record->error );
+        if( !$row->get( $args )) {
+            Flight::set( 'e', $row->e );
+            Flight::set( 'error', $row->error );
         }
     }
 });
 
 // delete
-Flight::map( 'delete', function( $record ) {
+Flight::map( 'delete', function( $row ) {
 
     if( Flight::empty( 'error' )) {
-        if( !$record->del()) {
-            Flight::set( 'e', $record->e );
-            Flight::set( 'error', $record->error );
+        if( !$row->del()) {
+            Flight::set( 'e', $row->e );
+            Flight::set( 'error', $row->error );
         }
     }
 });
@@ -297,61 +301,6 @@ Flight::before('json', function(&$params, &$output){
 
 Flight::route( 'GET /', function() {
 
-    /*
-    $user = new \App\Core\Record( Flight::get( 'pdo' ), 
-        'users', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
-        'user_status' => [ "/^pending$|^approved$|^trash$/",  false ],
-        'user_token'  => [ "/^[0-9a-f]{80}$/",  false ],
-        'user_email'  => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
-        'user_name'   => [ "/^.{0,128}$/", false ],
-        'user_hash'   => [ "/^[0-9a-f]{40}$/",  false ],
-    ]);
-    */
-
-    /*
-    $user->user_status = 'pending';
-    $user->user_token  = sha1('1') . sha1('1');
-    $user->user_email  = 'noreply@noreply.no';
-    $user->user_name   = 'art abramov';
-    $user->user_hash   = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-    $user->save();
-    */
-
-
-    /*
-    $pdo = require __DIR__ . "/../src/init/pdo.php";
-    $tag = new \App\Core\Record( $pdo, 'tags', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/",  false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/",  false ],
-        'post_id'     => [ "/^[0-9]{0,20}$/",  false ],
-        'tag_key'     => [ "/^[a-z0-9_-]{1,20}$/",  true ],
-        'tag_value'   => [ "/^.{0,255}$/", false ],
-    ]);
-    */
-
-    /*
-    $tag->post_id = 1;
-    $tag->tag_key = 'tag-2';
-    $tag->tag_value = 'just a tag';
-    $result = $tag->save();
-    */
-
-    //$tag->load( [['id', '=', 5]] );
-
-    /*
-    $user = Flight::user();
-    $user->user_status = 'pending';
-    $user->user_token  = sha1( rand(0,1000) ) . sha1( rand(0,1000) );
-    $user->user_email  = Flight::request()->query['user_email'];
-    $user->user_name   = Flight::request()->query['user_name'];
-    $user->user_hash   = '';
-    $user->save();
-    */
-
     $user = Flight::user([
         'user_status' => 'pending',
         'user_token'  => Flight::token(),
@@ -398,32 +347,32 @@ Flight::route( 'GET /user/@user_id', function( $user_id ) {
 
 // user rename
 Flight::route( 'PUT /user', function() {
-    require_once( '../src/routes/user_rename.php' );
+    require_once( '../src/routes/user_update.php' );
 });
 
-// hub create
-Flight::route( 'POST /hub', function() {
-    require_once( '../src/routes/hub_create.php' );
+// repo create
+Flight::route( 'POST /repo', function() {
+    require_once( '../src/routes/repo_insert.php' );
 });
 
-// hub rename
-Flight::route( 'PUT /hub/@hub_id', function( $hub_id ) {
-    require_once( '../src/routes/hub_update.php' );
+// repo update
+Flight::route( 'PUT /repo/@repo_id', function( $repo_id ) {
+    require_once( '../src/routes/repo_update.php' );
 });
 
-// hub trash
-Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
-    require_once( '../src/routes/hub_trash.php' );
+// repo delete
+Flight::route( 'DELETE /repo/@repo_id', function( $repo_id ) {
+    require_once( '../src/routes/repo_delete.php' );
 });
 
 // role invite
 Flight::route( 'POST /role', function() {
-    require_once( '../src/routes/role_invite.php' );
+    require_once( '../src/routes/role_insert.php' );
 });
 
-// role approve
+// role confirm
 Flight::route( 'GET /role', function() {
-    require_once( '../src/routes/role_approve.php' );
+    require_once( '../src/routes/role_confirm.php' );
 });
 
 // role update
@@ -476,12 +425,6 @@ Flight::route( 'POST /upload', function() {
         'success' => 'unknown', 
         'error' => 'unknown'
     ]);
-});
-
-// ---- META ----
-
-Flight::route( 'POST /meta', function() {
-    require_once( '../src/routes/meta_post.php' );
 });
 
 //================ START ================

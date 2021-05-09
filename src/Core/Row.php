@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class Record extends \App\Core\Echidna
+class Row extends \App\Core\Echidna
 {
     protected $error;
     protected $table;
@@ -19,8 +19,8 @@ class Record extends \App\Core\Echidna
 
     public function __get( string $key ) {
 
-        if( $key == 'error' ) {
-            return $this->error;
+        if( in_array( $key, ['error', 'e', 'pdo'] )) {
+            return $this->$key;
 
         } elseif( array_key_exists( $key, $this->data )) {
             return $this->data[ $key ];
@@ -30,8 +30,8 @@ class Record extends \App\Core\Echidna
 
     public function __set( string $key, $value ) {
 
-        if( $key == 'error' ) {
-            $this->error = $value;
+        if( in_array( $key, ['error', 'e', 'pdo'] )) {
+            $this->$key = $value;
 
         } elseif( array_key_exists( $key, $this->keys )) {
             $this->data[ $key ] = $value;
@@ -40,8 +40,8 @@ class Record extends \App\Core\Echidna
 
     public function __isset( string $key ) {
 
-        if( $key == 'error' ) {
-            return !empty( $this->error );
+        if( in_array( $key, ['error', 'e', 'pdo'] )) {
+            return !empty( $this->$key );
 
         } elseif( array_key_exists( $key, $this->data )) {
             return !empty( $this->$data[ $key ] );
@@ -136,9 +136,7 @@ class Record extends \App\Core\Echidna
         $this->error = '';
 
         if( $this->delete( $this->table, [['id', '=', $this->data['id']]] )) {
-            foreach( $data as $key => $value ) {
-                $this->$key = null;
-            }
+            $this->data = [];
 
         } else {
             $this->error = 'delete error';
@@ -146,55 +144,5 @@ class Record extends \App\Core\Echidna
 
         return empty( $this->error );
     }
-
-
-
-
-
-
-
-
-    public function save( $data = [] ) {
-
-        $this->e = null;
-        $this->error = '';
-
-        foreach( $data as $key => $value ) {
-            $this->$key = $value;
-        }
-
-        foreach( $this->data as $key => $value ) {
-
-            if( !preg_match( $this->keys[ $key ][0], $value ) ) {
-                $this->error = $key . ' is incorrect';
-
-            } elseif( empty( $this->data['id'] ) and $this->keys[ $key ][1] and $this->is_exists( $this->table, [[$key, '=', $value]] ) ) {
-                $this->error = $key . ' is occupied';
-            }
-        }
-
-        if( empty( $this->error )) {
-
-            // insert
-            if( empty( $this->data['id'] ) ) {
-                $id = $this->insert( $this->table, $this->data );
-                if( $id > 0 ) {
-                    $this->data['id'] = $id;
-                } else {
-                    $this->error = 'insert error';
-                }
-    
-            // update
-            } elseif( !$this->update( $this->table, [['id', '=', $this->data['id']]], $this->data )) {
-                $this->error = 'update error';
-            }
-        }
-
-        return empty( $this->error );
-    }
-
-
-
-
 
 }

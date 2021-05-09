@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS project.users (
     create_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     restore_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00',
-    user_status  VARCHAR(20)  NOT NULL, # pending | approved | trash
+    user_status  ENUM('pending', 'approved', 'trash') NOT NULL,
     user_token   VARCHAR(80)  NOT NULL,
     user_email   VARCHAR(255) NOT NULL,
     user_name    VARCHAR(128) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS project.repos (
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id     BIGINT(20)   NOT NULL,
-    repo_status VARCHAR(20)  NOT NULL, # private | custom | trash
+    repo_status  ENUM('private', 'custom', 'trash') NOT NULL,
     repo_name   VARCHAR(128) NOT NULL,
 
     PRIMARY KEY id          (id),
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS project.user_roles (
     update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     repo_id     BIGINT(20)  NOT NULL,
     user_id     BIGINT(20)  NOT NULL,
-    user_role   VARCHAR(20) NOT NULL, # admin | author | editor | reader | none
+    user_role  ENUM('admin', 'author', 'editor', 'reader', 'none') NOT NULL,
 
     PRIMARY KEY id          (id),
             KEY create_date (create_date),

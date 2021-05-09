@@ -2,7 +2,7 @@
 $user_token = (string) Flight::request()->query['user_token'];
 $user_id = (int) $user_id;
 
-// auth
+// me
 $me = Flight::auth( $user_token );
 
 // select user
