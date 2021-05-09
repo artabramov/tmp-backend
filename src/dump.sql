@@ -1,6 +1,6 @@
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.users (
-    id           BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    id           BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     restore_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00',
@@ -10,93 +10,91 @@ CREATE TABLE IF NOT EXISTS project.users (
     user_name    VARCHAR(128) NOT NULL,
     user_hash    VARCHAR(40)  NOT NULL DEFAULT '',
 
-    PRIMARY KEY id           (id),
-            KEY create_date  (create_date),
-            KEY update_date  (update_date),
-            KEY restore_date (restore_date),
-            KEY user_status  (user_status),
-    UNIQUE  KEY user_token   (user_token),
-    UNIQUE  KEY user_email   (user_email),
-            KEY user_name    (user_name),
-            KEY user_hash    (user_hash)
+    PRIMARY KEY (id),
+            KEY (user_status),
+     UNIQUE KEY (user_token),
+     UNIQUE KEY (user_email),
+            KEY (user_hash)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.user_meta (
-    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)   NOT NULL,
+    user_id     BIGINT(20)   UNSIGNED NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
-    meta_value  VARCHAR(255) NOT NULL,
+    meta_value  VARCHAR(255) NOT NULL DEFAULT '',
 
-    PRIMARY KEY id          (id),
-            KEY create_date (create_date),
-            KEY update_date (update_date),
-    FOREIGN KEY user_id     (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
-            KEY meta_key    (meta_key),
-            KEY meta_value  (meta_value)
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+     UNIQUE KEY (user_id, meta_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.repos (
-    id          BIGINT(20)   NOT NULL AUTO_INCREMENT,
+    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)   NOT NULL,
+    user_id     BIGINT(20)   UNSIGNED NOT NULL,
     repo_status  ENUM('private', 'custom', 'trash') NOT NULL,
     repo_name   VARCHAR(128) NOT NULL,
 
     PRIMARY KEY id          (id),
-            KEY create_date (create_date),
-            KEY update_date (update_date),
     FOREIGN KEY user_id     (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
-            KEY repo_status (repo_status),
-            KEY repo_name   (repo_name)
+            KEY repo_status (repo_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.user_roles (
-    id          BIGINT(20)  NOT NULL AUTO_INCREMENT,
+    id          BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    repo_id     BIGINT(20)  NOT NULL,
-    user_id     BIGINT(20)  NOT NULL,
+    user_id     BIGINT(20)  UNSIGNED NOT NULL,
+    repo_id     BIGINT(20)  UNSIGNED NOT NULL,
     user_role  ENUM('admin', 'author', 'editor', 'reader', 'none') NOT NULL,
 
-    PRIMARY KEY id          (id),
-            KEY create_date (create_date),
-            KEY update_date (update_date),
-    FOREIGN KEY repo_id     (repo_id) REFERENCES project.repos (id) ON DELETE CASCADE,
-    FOREIGN KEY user_id     (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
-            KEY user_role   (user_role)
+        PRIMARY KEY (id),
+        FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+        FOREIGN KEY (repo_id) REFERENCES project.repos (id) ON DELETE CASCADE,
+         UNIQUE KEY (user_id, repo_id),
+                KEY (user_role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+
+
 
 
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS project.posts (
-    id           BIGINT(20)  NOT NULL AUTO_INCREMENT,
+    id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    parent_id    BIGINT(20)  NOT NULL,
-    user_id      BIGINT(20)  NOT NULL,
-    repo_id      BIGINT(20)  NOT NULL,
-    post_type    VARCHAR(20) NOT NULL, # document | comment
-    post_status  VARCHAR(20) NOT NULL, # draft | todo | doing | done | inherit | trash
-    post_content TEXT        NOT NULL,
+    parent_id    BIGINT(20)  UNSIGNED NULL DEFAULT NULL,
+    user_id      BIGINT(20)  UNSIGNED NOT NULL,
+    repo_id      BIGINT(20)  UNSIGNED NOT NULL,
+    post_type    ENUM('document', 'comment') NOT NULL,
+    post_status  ENUM('draft', 'todo', 'doing', 'done', 'none', 'trash') NOT NULL,
+    post_content TEXT        NOT NULL DEFAULT '',
 
-    PRIMARY KEY id          (id),
-            KEY create_date (create_date),
-            KEY update_date (update_date),
-    FOREIGN KEY parent_id   (parent_id) REFERENCES project.posts (id) ON DELETE CASCADE,
-    FOREIGN KEY user_id     (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
-    FOREIGN KEY repo_id     (repo_id) REFERENCES project.repos (id) ON DELETE CASCADE,
-            KEY post_type   (post_type),
-            KEY post_status (post_status)
+    PRIMARY KEY (id),
+    FOREIGN KEY (parent_id) REFERENCES posts (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES project.users (id) ON DELETE CASCADE,
+    FOREIGN KEY (repo_id) REFERENCES project.repos (id) ON DELETE CASCADE,
+            KEY (post_type),
+            KEY (post_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+
+
+
+
 
 
 SET sql_mode = '';
@@ -139,7 +137,8 @@ CREATE TABLE IF NOT EXISTS project.post_uploads (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-
+insert into posts (user_id, repo_id, post_type, post_status, post_content) VALUES (1, 1, 'document', 'todo', 'parent');
+insert into posts (parent_id, user_id, repo_id, post_type, post_status, post_content) VALUES (1, 1, 1, 'document', 'todo', 'child');
 
 INSERT INTO project.users (user_status, user_token, user_email, user_name, user_hash) VALUES ('pending', 'token', 'noreply@noreply.no', 'art abramov', '');
 UPDATE project.users SET user_status='approved' WHERE id=1;
