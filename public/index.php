@@ -205,6 +205,31 @@ Flight::map( 'role', function( $data = [] ) {
     return $role;
 });
 
+// post
+Flight::map( 'post', function( $data = [] ) {
+
+    $post = new \App\Core\Row( Flight::get( 'pdo' ), 
+        'posts', [
+        'id'           => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'parent_id'    => [ "/^$|^[1-9][0-9]{0,20}$/", false ],
+        'user_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'repo_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'post_status'  => [ "/^$|^draft$|^todo$|^doing$|^done$|^trash$/", false ],
+        'post_content' => [ "/^.{1,4048}?/", false ],
+
+    ]);
+
+    foreach( $data as $key=>$value ) {
+        $user->$key = $value;
+    }
+
+    return $post;
+});
+
+//===========================================================
+
 // insert
 Flight::map( 'insert', function( $row, $data ) {
 
@@ -387,7 +412,7 @@ Flight::route( 'DELETE /role', function() {
 
 // create document
 Flight::route( 'POST /document', function() {
-    require_once( '../src/routes/document_create.php' );
+    require_once( '../src/routes/document_insert.php' );
 });
 
 // select the document

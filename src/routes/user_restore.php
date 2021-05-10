@@ -1,28 +1,28 @@
 <?php
 $user_email = Flight::request()->query['user_email'];
+$user_pass = Flight::pass();
 
-// me
-$me = Flight::user();
-Flight::select( $me, [
+// master
+$master = Flight::user();
+Flight::select( $master, [
     ['user_email', '=', $user_email], 
     ['user_status', '<>', 'trash']    
 ]);
 
 // delay over?
 $now = Flight::datetime();
-if( Flight::empty( 'error' ) and strtotime( $now ) - strtotime( $me->restore_date ) < 60 ) {
+if( Flight::empty( 'error' ) and strtotime( $now ) - strtotime( $master->restore_date ) < 60 ) {
     Flight::set( 'error', 'wait for 60 seconds' );
 }
 
-// update me
-$me_pass = Flight::pass();
-Flight::update( $me, [
+// update master
+Flight::update( $master, [
     'restore_date' => $now,
-    'user_hash' => Flight::hash( $me_pass ),
+    'user_hash' => Flight::hash( $user_pass ),
 ]);
 
-// email
-Flight::email( $me->user_email, 'User', 'User restore', 'One-time pass: <i>' . $me_pass . '</i>' );
+// send email
+Flight::email( $master->user_email, 'User', 'User restore', 'One-time pass: <i>' . $user_pass . '</i>' );
 
 // json
 Flight::json();

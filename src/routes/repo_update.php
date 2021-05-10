@@ -4,14 +4,14 @@ $repo_id = (int) $repo_id;
 $repo_status = (string) Flight::request()->query['repo_status'];
 $repo_name = (string) Flight::request()->query['repo_name'];
 
-// me
-$me = Flight::auth( $user_token );
+// auth
+$master = Flight::auth( $user_token );
 
 // repo
 $repo = Flight::repo();
 Flight::select( $repo, [
     ['id', '=', $repo_id], 
-    ['user_id', '=', $me->id],
+    ['user_id', '=', $master->id],
 ]);
 
 // update status

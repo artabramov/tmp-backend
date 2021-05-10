@@ -3,8 +3,8 @@ $user_token = (string) Flight::request()->query['user_token'];
 $repo_id = (int) Flight::request()->query['repo_id'];
 $user_id = (int) Flight::request()->query['user_id'];
 
-// me
-$me = Flight::auth( $user_token );
+// auth
+$master = Flight::auth( $user_token );
 
 // repo
 $repo = Flight::repo();
@@ -15,29 +15,29 @@ Flight::select( $repo, [
 ]);
 
 // my role
-$my_role = Flight::role();
-Flight::select( $my_role, [
-    ['user_id', '=', $me->id], 
+$master_role = Flight::role();
+Flight::select( $master_role, [
+    ['user_id', '=', $master->id], 
     ['repo_id', '=', $repo->id], 
     ['user_role', '=', 'admin']
 ]);
 
 // he
-$he = Flight::user();
-Flight::select( $he, [
+$slave = Flight::user();
+Flight::select( $slave, [
     ['id', '=', $user_id], 
     ['user_status', '=', 'approved']
 ]);
 
 // his role
-$his_role = Flight::role();
-Flight::select( $his_role, [
-    ['user_id', '=', $he->id], 
+$slave_role = Flight::role();
+Flight::select( $slave_role, [
+    ['user_id', '=', $slave->id], 
     ['repo_id', '=', $repo->id], 
 ]);
 
 // delete his role
-Flight::delete( $his_role );
+Flight::delete( $slave_role );
 
 // json
 Flight::json();
