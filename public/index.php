@@ -411,8 +411,8 @@ Flight::route( 'DELETE /role', function() {
 });
 
 // create document
-Flight::route( 'POST /document', function() {
-    require_once( '../src/routes/document_insert.php' );
+Flight::route( 'POST /post', function() {
+    require_once( '../src/routes/post_insert.php' );
 });
 
 // select the document

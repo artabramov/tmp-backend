@@ -1,6 +1,7 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 $repo_id = (int) Flight::request()->query['repo_id'];
+$parent_id = (int) Flight::request()->query['parent_id'];
 $post_status = (string) Flight::request()->query['post_status'];
 $post_content = (string) Flight::request()->query['post_content'];
 $post_tags = (string) Flight::request()->query['post_tags'];
@@ -8,27 +9,92 @@ $post_tags = (string) Flight::request()->query['post_tags'];
 // auth
 $master = Flight::auth( $user_token );
 
-// repo
-$repo = Flight::repo();
-Flight::select( $repo, [
-    ['id', '=', $repo_id], 
-    ['repo_status', '<>', 'trash'],
-]);
+// document
+if( empty( $parent_id )) {
 
-// master role
-$master_role = Flight::role();
-Flight::select( $master_role, [
-    ['user_id', '=', $master->id], 
-    ['repo_id', '=', $repo->id], 
-]);
+    // repo
+    $repo = Flight::repo();
+    Flight::select( $repo, [
+        ['id', '=', $repo_id], 
+        ['repo_status', '<>', 'trash'],
+    ]);
 
-// role check
-if( Flight::empty( 'error' ) and empty( $parent_id ) and !in_array( $master_role->user_role, ['admin', 'author'] )) {
-    Flight::set( 'error', 'user_role must be admin or author' );
+    // master role
+    $master_role = Flight::role();
+    Flight::select( $master_role, [
+        ['user_id', '=', $master->id], 
+        ['repo_id', '=', $repo->id], 
+    ]);
 
-} elseif( Flight::empty( 'error' ) and !empty( $parent_id ) and !in_array( $master_role->user_role, ['admin', 'author', 'editor'] )) {
-    Flight::set( 'error', 'user_role must be admin, author or editor' );
+    // additional checks
+    if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'author'] )) {
+        Flight::set( 'error', 'user_role must be admin or author' );
+
+    } elseif( Flight::empty( 'error' ) and !in_array( $post_status, ['todo', 'doing', 'done', 'draft']) ) {
+        Flight::set( 'error', 'post_status must be todo, doing, done or draft' );
+    }
+
+    // post insert
+    $post = Flight::post();
+    Flight::insert( $post, [
+        'user_id'      => $master->id,
+        'repo_id'      => $repo->id,
+        'post_status'  => $post_status,
+        'post_content' => $post_content,
+    ]);
+
+// comment
+} else {
+
+    // parent
+    $parent = Flight::post();
+    Flight::select( $parent, [
+        ['id', '=', $parent_id], 
+        ['post_status', '<>', 'trash'],
+    ]);
+
+    // repo
+    $repo = Flight::repo();
+    Flight::select( $repo, [
+        ['id', '=', $parent->repo_id], 
+        ['repo_status', '<>', 'trash'],
+    ]);
+
+    // master role
+    $master_role = Flight::role();
+    Flight::select( $master_role, [
+        ['user_id', '=', $master->id], 
+        ['repo_id', '=', $repo->id], 
+    ]);
+
+    // additional checks
+    if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'author', 'editor'] )) {
+        Flight::set( 'error', 'user_role must be admin, author or editor' );
+
+    } elseif( Flight::empty( 'error' ) and !in_array( $parent->post_status, ['todo', 'doing', 'done', 'draft']) ) {
+        Flight::set( 'error', 'parent post_status must be todo, doing, done or draft' );
+    }
+
+    // post insert
+    $post = Flight::post();
+    Flight::insert( $post, [
+        'parent_id' => $parent->id,
+        'user_id' => $master->id,
+        'repo_id' => $repo->id,
+        //'post_status' => $post_status,
+        'post_content' => $post_content,
+    ]);
+
+
+
+
 }
+
+
+
+
+
+
 
 /*
 // parent post
@@ -43,16 +109,7 @@ if( !empty( $parent_id )) {
 }
 */
 
-// post status and parent status checks
-if( Flight::empty( 'error' ) and !empty( $parent_id ) and !in_array( $parent->post_status, ['todo', 'doing', 'done', 'draft']) ) {
-    Flight::set( 'error', 'parent post_status must be todo, doing, done or draft' );
 
-} elseif( Flight::empty( 'error' ) and !empty( $parent_id ) and $post_status != 'inherit' ) {
-    Flight::set( 'error', 'post_status must be inherit' );
-
-} elseif( Flight::empty( 'error' ) and empty( $parent_id ) and !in_array( $post_status, ['todo', 'doing', 'done', 'draft'] )) {
-    Flight::set( 'error', 'post_status must be todo, doing, done or draft' );
-}
 
 /*
 $data = [
@@ -67,14 +124,7 @@ if( !empty( $parent )) {
 }
 */
 
-// post insert
-$post = Flight::post();
-Flight::insert( $post, [
-    'user_id'      => $master->id,
-    'repo_id'      => $repo->id,
-    'post_status'  => $post_status,
-    'post_content' => $post_content,
-]);
+
 
 /*
 // upload the files
