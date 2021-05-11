@@ -73,12 +73,12 @@ CREATE TABLE IF NOT EXISTS posts (
     parent_id    BIGINT(20)  UNSIGNED NULL DEFAULT NULL,
     user_id      BIGINT(20)  UNSIGNED NOT NULL,
     repo_id      BIGINT(20)  UNSIGNED NOT NULL,
-    post_status  ENUM('draft', 'todo', 'doing', 'done', 'trash') NULL DEFAULT NULL,
+    post_status  ENUM('willdo', 'todo', 'doing', 'done', 'comment', 'trash') NULL DEFAULT NULL,
     post_content TEXT        NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
     FOREIGN KEY (parent_id) REFERENCES posts (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
     FOREIGN KEY (repo_id) REFERENCES repos (id) ON DELETE CASCADE,
             KEY (post_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

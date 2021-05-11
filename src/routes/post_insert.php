@@ -30,7 +30,7 @@ if( empty( $parent_id )) {
     if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'author'] )) {
         Flight::set( 'error', 'user_role must be admin or author' );
 
-    } elseif( Flight::empty( 'error' ) and !in_array( $post_status, ['todo', 'doing', 'done', 'draft']) ) {
+    } elseif( Flight::empty( 'error' ) and !in_array( $post_status, ['willdo', 'todo', 'doing', 'done']) ) {
         Flight::set( 'error', 'post_status must be todo, doing, done or draft' );
     }
 
@@ -71,7 +71,7 @@ if( empty( $parent_id )) {
     if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'author', 'editor'] )) {
         Flight::set( 'error', 'user_role must be admin, author or editor' );
 
-    } elseif( Flight::empty( 'error' ) and !in_array( $parent->post_status, ['todo', 'doing', 'done', 'draft']) ) {
+    } elseif( Flight::empty( 'error' ) and !in_array( $parent->post_status, ['willdo', 'todo', 'doing', 'done']) ) {
         Flight::set( 'error', 'parent post_status must be todo, doing, done or draft' );
     }
 
