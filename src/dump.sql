@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS posts (
     parent_id    BIGINT(20)  UNSIGNED NULL DEFAULT NULL,
     user_id      BIGINT(20)  UNSIGNED NOT NULL,
     repo_id      BIGINT(20)  UNSIGNED NOT NULL,
-    post_status  ENUM('willdo', 'todo', 'doing', 'done', 'comment', 'trash') NULL DEFAULT NULL,
-    post_content TEXT        NOT NULL DEFAULT '',
+    post_status  ENUM('todo', 'doing', 'done', 'comment', 'trash') NOT NULL,
+    post_content TEXT        NOT NULL,
 
     PRIMARY KEY (id),
     FOREIGN KEY (parent_id) REFERENCES posts (id) ON DELETE CASCADE,
