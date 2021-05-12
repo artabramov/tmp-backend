@@ -100,19 +100,64 @@ CREATE TABLE IF NOT EXISTS post_meta (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
+DELIMITER |
+CREATE TRIGGER post_insert
+AFTER INSERT
+ON posts 
+FOR EACH ROW 
+BEGIN
+    IF NEW.parent_id IS NOT NULL THEN
+        SET @childs_count := (SELECT COUNT(id) FROM posts WHERE parent_id = NEW.parent_id);
+        IF EXISTS (SELECT id FROM post_meta WHERE post_id=NEW.parent_id AND meta_key='childs_count') THEN
+            UPDATE post_meta SET meta_value=@childs_count WHERE post_id=NEW.parent_id AND meta_key='childs_count';
+        ELSE
+            INSERT INTO post_meta (post_id, meta_key, meta_value) VALUES (NEW.parent_id, 'childs_count', @childs_count);
+        END IF;
+    END IF;
+END;
+| 
+DELIMITER ;
+
+
+DELIMITER |
+CREATE TRIGGER post_delete
+AFTER DELETE
+ON posts 
+FOR EACH ROW 
+BEGIN
+    IF OLD.parent_id IS NOT NULL THEN
+        SET @childs_count := (SELECT COUNT(id) FROM posts WHERE parent_id = OLD.parent_id);
+        IF @childs_count = 0 THEN
+            DELETE FROM post_meta WHERE post_id=OLD.parent_id AND meta_key='childs_count';
+        ELSE 
+            UPDATE post_meta SET meta_value=@childs_count WHERE post_id=OLD.parent_id AND meta_key='childs_count';
+        END IF;
+    END IF;
+END;
+|
+DELIMITER ;
+
+
+
 SET sql_mode = '';
 CREATE TABLE IF NOT EXISTS post_uploads (
     id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id     BIGINT(20)   UNSIGNED NOT NULL,
+    repo_id     BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
     post_id     BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
+    upload_key  VARCHAR(20)  NOT NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size BIGINT(20)   NOT NULL,
     upload_file VARCHAR(255) NOT NULL,
 
     PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
+    FOREIGN KEY (repo_id) REFERENCES repos (id) ON DELETE SET NULL,
     FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE SET NULL,
+            KEY (upload_key),
             KEY (upload_name),
             KEY (upload_mime),
             KEY (upload_size),

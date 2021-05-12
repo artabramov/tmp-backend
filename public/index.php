@@ -216,9 +216,8 @@ Flight::map( 'post', function( $data = [] ) {
         'parent_id'    => [ "/^$|^[1-9][0-9]{0,20}$/", false ],
         'user_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
         'repo_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'post_status'  => [ "/^$|^draft$|^todo$|^doing$|^done$|^trash$/", false ],
+        'post_status'  => [ "/^todo$|^doing$|^done$|^comment$|^trash$/", false ],
         'post_content' => [ "/^.{1,4048}?/", false ],
-
     ]);
 
     foreach( $data as $key=>$value ) {
@@ -226,6 +225,51 @@ Flight::map( 'post', function( $data = [] ) {
     }
 
     return $post;
+});
+
+// postmeta
+Flight::map( 'postmeta', function( $data = [] ) {
+
+    $meta = new \App\Core\Row( Flight::get( 'pdo' ), 
+        'post_meta', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'post_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'meta_key'    => [ "/^[a-z0-9_]{1,20}$/", false ],
+        'meta_value'  => [ "/^.{1,255}$/", false ],
+    ]);
+
+    foreach( $data as $key=>$value ) {
+        $meta->$key = $value;
+    }
+
+    return $meta;
+});
+
+//upload
+Flight::map( 'upload', function( $data = [] ) {
+
+    $upload = new \App\Core\Row( Flight::get( 'pdo' ), 
+        'post_uploads', [
+        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'create_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'update_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
+        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'repo_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'post_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'upload_key'  => [ "/^[a-z0-9_]{1,20}$/", false ],
+        'upload_name' => [ "/^.{1,255}$/", false ],
+        'upload_mime' => [ "/^.{1,255}$/", false ],
+        'upload_size' => [ "/^[1-9][0-9]{0,20}$/", false ],
+        'upload_file' => [ "/^.{1,255}$/", false ],
+    ]);
+
+    foreach( $data as $key=>$value ) {
+        $user->$key = $value;
+    }
+
+    return $upload;
 });
 
 //===========================================================
@@ -416,22 +460,18 @@ Flight::route( 'POST /post', function() {
 });
 
 // select the document
-Flight::route( 'GET /document/@post_id', function( $post_id ) {
-    require_once( '../src/routes/document_select.php' );
+Flight::route( 'GET /post/@post_id', function( $post_id ) {
+    require_once( '../src/routes/post_select.php' );
 });
 
-
-
+/*
 // documents (!) select
 Flight::route( 'GET /documents', function() {
     require_once( '../src/routes/documents_select.php' );
 });
+*/
 
-// create comment
-Flight::route( 'POST /comment', function() {
-    require_once( '../src/routes/comment_create.php' );
-});
-
+/*
 // Post file
 Flight::route( 'POST /upload', function() {
 
@@ -451,6 +491,7 @@ Flight::route( 'POST /upload', function() {
         'error' => 'unknown'
     ]);
 });
+*/
 
 //================ START ================
 

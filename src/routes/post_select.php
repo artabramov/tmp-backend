@@ -2,35 +2,36 @@
 $user_token = (string) Flight::request()->query['user_token'];
 $post_id = (int) $post_id;
 
-// open transaction
-Flight::get('pdo')->beginTransaction();
-
 // auth
-$master = new \App\Core\User( Flight::get( 'pdo' ));
-Flight::auth( $master, $user_token );
+$master = Flight::auth( $user_token );
 
-// document
-$document = new \App\Core\Post( Flight::get( 'pdo' ));
-Flight::select( $document, [
+// parent
+$post = Flight::post();
+Flight::select( $post, [
     ['id', '=', $post_id], 
     ['post_status', '<>', 'trash'],
 ]);
 
-// hub
-$hub = new \App\Core\Hub( Flight::get( 'pdo' ));
-Flight::select( $hub, [
-    ['id', '=', $document->hub_id], 
-    ['hub_status', '<>', 'trash'],
+// repo
+$repo = Flight::repo();
+Flight::select( $repo, [
+    ['id', '=', $post->repo_id], 
+    ['repo_status', '<>', 'trash'],
 ]);
 
 // master role
-$master_role = new \App\Core\Role( Flight::get( 'pdo' ));
+$master_role = Flight::role();
 Flight::select( $master_role, [
     ['user_id', '=', $master->id], 
-    ['hub_id', '=', $hub->id], 
+    ['repo_id', '=', $repo->id], 
 ]);
 
+// additional checks
+if( Flight::empty( 'error' ) and !in_array( $master_role->user_role, ['admin', 'author', 'editor', 'reader'] )) {
+    Flight::set( 'error', 'user_role must be admin, author or editor' );
+}
 
+/*
 $post_tags = new \App\Core\Finder( Flight::get( 'pdo' ));
 if( Flight::empty( 'error' )) {
     if( !$post_tags->find( 'App\Core\Meta', 'post_meta', [['post_id', '=', $document->id], ['meta_key', '=', 'post_tag']], 100, 0 )) {
@@ -39,10 +40,7 @@ if( Flight::empty( 'error' )) {
         Flight::set( 'error', $post_tags->error );
     }
 }
-
-
-
-
+*/
 
 /*
 // do
@@ -72,22 +70,13 @@ if( Flight::empty( 'error' )) {
 
 
 
-// close transaction
-if( Flight::empty( 'error' )) {
-    Flight::get( 'pdo' )->commit();
 
-} else {
-    Flight::get( 'pdo' )->rollBack();
-}
-
-// debug
-if( !Flight::empty( 'e' )) {
-    Flight::debug( Flight::get('e') );
-}
 
 // json
-Flight::json([ 
-    'time'    => Flight::time(),
-    'success' => Flight::empty( 'error' ) ? 'true' : 'false',
-    'error'   => Flight::empty( 'error' ) ? '' : Flight::get( 'error' ), 
+Flight::json([ 'post' => Flight::empty( 'error' ) ? [
+    'id'           => $post->id, 
+    'create_date'  => $post->create_date, 
+    'post_status'  => $post->post_status,
+    'post_content' => $post->post_content ] 
+    : [],
 ]);
