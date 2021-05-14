@@ -38,32 +38,6 @@ Flight::map( 'debug', function( Throwable $e ) {
     ]);
 });
 
-// generate token
-Flight::map( 'token', function() {
-    return sha1( date( 'U' )) . bin2hex( random_bytes( 20 ));
-});
-
-// generate pass
-Flight::map( 'pass', function() {
-
-    $pass_symbols = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    $pass_len = 10;
-
-    $symbols_length = mb_strlen( $pass_symbols, 'utf-8' ) - 1;
-    $user_pass = '';
-
-    for( $i = 0; $i < $pass_len; $i++ ) {
-        $user_pass .= $pass_symbols[ random_int( 0, $symbols_length ) ];
-    }
-    return $user_pass;
-
-});
-
-// het hash
-Flight::map( 'hash', function( string $user_pass ) {
-    return sha1( $user_pass . '~salt' );
-});
-
 // datetime
 Flight::map( 'datetime', function() {
     $time = new \App\Core\Time( Flight::get( 'pdo' ));
@@ -335,6 +309,7 @@ Flight::map( 'auth', function( $user_token ) {
     return $user;
 });
 
+
 // ==== FILTERING ====
 
 // before route
@@ -370,237 +345,18 @@ Flight::before('json', function(&$params, &$output){
 
 Flight::route( 'GET /', function() {
 
-    class Repository
-    {
-        protected $exception;
-        protected $pdo;
-
-        public function __construct( $pdo ) {
-            $this->exception = null;
-            $this->pdo = $pdo;
-        }
-
-        public function insert( string $table, array $data ) : int {
-
-            $keys = '';
-            $values = '';
-            foreach( $data as $key=>$value ) {
-                $keys .= empty( $keys ) ? $key : ', ' . $key;
-                $values .= empty( $values ) ? ':' . $key : ', ' . ':' . $key;
-            }
-    
-            try {
-                $stmt = $this->pdo->prepare( 'INSERT INTO ' . $table . ' ( ' . $keys . ' ) VALUES ( ' . $values . ' )' );
-                foreach( $data as $key=>$value ) {
-                    $stmt->bindParam( ':' . $key, $data[ $key ] );
-                }
-    
-                $stmt->execute();
-                $id = $this->pdo->lastInsertId();
-    
-            } catch( \Exception $e ) {
-                $this->exception = $e;
-            }
-    
-            return empty( $this->exception ) ? $id : 0;
-        }
-
-        public function is_exists( string $table, array $args ) : bool {
-
-            $where = '';
-            foreach( $args as $arg ) {
-                $where .= empty( $where ) ? 'WHERE ' : ' AND ';
-                $where .= $arg[0] . $arg[1] . ':' . $arg[0];
-            }
-    
-            try {
-                $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' ' . $where . ' LIMIT 1' );
-                foreach( $args as $arg ) {
-                    $stmt->bindParam( ':' . $arg[0], $arg[2]  );
-                }
-    
-                $stmt->execute();
-                $rows = $stmt->fetch( $this->pdo::FETCH_OBJ );
-    
-            } catch( \Exception $e ) {
-                $this->e = $e;
-            }
-    
-            return empty( $this->e ) ? !empty( $rows->id ) : false;
-        }
-    }
-
-
-    class Mapper
-    {
-        protected $error;
-        protected $repository;
-
-        public function __construct( $repository ) {
-            $this->error = '';
-            $this->repository = $repository;
-        }
-
-        public function __isset( $key ) {
-            if( property_exists( $this, $key )) {
-                return !empty( $this->$key );
-            }
-            return false;
-        }
-
-        public function __get( $key ) {
-            if( property_exists( $this, $key )) {
-                return $this->$key;
-            }
-        }
-
-        // doc format: @key(param1=value1 param2=value2)
-        private function parse_params( $doc, $key ) {
-
-            preg_match_all( '#@' . $key . '\((.*?)\)\n#s', $doc, $tmp );
-            preg_match_all( '/\s*([^=]+)=(\S+)\s*/', !empty($tmp[1][0]) ? $tmp[1][0] : '', $tmp );
-            return array_combine ( $tmp[1], $tmp[2] );
-        }
-
-        private function get_entity_params( $entity ) {
-
-            $class = new ReflectionClass( $entity );
-            $doc = $class->getDocComment();
-            return $this->parse_params( $doc, 'entity' );
-        }
-
-        private function get_column_params( $entity, $column ) {
-
-            $class = new ReflectionClass( $entity );
-            $property = $class->getProperty( $column );
-            $doc = $property->getDocComment();
-            return $this->parse_params( $doc, 'column' );
-        }
-
-        public function save( $entity ) {
-
-            $this->error = '';
-            $entity_params = $this->get_entity_params( $entity );
-            $class = new ReflectionClass( $entity );
-            $properties = $class->getProperties();
-            $data = [];
-
-            foreach( $properties as $property ) {
-                $property_name = $property->name;
-                $property = $class->getProperty( $property_name );
-                $property->setAccessible( true );
-                $property_value = $property->getValue( $entity );
-                $property_params = $this->get_column_params( $entity, $property_name );
-
-                $property_name = array_key_exists( 'name', $property_params ) ? strval( $property_params['name'] ) : '';
-                $property_type = array_key_exists( 'type', $property_params ) ? strval( $property_params['type'] ) : '';
-                $property_length = array_key_exists( 'length', $property_params ) ? intval( $property_params['length'] ) : 0;
-                $property_unique = array_key_exists( 'unique', $property_params ) ? boolval( $property_params['unique'] ) : false;
-                $property_nullable = array_key_exists( 'nullable', $property_params ) ? boolval( $property_params['nullable'] ) : false;
-                $property_regex = array_key_exists( 'regex', $property_params ) ? strval( $property_params['regex'] ) : '/^.*$/';
-
-                if( !$property_nullable and empty( $property_value )) {
-                    $this->error = $property_name . ' is empty';
-                    break;
-
-                } elseif( !empty( $property_value ) and $property_type != gettype( $property_value )) {
-                    $this->error = $property_name . ' has incorrect type';
-                    break;
-
-                } elseif( !empty( $property_length ) and mb_strlen( $property_value ) > $property_length ) {
-                    $this->error = $property_name . ' is too long';
-                    break;
-
-                } elseif( !empty( $property_regex ) and !preg_match( $property_regex, $property_value ) ) {
-                    $this->error = $property_name . ' does not match the pattern';
-                    break;
-
-                } elseif( $property_unique and $this->repository->is_exists( $entity_params['table'], [['user_email', '=', $property_value]] ) ) {
-                    $this->error = $property_name . ' is occupied';
-                    break;
-
-                } elseif( !empty( $property_value )) {
-                    $data[$property_name] = $property_value;
-                }
-            }
-
-
-
-            if( empty( $this->error )) {
-                if( empty( $this->id )) {
-                    $this->repository->insert( $entity_params['table'], $data );
-
-                    
-
-                    $a = 1;
-
-                } else {
-                    //$this->repositoty->update( $entity );
-                }
-            }
-
-
-
-        }
-    }
-
-    class Entity
-    {
-        public function __set( $key, $value ) {
-            if( property_exists( $this, $key )) {
-                $this->$key = $value;
-            }            
-        }
-
-        public function __get( $key ) {
-            if( property_exists( $this, $key )) {
-                return $this->$key;
-            }            
-        }
-    }
-
-    /**
-     * @entity(name=user table=users)
-     */
-    class User extends Entity
-    {
-        /**
-         * @column(name=id type=integer unique=true nullable=true)
-         */
-        protected $id;
-
-        /**
-         * @column(name=user_email type=string length=255 nullable=false unique=true regex=/^\S+@\S+\.\S+$/)
-         */
-        protected $user_email;
-
-        /**
-         * @column(name=user_name type=string length=10)
-         */
-        protected $user_name;
-
-        /**
-         * @column(name=user_token nullable=false type=string regex=/^[0-9a-f]{80}$/)
-         */
-        protected $user_token;
-    }
-
-    //--------------------------------------------------------------
-
     $user_email = (string) Flight::request()->query['user_email'];
     $user_name = (string) Flight::request()->query['user_name'];
 
+    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+    $mapper = new \App\Core\Mapper( $repository );
 
-    $repository = new Repository( Flight::get( 'pdo' ) );
-
-    $user = new User;
-    //$user->id = 11;
+    $user = new \App\Entities\User;
     $user->user_email = $user_email;
     $user->user_name = $user_name;
-    $user->user_token = '65656a668d4634d6f1abc6d5ff182b9fdbc92561960b64a66b43e75128973f6e418de8a3219923a1';
-    //$user->register_date = '2000-01-01 00:00:00';
-
-    $mapper = new Mapper( $repository );
+    $user->user_pass = $user->pass();
+    $user->user_hash = $user->hash( $user->user_pass );
+    $user->user_token = $user->token();
     $mapper->save( $user );
 
     if( !empty( $mapper->error )) {
