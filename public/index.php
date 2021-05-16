@@ -40,8 +40,9 @@ Flight::map( 'debug', function( Throwable $e ) {
 
 // datetime
 Flight::map( 'datetime', function() {
-    $time = new \App\Core\Time( Flight::get( 'pdo' ));
-    return $time->datetime;
+    //$time = new \App\Core\Time( Flight::get( 'pdo' ));
+    //return $time->datetime;
+    return date('U');
 });
 
 // send email
@@ -248,6 +249,23 @@ Flight::map( 'upload', function( $data = [] ) {
 
 //===========================================================
 
+// save
+Flight::map( 'save', function( $entity ) {
+
+    if( Flight::empty( 'error' )) {
+
+        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \App\Core\Mapper( $repository );
+        $mapper->save( $entity );
+
+        if( !empty( $mapper->error )) {
+            //Flight::set( 'e', $row->e );
+            Flight::set( 'error', $mapper->error );
+        }
+    }
+});
+
+/*
 // insert
 Flight::map( 'insert', function( $row, $data ) {
 
@@ -308,7 +326,7 @@ Flight::map( 'auth', function( $user_token ) {
 
     return $user;
 });
-
+*/
 
 // ==== FILTERING ====
 

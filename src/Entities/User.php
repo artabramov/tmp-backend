@@ -2,32 +2,47 @@
 namespace App\Entities;
 
 /**
- * @entity(name=user table=users)
+ * @entity(table=users alias=user)
  */
 class User extends \App\Core\Entity
 {
     /**
-     * @column(name=id type=integer unique=true nullable=true)
+     * @column(nullable=true unique=true regex=/^[0-9]{1,20}$/)
      */
     protected $id;
 
     /**
-     * @column(name=user_email type=string length=255 nullable=false unique=true regex=/^\S+@\S+\.\S+$/)
+     * @column(nullable=true unique=false regex=/^[0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$/)
+     */
+    protected $create_date;
+
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$/)
+     */
+    protected $update_date;
+
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{4}-[0-9]{2}-[0-9]{2}\s[0-9]{2}:[0-9]{2}:[0-9]{2}$/)
+     */
+    protected $restore_date;
+
+    /**
+     * @column(nullable=false unique=true regex=/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/)
      */
     protected $user_email;
 
     /**
-     * @column(name=user_name type=string length=10)
+     * @column(nullable=false unique=false regex=/^.{2,128}$/)
      */
     protected $user_name;
 
     /**
-     * @column(name=user_token nullable=false type=string regex=/^[0-9a-f]{80}$/)
+     * @column(nullable=false unique=true regex=/^[0-9a-f]{80}$/)
      */
     protected $user_token;
 
     /**
-     * @column(name=user_hash nullable=true type=string regex=/^[0-9a-f]{40}$/)
+     * @column(nullable=true unique=false regex=/^[0-9a-f]{40}$/)
      */
     protected $user_hash;
 

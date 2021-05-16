@@ -47,6 +47,24 @@ class Mapper
         return $this->parse_params( $doc, 'column' );
     }
 
+    // get param value from array
+    private function get_param( $key, $array ) {
+
+        if( !array_key_exists( $key, $array )) {
+            return null;
+        }
+
+        if( in_array( $array[ $key ], [ 'true', 'false' ] ) ) {
+            return $array[ $key ] == 'true' ? true : false;
+
+        } elseif( ctype_digit( $array[ $key ] )) {
+            return intval( $array[ $key ] );
+
+        } else {
+            return strval( $array[ $key ] );
+        }
+    }
+
     public function save( $entity ) {
 
         $this->error = '';
@@ -63,48 +81,52 @@ class Mapper
             $property_params = $this->get_column_params( $entity, $property_name );
 
             if( !empty( $property_params )) {
-                $property_name = array_key_exists( 'name', $property_params ) ? strval( $property_params['name'] ) : '';
-                $property_type = array_key_exists( 'type', $property_params ) ? strval( $property_params['type'] ) : '';
-                $property_length = array_key_exists( 'length', $property_params ) ? intval( $property_params['length'] ) : 0;
-                $property_unique = array_key_exists( 'unique', $property_params ) ? boolval( $property_params['unique'] ) : false;
-                $property_nullable = array_key_exists( 'nullable', $property_params ) ? boolval( $property_params['nullable'] ) : false;
-                $property_regex = array_key_exists( 'regex', $property_params ) ? strval( $property_params['regex'] ) : '/^.*$/';
+                $property_unique = $this->get_param( 'unique', $property_params );
+                $property_nullable = $this->get_param( 'nullable', $property_params );
+                $property_regex = $this->get_param( 'regex', $property_params );
 
-                if( !$property_nullable and empty( $property_value )) {
+                if( $property_nullable !== true and empty( $property_value )) {
                     $this->error = $property_name . ' is empty';
                     break;
 
-                } elseif( !empty( $property_value ) and $property_type != gettype( $property_value )) {
-                    $this->error = $property_name . ' has incorrect type';
-                    break;
-
-                } elseif( !empty( $property_length ) and mb_strlen( $property_value ) > $property_length ) {
-                    $this->error = $property_name . ' is too long';
-                    break;
-
-                } elseif( !empty( $property_regex ) and !preg_match( $property_regex, $property_value ) ) {
-                    $this->error = $property_name . ' does not match the pattern';
-                    break;
-
-                } elseif( $property_unique and $this->repository->is_exists( $entity_params['table'], [['user_email', '=', $property_value]] ) ) {
-                    $this->error = $property_name . ' is occupied';
-                    break;
-
                 } elseif( !empty( $property_value )) {
-                    $data[$property_name] = $property_value;
+
+                    if( !empty( $property_regex ) and !preg_match( $property_regex, $property_value ) ) {
+                        $this->error = $property_name . ' is incorrect';
+                        break;
+
+                    } elseif( $property_unique === true and $this->repository->is_exists( $entity_params['table'], [['user_email', '=', $property_value]] ) ) {
+                        $this->error = $property_name . ' is occupied';
+                        break;
+
+                    } elseif( !empty( $property_value )) {
+                        $data[$property_name] = $property_value;
+                    }
                 }
             }
         }
 
-
         if( empty( $this->error )) {
-            if( empty( $this->id )) {
-                $this->repository->insert( $entity_params['table'], $data );
+
+            $property_id = $class->getProperty( 'id' );
+            $property_id->setAccessible( true );
+            $entity_id = $property_id->getValue( $entity );
+
+            if( empty( $entity_id )) {
+                $id = $this->repository->insert( $entity_params['table'], $data );
+
+                if( !empty( $id )) {
+                    $property_id->setValue( $entity, $id );
+
+                } else {
+                    $this->error = $entity_params['alias'] . ' save error';
+                }
 
             } else {
                 //$this->repositoty->update( $entity );
             }
         }
 
+        return empty( $this->error );
     }
 }

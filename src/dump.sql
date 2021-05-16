@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
     user_hash    VARCHAR(40)  NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
             KEY (user_status),
      UNIQUE KEY (user_token),
      UNIQUE KEY (user_email),
@@ -28,23 +30,29 @@ CREATE TABLE IF NOT EXISTS user_meta (
     meta_value  VARCHAR(255) NOT NULL DEFAULT '',
 
     PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-     UNIQUE KEY (user_id, meta_key)
+            KEY (meta_key),
+     UNIQUE KEY (user_id, meta_key),
+            KEY (meta_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS repos (
+CREATE TABLE IF NOT EXISTS hubs (
     id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id     BIGINT(20)   UNSIGNED NOT NULL,
-    repo_status  ENUM('private', 'custom', 'trash') NOT NULL,
-    repo_name   VARCHAR(128) NOT NULL,
+    hub_status  ENUM('private', 'custom', 'trash') NOT NULL,
+    hub_name    VARCHAR(128) NOT NULL,
 
-    PRIMARY KEY id          (id),
-    FOREIGN KEY user_id     (user_id) REFERENCES users (id) ON DELETE CASCADE,
-            KEY repo_status (repo_status)
+    PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            KEY (hub_status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -54,15 +62,147 @@ CREATE TABLE IF NOT EXISTS user_roles (
     create_date DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id     BIGINT(20)  UNSIGNED NOT NULL,
-    repo_id     BIGINT(20)  UNSIGNED NOT NULL,
+    hub_id      BIGINT(20)  UNSIGNED NOT NULL,
     user_role  ENUM('admin', 'author', 'editor', 'reader', 'none') NOT NULL,
 
         PRIMARY KEY (id),
+                KEY (create_date),
+                KEY (update_date),
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-        FOREIGN KEY (repo_id) REFERENCES repos (id) ON DELETE CASCADE,
-         UNIQUE KEY (user_id, repo_id),
+        FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
+         UNIQUE KEY (user_id, hub_id),
                 KEY (user_role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS documents (
+    id              BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
+    create_date     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date     DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id         BIGINT(20)  UNSIGNED NOT NULL,
+    hub_id          BIGINT(20)  UNSIGNED NOT NULL,
+    document_status ENUM('todo', 'doing', 'done', 'trash') NOT NULL,
+    document_title  VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
+    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
+            KEY (document_status),
+            KEY (document_title)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS document_meta (
+    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    document_id BIGINT(20)   UNSIGNED NOT NULL,
+    meta_key    VARCHAR(20)  NOT NULL,
+    meta_value  VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
+    FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+            KEY (meta_key),
+            KEY (meta_value)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS comments (
+    id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
+    create_date  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date  DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    document_id  BIGINT(20)  UNSIGNED NOT NULL,
+    user_id      BIGINT(20)  UNSIGNED NOT NULL,
+    hub_id       BIGINT(20)  UNSIGNED NOT NULL,
+    comment_text TEXT        NOT NULL,
+
+    PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
+    FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
+    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS comment_uploads (
+    id            BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
+    create_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date   DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id       BIGINT(20)   UNSIGNED NOT NULL,
+    hub_id        BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
+    comment_id    BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
+    upload_status ENUM('common', 'favorite', 'trash') NOT NULL,
+    upload_name   VARCHAR(255) NOT NULL,
+    upload_mime   VARCHAR(255) NOT NULL,
+    upload_size   BIGINT(20)   NOT NULL,
+    upload_file   VARCHAR(255) NOT NULL,
+
+    PRIMARY KEY (id),
+            KEY (create_date),
+            KEY (update_date),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
+    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE SET NULL,
+    FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE SET NULL,
+            KEY (upload_status),
+            KEY (upload_name),
+            KEY (upload_mime),
+            KEY (upload_size),
+     UNIQUE KEY (upload_file)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+DELIMITER |
+CREATE TRIGGER comment_insert
+AFTER INSERT
+ON comments 
+FOR EACH ROW 
+BEGIN
+    SET @childs_count := (SELECT COUNT(id) FROM comments WHERE document_id = NEW.document_id);
+    IF EXISTS (SELECT id FROM document_meta WHERE document_id=NEW.document_id AND meta_key='childs_count') THEN
+        UPDATE document_meta SET meta_value=@childs_count WHERE document_id=NEW.document_id AND meta_key='childs_count';
+    ELSE
+        INSERT INTO document_meta (document_id, meta_key, meta_value) VALUES (NEW.document_id, 'childs_count', @childs_count);
+    END IF;
+END;
+| 
+DELIMITER ;
+
+
+DELIMITER |
+CREATE TRIGGER comment_delete
+AFTER DELETE
+ON comments 
+FOR EACH ROW 
+BEGIN
+    SET @childs_count := (SELECT COUNT(id) FROM comments WHERE document_id = OLD.document_id);
+    IF @childs_count = 0 THEN
+        DELETE FROM document_meta WHERE document_id=OLD.document_id AND meta_key='childs_count';
+    ELSE 
+        UPDATE document_meta SET meta_value=@childs_count WHERE document_id=OLD.document_id AND meta_key='childs_count';
+    END IF;
+END;
+|
+DELIMITER ;
+
+
+# ==========================================================================================================
+
+
+
+
+
+
+
+
 
 
 SET sql_mode = '';
@@ -128,8 +268,8 @@ BEGIN
     IF OLD.parent_id IS NOT NULL THEN
         SET @childs_count := (SELECT COUNT(id) FROM posts WHERE parent_id = OLD.parent_id);
         IF @childs_count = 0 THEN
-            DELETE FROM post_meta WHERE post_id=OLD.parent_id AND meta_key='childs_count';
-        ELSE 
+            #DELETE FROM post_meta WHERE post_id=OLD.parent_id AND meta_key='childs_count';
+        #ELSE 
             UPDATE post_meta SET meta_value=@childs_count WHERE post_id=OLD.parent_id AND meta_key='childs_count';
         END IF;
     END IF;
