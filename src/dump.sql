@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     update_date  DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     restore_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00',
     user_status  ENUM('pending', 'approved', 'trash') NOT NULL,
-    user_token   VARCHAR(80)  NOT NULL,
+    user_token   CHAR(80)  NOT NULL,
     user_email   VARCHAR(255) NOT NULL,
     user_name    VARCHAR(128) NOT NULL,
     user_hash    VARCHAR(40)  NOT NULL DEFAULT '',
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS hubs (
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id     BIGINT(20)   UNSIGNED NOT NULL,
-    hub_status  ENUM('private', 'custom', 'trash') NOT NULL,
+    hub_status  ENUM('private', 'custom', 'public', 'trash') NOT NULL,
     hub_name    VARCHAR(128) NOT NULL,
 
     PRIMARY KEY (id),
@@ -76,38 +76,40 @@ CREATE TABLE IF NOT EXISTS user_roles (
 
 
 SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS documents (
-    id              BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date     DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id         BIGINT(20)  UNSIGNED NOT NULL,
-    hub_id          BIGINT(20)  UNSIGNED NOT NULL,
-    document_status ENUM('todo', 'doing', 'done', 'trash') NOT NULL,
-    document_title  VARCHAR(255) NOT NULL,
+CREATE TABLE IF NOT EXISTS posts (
+    id          BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
+    create_date DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
+    user_id     BIGINT(20)  UNSIGNED NOT NULL,
+    hub_id      BIGINT(20)  UNSIGNED NOT NULL,
+    post_type   ENUM('document') NOT NULL,
+    post_status ENUM('todo', 'doing', 'done', 'trash') NOT NULL,
+    post_title  VARCHAR(255) NOT NULL,
 
     PRIMARY KEY (id),
             KEY (create_date),
             KEY (update_date),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
     FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
-            KEY (document_status),
-            KEY (document_title)
+            KEY (post_type),
+            KEY (post_status),
+            KEY (post_title)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS document_meta (
+CREATE TABLE IF NOT EXISTS post_meta (
     id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    document_id BIGINT(20)   UNSIGNED NOT NULL,
+    post_id     BIGINT(20)   UNSIGNED NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
 
     PRIMARY KEY (id),
             KEY (create_date),
             KEY (update_date),
-    FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
             KEY (meta_key),
             KEY (meta_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -118,7 +120,7 @@ CREATE TABLE IF NOT EXISTS comments (
     id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    document_id  BIGINT(20)  UNSIGNED NOT NULL,
+    post_id      BIGINT(20)  UNSIGNED NOT NULL,
     user_id      BIGINT(20)  UNSIGNED NOT NULL,
     hub_id       BIGINT(20)  UNSIGNED NOT NULL,
     comment_text TEXT        NOT NULL,
@@ -126,7 +128,7 @@ CREATE TABLE IF NOT EXISTS comments (
     PRIMARY KEY (id),
             KEY (create_date),
             KEY (update_date),
-    FOREIGN KEY (document_id) REFERENCES documents (id) ON DELETE CASCADE,
+    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
     FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
