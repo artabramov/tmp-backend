@@ -1,7 +1,16 @@
 <?php
 $user_email = Flight::request()->query['user_email'];
-$user_pass = Flight::pass();
+//$user_pass = Flight::pass();
 
+// select user
+$user = new \App\Entities\User;
+//$user->user_email = $user_email;
+Flight::load( $user, [
+    ['user_email', '=', $user_email], 
+    ['user_status', '<>', 'trash']    
+] );
+
+/*
 // master
 $master = Flight::user();
 Flight::select( $master, [
@@ -23,6 +32,7 @@ Flight::update( $master, [
 
 // send email
 Flight::email( $master->user_email, 'User', 'User restore', 'One-time pass: <i>' . $user_pass . '</i>' );
+*/
 
 // json
 Flight::json();

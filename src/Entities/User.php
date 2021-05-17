@@ -27,6 +27,17 @@ class User extends \App\Core\Entity
     protected $restore_date;
 
     /**
+     * @column(nullable=false unique=false regex=/^pending$|^approved$|^trash$/)
+     */
+    protected $user_status;
+
+    /**
+     * @column(nullable=false unique=true regex=/^[0-9a-f]{80}$/)
+     */
+    protected $user_token;
+
+
+    /**
      * @column(nullable=false unique=true regex=/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/)
      */
     protected $user_email;
@@ -35,11 +46,6 @@ class User extends \App\Core\Entity
      * @column(nullable=false unique=false regex=/^.{2,128}$/)
      */
     protected $user_name;
-
-    /**
-     * @column(nullable=false unique=true regex=/^[0-9a-f]{80}$/)
-     */
-    protected $user_token;
 
     /**
      * @column(nullable=true unique=false regex=/^[0-9a-f]{40}$/)

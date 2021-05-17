@@ -1,6 +1,0 @@
-first string
-
-SECond String
-third STRing
-END.
-

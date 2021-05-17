@@ -81,8 +81,8 @@ class Mapper
             $property_params = $this->get_column_params( $entity, $property_name );
 
             if( !empty( $property_params )) {
-                $property_unique = $this->get_param( 'unique', $property_params );
                 $property_nullable = $this->get_param( 'nullable', $property_params );
+                $property_unique = $this->get_param( 'unique', $property_params );
                 $property_regex = $this->get_param( 'regex', $property_params );
 
                 if( $property_nullable !== true and empty( $property_value )) {
@@ -128,5 +128,28 @@ class Mapper
         }
 
         return empty( $this->error );
+    }
+
+
+
+    public function load( $entity, $args ) {
+        $this->error = '';
+
+        $reflection = new \ReflectionClass( $entity );
+        $entity_params = $this->get_entity_params( $entity );
+
+        $rows = $this->repository->select( ['*'], $entity_params['table'], $args, 1, 0 );
+
+        if( !empty( $rows )) {
+            foreach( $rows[0] as $key=>$value ) {
+
+                $property = $reflection->getProperty( $key );
+                $property->setAccessible( true );
+                $property->setValue( $entity, $rows[0]->$key );
+            }
+        }
+
+
+        //$a = 1;
     }
 }

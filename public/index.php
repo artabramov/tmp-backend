@@ -265,6 +265,25 @@ Flight::map( 'save', function( $entity ) {
     }
 });
 
+// load
+Flight::map( 'load', function( $entity, $args ) {
+
+    if( Flight::empty( 'error' )) {
+
+        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \App\Core\Mapper( $repository );
+        $mapper->load( $entity, $args );
+
+        /*
+        if( !$row->get( $args )) {
+            Flight::set( 'e', $row->e );
+            Flight::set( 'error', $row->error );
+        }
+        */
+    }
+});
+
+
 /*
 // insert
 Flight::map( 'insert', function( $row, $data ) {
@@ -363,6 +382,54 @@ Flight::before('json', function(&$params, &$output){
 
 Flight::route( 'GET /', function() {
 
+    /*
+    $table = 'users';
+    $columns = ['id', 'user_name'];
+    $args = [['user_status', '<>', 'trash'], ['create_date', '!=', '0000-00-00'], ['user_hash', 'IN', [1, 2, 3]]];
+    $limit = 1;
+    $offset = 0;
+
+    $select = implode( ', ', $columns );
+    $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
+
+    $params = [];
+    foreach( $args as $arg ) {
+        if( is_array( $arg[2] )) {
+            foreach( $arg[2] as $param ) {
+                $params[] = $param;
+            }
+        } else {
+            $params[] = $arg[2];
+        }
+    }
+    $params[] = $limit;
+    $params[] = $offset;
+
+    $sql = 'SELECT ' . $select . ' FROM ' . $table . ' WHERE ' . $where . ' LIMIT ?,?';
+    */
+
+    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+    $result = $repository->select( ['test_value'], 'tests', [['test_key', '=', 'key']], 1, 0 );
+    $a = 1;
+
+
+    //print_r( $args );
+    //print_r( $data );
+
+    //echo PHP_EOL;
+    //echo( $columns );
+    //echo PHP_EOL;
+    //echo( $values );
+
+    
+    //echo PHP_EOL;
+    //print_r( $params );
+    //echo PHP_EOL;
+    //echo( $sql );
+    
+
+
+    /*
     $user_email = (string) Flight::request()->query['user_email'];
     $user_name = (string) Flight::request()->query['user_name'];
 
@@ -383,7 +450,7 @@ Flight::route( 'GET /', function() {
     } else {
         echo 'hurrah!';
     }
-    
+    */
 
 
     //--------------------------------------------------------
