@@ -24,7 +24,21 @@ class Mapper
         }
     }
 
-    // doc format: @key(param1=value1 param2=value2)
+    // +
+    private function get_entity_params( $entity_class ) {
+        $doc = $entity_class->getDocComment();
+        return $this->parse_params( $doc, 'entity' );
+    }
+
+    // +
+    private function get_property_params( $entity, $column ) {
+        $class = new \ReflectionClass( $entity );
+        $property = $class->getProperty( $column );
+        $doc = $property->getDocComment();
+        return $this->parse_params( $doc, 'column' );
+    }
+
+    // + doc format: @key(param1=value1 param2=value2)
     private function parse_params( $doc, $key ) {
 
         preg_match_all( '#@' . $key . '\((.*?)\)\n#s', $doc, $tmp );
@@ -32,124 +46,119 @@ class Mapper
         return array_combine ( $tmp[1], $tmp[2] );
     }
 
-    private function get_entity_params( $entity ) {
-
-        $class = new \ReflectionClass( $entity );
-        $doc = $class->getDocComment();
-        return $this->parse_params( $doc, 'entity' );
-    }
-
-    private function get_column_params( $entity, $column ) {
-
-        $class = new \ReflectionClass( $entity );
-        $property = $class->getProperty( $column );
-        $doc = $property->getDocComment();
-        return $this->parse_params( $doc, 'column' );
-    }
-
-    // get param value from array
-    private function get_param( $key, $array ) {
-
-        if( !array_key_exists( $key, $array )) {
-            return null;
-        }
-
-        if( in_array( $array[ $key ], [ 'true', 'false' ] ) ) {
-            return $array[ $key ] == 'true' ? true : false;
-
-        } elseif( ctype_digit( $array[ $key ] )) {
-            return intval( $array[ $key ] );
-
-        } else {
-            return strval( $array[ $key ] );
-        }
-    }
-
-    public function save( $entity ) {
+    public function insert( $entity, $data ) {
 
         $this->error = '';
-        $entity_params = $this->get_entity_params( $entity );
-        $class = new \ReflectionClass( $entity );
-        $properties = $class->getProperties();
-        $data = [];
+        $entity_class = new \ReflectionClass( $entity );
+        $entity_params = $this->get_entity_params( $entity_class );
 
-        foreach( $properties as $property ) {
-            $property_name = $property->name;
-            $property = $class->getProperty( $property_name );
+        foreach( $data as $key => $value ) {
+            $property = $entity_class->getProperty( $key );
             $property->setAccessible( true );
-            $property_value = $property->getValue( $entity );
-            $property_params = $this->get_column_params( $entity, $property_name );
+            $property_params = $this->get_property_params( $entity, $key );
 
-            if( !empty( $property_params )) {
-                $property_nullable = $this->get_param( 'nullable', $property_params );
-                $property_unique = $this->get_param( 'unique', $property_params );
-                $property_regex = $this->get_param( 'regex', $property_params );
+            if( $property_params[ 'nullable' ] != 'true' and empty( $value )) {
+                $this->error = $key . ' is empty';
+                break;
 
-                if( $property_nullable !== true and empty( $property_value )) {
-                    $this->error = $property_name . ' is empty';
+            } elseif( !empty( $value )) {
+
+                if( !preg_match( $property_params[ 'regex' ], $value ) ) {
+                    $this->error = $key . ' is incorrect';
                     break;
 
-                } elseif( !empty( $property_value )) {
-
-                    if( !empty( $property_regex ) and !preg_match( $property_regex, $property_value ) ) {
-                        $this->error = $property_name . ' is incorrect';
-                        break;
-
-                    } elseif( $property_unique === true and $this->repository->is_exists( $entity_params['table'], [['user_email', '=', $property_value]] ) ) {
-                        $this->error = $property_name . ' is occupied';
-                        break;
-
-                    } elseif( !empty( $property_value )) {
-                        $data[$property_name] = $property_value;
-                    }
+                } elseif( $property_params[ 'unique' ] == 'true' and $this->repository->is_exists( $entity_params[ 'table' ], [[ $key, '=', $value ]] ) ) {
+                    $this->error = $key . ' is occupied';
+                    break;
                 }
             }
         }
-
+        
         if( empty( $this->error )) {
+            $data['id'] = $this->repository->insert( $entity_params['table'], $data );
 
-            $property_id = $class->getProperty( 'id' );
-            $property_id->setAccessible( true );
-            $entity_id = $property_id->getValue( $entity );
+            if( !empty( $data['id'] )) {
 
-            if( empty( $entity_id )) {
-                $id = $this->repository->insert( $entity_params['table'], $data );
-
-                if( !empty( $id )) {
-                    $property_id->setValue( $entity, $id );
-
-                } else {
-                    $this->error = $entity_params['alias'] . ' save error';
+                foreach( $data as $key => $value ) {
+                    $property = $entity_class->getProperty( $key );
+                    $property->setAccessible( true );
+                    $property->setValue( $entity, $value );
                 }
 
             } else {
-                //$this->repositoty->update( $entity );
+                $this->error = $entity_params['alias'] . ' insert error';
             }
         }
 
         return empty( $this->error );
     }
 
+    public function update( $entity, $data ) {
 
+        $this->error = '';
+        $entity_class = new \ReflectionClass( $entity );
+        $entity_params = $this->get_entity_params( $entity_class );
 
-    public function load( $entity, $args ) {
+        foreach( $data as $key => $value ) {
+            $property = $entity_class->getProperty( $key );
+            $property->setAccessible( true );
+            $property_params = $this->get_property_params( $entity, $key );
+
+            if( $property_params[ 'nullable' ] != 'true' and empty( $value )) {
+                $this->error = $key . ' is empty';
+                break;
+
+            } elseif( !empty( $value )) {
+
+                if( !preg_match( $property_params[ 'regex' ], $value ) ) {
+                    $this->error = $key . ' is incorrect';
+                    break;
+
+                } elseif( $property_params[ 'unique' ] == 'true' and $this->repository->is_exists( $entity_params[ 'table' ], [[ $key, '=', $value ]] ) ) {
+                    $this->error = $key . ' is occupied';
+                    break;
+                }
+            }
+        }
+
+        if( empty( $this->error )) {
+
+            if( $this->repository->update( $entity_params['table'], [['id', '=', $entity->id]], $data )) {
+
+                foreach( $data as $key => $value ) {
+                    $property = $entity_class->getProperty( $key );
+                    $property->setAccessible( true );
+                    $property->setValue( $entity, $value );
+                }
+
+            } else {
+                $this->error = $entity_params['alias'] . ' update error';
+            }
+        }
+
+        return empty( $this->error );
+    }
+
+    public function select( $entity, $args ) {
         $this->error = '';
 
-        $reflection = new \ReflectionClass( $entity );
-        $entity_params = $this->get_entity_params( $entity );
-
-        $rows = $this->repository->select( ['*'], $entity_params['table'], $args, 1, 0 );
+        $class = new \ReflectionClass( $entity );
+        $params = $this->get_entity_params( $class );
+        $rows = $this->repository->select( ['*'], $params['table'], $args, 1, 0 );
 
         if( !empty( $rows )) {
             foreach( $rows[0] as $key=>$value ) {
 
-                $property = $reflection->getProperty( $key );
+                $property = $class->getProperty( $key );
                 $property->setAccessible( true );
                 $property->setValue( $entity, $rows[0]->$key );
             }
+
+        } else {
+            $this->error = $params['alias'] . ' not found';
         }
 
-
-        //$a = 1;
+        return empty( $this->error );
     }
+
 }

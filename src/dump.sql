@@ -82,7 +82,6 @@ CREATE TABLE IF NOT EXISTS posts (
     update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id     BIGINT(20)  UNSIGNED NOT NULL,
     hub_id      BIGINT(20)  UNSIGNED NOT NULL,
-    post_type   ENUM('document') NOT NULL,
     post_status ENUM('todo', 'doing', 'done', 'trash') NOT NULL,
     post_title  VARCHAR(255) NOT NULL,
 
@@ -91,7 +90,6 @@ CREATE TABLE IF NOT EXISTS posts (
             KEY (update_date),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
     FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
-            KEY (post_type),
             KEY (post_status),
             KEY (post_title)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -120,17 +118,15 @@ CREATE TABLE IF NOT EXISTS comments (
     id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
     create_date  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    post_id      BIGINT(20)  UNSIGNED NOT NULL,
     user_id      BIGINT(20)  UNSIGNED NOT NULL,
-    hub_id       BIGINT(20)  UNSIGNED NOT NULL,
-    comment_text TEXT        NOT NULL,
+    post_id      BIGINT(20)  UNSIGNED NOT NULL,
+    comment_text TEXT        NULL DEFAULT NULL,
 
     PRIMARY KEY (id),
             KEY (create_date),
             KEY (update_date),
-    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES posts (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -140,9 +136,8 @@ CREATE TABLE IF NOT EXISTS comment_uploads (
     create_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date   DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     user_id       BIGINT(20)   UNSIGNED NOT NULL,
-    hub_id        BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
     comment_id    BIGINT(20)   UNSIGNED NULL DEFAULT NULL,
-    upload_status ENUM('common', 'favorite', 'trash') NOT NULL,
+    upload_status ENUM('uploaded', 'favorite', 'trash') NOT NULL,
     upload_name   VARCHAR(255) NOT NULL,
     upload_mime   VARCHAR(255) NOT NULL,
     upload_size   BIGINT(20)   NOT NULL,
@@ -152,7 +147,6 @@ CREATE TABLE IF NOT EXISTS comment_uploads (
             KEY (create_date),
             KEY (update_date),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE SET NULL,
     FOREIGN KEY (comment_id) REFERENCES comments (id) ON DELETE SET NULL,
             KEY (upload_status),
             KEY (upload_name),
@@ -168,11 +162,11 @@ AFTER INSERT
 ON comments 
 FOR EACH ROW 
 BEGIN
-    SET @childs_count := (SELECT COUNT(id) FROM comments WHERE document_id = NEW.document_id);
-    IF EXISTS (SELECT id FROM document_meta WHERE document_id=NEW.document_id AND meta_key='childs_count') THEN
-        UPDATE document_meta SET meta_value=@childs_count WHERE document_id=NEW.document_id AND meta_key='childs_count';
+    SET @comment_count := (SELECT COUNT(id) FROM comments WHERE post_id = NEW.post_id);
+    IF EXISTS (SELECT id FROM post_meta WHERE post_id=NEW.post_id AND meta_key='comment_count') THEN
+        UPDATE post_meta SET meta_value=@comment_count WHERE post_id=NEW.post_id AND meta_key='comment_count';
     ELSE
-        INSERT INTO document_meta (document_id, meta_key, meta_value) VALUES (NEW.document_id, 'childs_count', @childs_count);
+        INSERT INTO post_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'comment_count', @comment_count);
     END IF;
 END;
 | 
@@ -185,11 +179,11 @@ AFTER DELETE
 ON comments 
 FOR EACH ROW 
 BEGIN
-    SET @childs_count := (SELECT COUNT(id) FROM comments WHERE document_id = OLD.document_id);
-    IF @childs_count = 0 THEN
-        DELETE FROM document_meta WHERE document_id=OLD.document_id AND meta_key='childs_count';
+    SET @comment_count := (SELECT COUNT(id) FROM comments WHERE post_id = OLD.post_id);
+    IF @comment_count = 0 THEN
+        DELETE FROM post_meta WHERE post_id=OLD.post_id AND meta_key='comment_count';
     ELSE 
-        UPDATE document_meta SET meta_value=@childs_count WHERE document_id=OLD.document_id AND meta_key='childs_count';
+        UPDATE post_meta SET meta_value=@comment_count WHERE post_id=OLD.post_id AND meta_key='comment_count';
     END IF;
 END;
 |
@@ -199,8 +193,25 @@ DELIMITER ;
 # ==========================================================================================================
 
 
+DROP TABLE IF EXISTS comment_uploads;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS post_meta;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS user_meta;
+DROP TABLE IF EXISTS user_roles;
+DROP TABLE IF EXISTS hubs;
+DROP TABLE IF EXISTS users;
 
+DELETE FROM comment_uploads;
+DELETE FROM comments;
+DELETE FROM post_meta;
+DELETE FROM posts;
+DELETE FROM user_meta;
+DELETE FROM user_roles;
+DELETE FROM hubs;
+DELETE FROM users;
 
+SELECT * FROM users; SELECT * FROM hubs; SELECT * FROM user_roles; SELECT * FROM user_meta; SELECT * FROM posts;
 
 
 
@@ -309,13 +320,9 @@ CREATE TABLE IF NOT EXISTS post_uploads (
 
 # ==========================================================================================================
 
-DROP TABLE IF EXISTS user_meta;
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS post_uploads;
-DROP TABLE IF EXISTS post_meta;
-DROP TABLE IF EXISTS posts;
-DROP TABLE IF EXISTS repos;
-DROP TABLE IF EXISTS users;
+
+
+
 
 
 CREATE TRIGGER post_delete

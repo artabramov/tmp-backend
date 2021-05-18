@@ -1,7 +1,7 @@
 <?php
 namespace App\Core;
 
-class Time extends \App\Core\Echidna
+class Time extends \App\Core\Repository
 {
 
     public function __get( string $key ) {

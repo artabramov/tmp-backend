@@ -38,13 +38,6 @@ Flight::map( 'debug', function( Throwable $e ) {
     ]);
 });
 
-// datetime
-Flight::map( 'datetime', function() {
-    //$time = new \App\Core\Time( Flight::get( 'pdo' ));
-    //return $time->datetime;
-    return date('U');
-});
-
 // send email
 Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
 
@@ -249,38 +242,59 @@ Flight::map( 'upload', function( $data = [] ) {
 
 //===========================================================
 
-// save
-Flight::map( 'save', function( $entity ) {
+// insert
+Flight::map( 'insert', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
 
         $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
         $mapper = new \App\Core\Mapper( $repository );
-        $mapper->save( $entity );
+        $mapper->insert( $entity, $data );
 
         if( !empty( $mapper->error )) {
-            //Flight::set( 'e', $row->e );
+            Flight::set( 'e', $repository->e );
             Flight::set( 'error', $mapper->error );
         }
     }
 });
 
-// load
-Flight::map( 'load', function( $entity, $args ) {
+// update
+Flight::map( 'update', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
 
         $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
         $mapper = new \App\Core\Mapper( $repository );
-        $mapper->load( $entity, $args );
+        $mapper->update( $entity, $data );
 
-        /*
-        if( !$row->get( $args )) {
-            Flight::set( 'e', $row->e );
-            Flight::set( 'error', $row->error );
+        if( !empty( $mapper->error )) {
+            Flight::set( 'e', $repository->e );
+            Flight::set( 'error', $mapper->error );
         }
-        */
     }
+});
+
+// select
+Flight::map( 'select', function( $entity, $args ) {
+
+    if( Flight::empty( 'error' )) {
+
+        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \App\Core\Mapper( $repository );
+        $mapper->select( $entity, $args );
+
+        if( !empty( $mapper->error )) {
+            Flight::set( 'e', $repository->e );
+            Flight::set( 'error', $mapper->error );
+        }
+    }
+});
+
+// datetime
+Flight::map( 'datetime', function() {
+
+    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+    return $repository->datetime();
 });
 
 

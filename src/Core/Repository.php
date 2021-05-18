@@ -3,11 +3,11 @@ namespace App\Core;
 
 class Repository
 {
-    protected $exception;
+    public $e;
     protected $pdo;
 
     public function __construct( $pdo ) {
-        $this->exception = null;
+        $this->e = null;
         $this->pdo = $pdo;
     }
 
@@ -26,10 +26,10 @@ class Repository
             $id = $this->pdo->lastInsertId();
 
         } catch( \Exception $e ) {
-            $this->exception = $e;
+            $this->e = $e;
         }
 
-        return empty( $this->exception ) ? $id : 0;
+        return empty( $this->e ) ? $id : 0;
     }
 
     /**
@@ -155,10 +155,19 @@ class Repository
         return empty( $this->e ) ? !empty( $rows->id ) : false;
     }
 
+    public function datetime() {
 
+        try {
+            $stmt = $this->pdo->prepare( 'SELECT NOW() AS datetime;' );
+            $stmt->execute();
+            $rows = $stmt->fetch( $this->pdo::FETCH_ASSOC );
 
+        } catch( \Exception $e ) {
+            $this->e = $e;
+        }
 
-
+        return empty( $this->e ) ? $rows[ 'datetime' ] : '0000-00-00 00:00:00';
+    }
 
 
 }

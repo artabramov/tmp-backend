@@ -4,11 +4,19 @@ $user_email = Flight::request()->query['user_email'];
 
 // select user
 $user = new \App\Entities\User;
-//$user->user_email = $user_email;
-Flight::load( $user, [
+Flight::select( $user, [
     ['user_email', '=', $user_email], 
     ['user_status', '<>', 'trash']    
-] );
+]);
+
+// update user
+Flight::update( $user, [
+    'restore_date' => Flight::datetime()
+]);
+
+// update master
+//$user->restore_date = Flight::datetime();
+//Flight::update( $user );
 
 /*
 // master
