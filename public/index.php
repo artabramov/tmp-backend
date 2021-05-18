@@ -290,6 +290,22 @@ Flight::map( 'select', function( $entity, $args ) {
     }
 });
 
+// delete
+Flight::map( 'delete', function( $entity ) {
+
+    if( Flight::empty( 'error' )) {
+
+        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \App\Core\Mapper( $repository );
+        $mapper->delete( $entity );
+
+        if( !empty( $mapper->error )) {
+            Flight::set( 'e', $repository->e );
+            Flight::set( 'error', $mapper->error );
+        }
+    }
+});
+
 // datetime
 Flight::map( 'datetime', function() {
 

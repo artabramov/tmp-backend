@@ -11,6 +11,22 @@ class Repository
         $this->pdo = $pdo;
     }
 
+    private function params( $args ) {
+
+        $params = [];
+        foreach( $args as $arg ) {
+            if( is_array( $arg[2] )) {
+                foreach( $arg[2] as $param ) {
+                    $params[] = $param;
+                }
+            } else {
+                $params[] = $arg[2];
+            }
+        }
+
+        return $params;
+    }
+
     /**
      * @return integer
      * @throws \Exception
@@ -40,17 +56,7 @@ class Repository
 
         $set = implode( ', ', array_map( fn( $value ) => $value . ' = ?', array_keys( $data )));
         $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-
-        $params = array_values( $data );
-        foreach( $args as $arg ) {
-            if( is_array( $arg[2] )) {
-                foreach( $arg[2] as $param ) {
-                    $params[] = $param;
-                }
-            } else {
-                $params[] = $arg[2];
-            }
-        }
+        $params = array_merge( array_values( $data ), $this->params( $args ));
 
         try {
             $stmt = $this->pdo->prepare( 'UPDATE ' . $table . ' SET ' . $set . ' WHERE ' . $where . ' LIMIT 1' );
@@ -72,17 +78,7 @@ class Repository
 
         $select = implode( ', ', $columns );
         $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-    
-        $params = [];
-        foreach( $args as $arg ) {
-            if( is_array( $arg[2] )) {
-                foreach( $arg[2] as $param ) {
-                    $params[] = $param;
-                }
-            } else {
-                $params[] = $arg[2];
-            }
-        }
+        $params = $this->params( $args );
 
         try {
             $stmt = $this->pdo->prepare( 'SELECT ' . $select . ' FROM ' . $table . ' WHERE ' . $where . ' LIMIT ' . $offset . ',' . $limit );
@@ -100,20 +96,10 @@ class Repository
      * @return bool
      * @throws \Exception
      */
-    protected function delete( string $table, array $args ) : bool {
+    public function delete( string $table, array $args ) : bool {
 
         $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-
-        $params = [];
-        foreach( $args as $arg ) {
-            if( is_array( $arg[2] )) {
-                foreach( $arg[2] as $param ) {
-                    $params[] = $param;
-                }
-            } else {
-                $params[] = $arg[2];
-            }
-        }
+        $params = $this->params( $args );
 
         try {
             $stmt = $this->pdo->prepare( 'DELETE FROM ' . $table . ' WHERE ' . $where );
@@ -131,17 +117,7 @@ class Repository
     public function is_exists( string $table, array $args ) : bool {
 
         $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-
-        $params = [];
-        foreach( $args as $arg ) {
-            if( is_array( $arg[2] )) {
-                foreach( $arg[2] as $param ) {
-                    $params[] = $param;
-                }
-            } else {
-                $params[] = $arg[2];
-            }
-        }
+        $params = $this->params( $args );
 
         try {
             $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' WHERE ' . $where . ' LIMIT 1' );

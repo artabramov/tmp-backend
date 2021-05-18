@@ -14,6 +14,16 @@ Flight::update( $user, [
     'restore_date' => Flight::datetime()
 ]);
 
+// select usermeta
+$usermeta = new \App\Entities\Usermeta;
+Flight::select( $usermeta, [
+    ['user_id', '=', $user->id], 
+    ['meta_key', '=', 'register_agent']    
+]);
+
+Flight::delete( $usermeta );
+
+
 // update master
 //$user->restore_date = Flight::datetime();
 //Flight::update( $user );

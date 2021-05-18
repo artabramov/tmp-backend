@@ -139,6 +139,28 @@ class Mapper
         return empty( $this->error );
     }
 
+    public function delete( $entity ) {
+        $this->error = '';
+
+        $class = new \ReflectionClass( $entity );
+        $params = $this->get_entity_params( $class );
+
+        if( $this->repository->delete( $params['table'], [['id', '=', $entity->id]] )) {
+            $properties = $class->getProperties();
+
+            foreach( $properties as $property ) {
+                //$property = $class->getProperty( $key );
+                $property->setAccessible( true );
+                $property->setValue( $entity, null );
+            }
+
+        } else {
+            $this->error = $params['alias'] . ' delete error';
+        }
+
+        return empty( $this->error );
+    }
+
     public function select( $entity, $args ) {
         $this->error = '';
 
@@ -160,5 +182,7 @@ class Mapper
 
         return empty( $this->error );
     }
+
+
 
 }
