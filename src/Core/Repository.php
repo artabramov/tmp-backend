@@ -3,7 +3,7 @@ namespace App\Core;
 
 class Repository
 {
-    public $e;
+    protected $e;
     protected $pdo;
 
     public function __construct( $pdo ) {
@@ -11,7 +11,25 @@ class Repository
         $this->pdo = $pdo;
     }
 
-    private function params( $args ) {
+    public function __get( $key ) {
+        if( property_exists( $this, $key )) {
+            return $this->$key;
+        }
+        return null;
+    }
+
+    public function __isset( $key ) {
+        if( property_exists( $this, $key )) {
+            return !empty( $this->$key );
+        }
+        return false;
+    }
+
+    protected function get_where( array $args ) : string {
+        return implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
+    }
+
+    protected function get_params( array $args ) : array {
 
         $params = [];
         foreach( $args as $arg ) {
@@ -55,8 +73,8 @@ class Repository
     public function update( string $table, array $args, array $data ) : bool {
 
         $set = implode( ', ', array_map( fn( $value ) => $value . ' = ?', array_keys( $data )));
-        $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-        $params = array_merge( array_values( $data ), $this->params( $args ));
+        $where = $this->get_where( $args );
+        $params = array_merge( array_values( $data ), $this->get_params( $args ));
 
         try {
             $stmt = $this->pdo->prepare( 'UPDATE ' . $table . ' SET ' . $set . ' WHERE ' . $where . ' LIMIT 1' );
@@ -77,8 +95,8 @@ class Repository
     public function select( array $columns, string $table, array $args, int $limit, int $offset ) : array {
 
         $select = implode( ', ', $columns );
-        $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-        $params = $this->params( $args );
+        $where = $this->get_where( $args );
+        $params = $this->get_params( $args );
 
         try {
             $stmt = $this->pdo->prepare( 'SELECT ' . $select . ' FROM ' . $table . ' WHERE ' . $where . ' LIMIT ' . $offset . ',' . $limit );
@@ -98,8 +116,8 @@ class Repository
      */
     public function delete( string $table, array $args ) : bool {
 
-        $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-        $params = $this->params( $args );
+        $where = $this->get_where( $args );
+        $params = $this->get_params( $args );
 
         try {
             $stmt = $this->pdo->prepare( 'DELETE FROM ' . $table . ' WHERE ' . $where );
@@ -113,25 +131,11 @@ class Repository
         return empty( $this->e ) ? true : false;
     }
 
-
-    public function is_exists( string $table, array $args ) : bool {
-
-        $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-        $params = $this->params( $args );
-
-        try {
-            $stmt = $this->pdo->prepare( 'SELECT id FROM ' . $table . ' WHERE ' . $where . ' LIMIT 1' );
-            $stmt->execute( $params );
-            $rows = $stmt->fetch( $this->pdo::FETCH_OBJ );
-
-        } catch( \Exception $e ) {
-            $this->e = $e;
-        }
-
-        return empty( $this->e ) ? !empty( $rows->id ) : false;
-    }
-
-    public function datetime() {
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function time() {
 
         try {
             $stmt = $this->pdo->prepare( 'SELECT NOW() AS datetime;' );
@@ -144,6 +148,5 @@ class Repository
 
         return empty( $this->e ) ? $rows[ 'datetime' ] : '0000-00-00 00:00:00';
     }
-
 
 }

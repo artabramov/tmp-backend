@@ -36,7 +36,6 @@ class User extends \App\Core\Entity
      */
     protected $user_token;
 
-
     /**
      * @column(nullable=false unique=true regex=/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/)
      */

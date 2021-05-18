@@ -11,7 +11,7 @@ Flight::select( $user, [
 
 // update user
 Flight::update( $user, [
-    'restore_date' => Flight::datetime()
+    'restore_date' => Flight::time()
 ]);
 
 // select usermeta

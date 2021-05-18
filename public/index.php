@@ -58,7 +58,7 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
 });
 
 // upload the file
-Flight::map( 'dropbox_upload', function( $file, $upload_file ) {
+Flight::map( 'upload', function( $file, $upload_file ) {
 
     if( Flight::empty( 'error' )) {
 
@@ -83,161 +83,6 @@ Flight::map( 'dropbox_upload', function( $file, $upload_file ) {
             Flight::set( 'error', 'upload error' );
         }
     }
-});
-
-// exist
-Flight::map( 'exist', function() {
-    return new \App\Core\Exist( Flight::get( 'pdo' ));
-});
-
-// create the user
-Flight::map( 'user', function( $data = [] ) {
-
-    $user = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'users', [
-        'id'           => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'restore_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'user_status'  => [ "/^pending$|^approved$|^trash$/", false ],
-        'user_token'   => [ "/^[0-9a-f]{80}$/", true ],
-        'user_email'   => [ "/^[a-z0-9._-]{2,80}@(([a-z0-9_-]+\.)+(com|net|org|mil|"."edu|gov|arpa|info|biz|inc|name|[a-z]{2})|[0-9]{1,3}\.[0-9]{1,3}\.[0-"."9]{1,3}\.[0-9]{1,3})$/", true ],
-        'user_name'    => [ "/^.{1,128}$/", false ],
-        'user_hash'    => [ "/^$|^[0-9a-f]{40}$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $user->$key = $value;
-    }
-
-    return $user;
-});
-
-// usermeta
-Flight::map( 'usermeta', function( $data = [] ) {
-
-    $meta = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'user_meta', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'meta_key'    => [ "/^[a-z0-9_]{1,20}$/", false ],
-        'meta_value'  => [ "/^.{0,255}$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $meta->$key = $value;
-    }
-
-    return $meta;
-});
-
-// repo
-Flight::map( 'repo', function( $data = [] ) {
-
-    $repo = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'repos', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'repo_status' => [ "/^private$|^custom$|^trash$/", false ],
-        'repo_name'   => [ "/^.{1,128}$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $repo->$key = $value;
-    }
-
-    return $repo;
-});
-
-// role
-Flight::map( 'role', function( $data = [] ) {
-
-    $role = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'user_roles', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'repo_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'user_role'   => [ "/^admin$|^author$|^editor$|^reader$|^none$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $role->$key = $value;
-    }
-
-    return $role;
-});
-
-// post
-Flight::map( 'post', function( $data = [] ) {
-
-    $post = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'posts', [
-        'id'           => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date'  => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'parent_id'    => [ "/^$|^[1-9][0-9]{0,20}$/", false ],
-        'user_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'repo_id'    => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'post_status'  => [ "/^todo$|^doing$|^done$|^comment$|^trash$/", false ],
-        'post_content' => [ "/^.{1,4048}?/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $user->$key = $value;
-    }
-
-    return $post;
-});
-
-// postmeta
-Flight::map( 'postmeta', function( $data = [] ) {
-
-    $meta = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'post_meta', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'post_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'meta_key'    => [ "/^[a-z0-9_]{1,20}$/", false ],
-        'meta_value'  => [ "/^.{1,255}$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $meta->$key = $value;
-    }
-
-    return $meta;
-});
-
-//upload
-Flight::map( 'upload', function( $data = [] ) {
-
-    $upload = new \App\Core\Row( Flight::get( 'pdo' ), 
-        'post_uploads', [
-        'id'          => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'create_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'update_date' => [ "/^$|^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/", false ],
-        'user_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'repo_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'post_id'     => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'upload_key'  => [ "/^[a-z0-9_]{1,20}$/", false ],
-        'upload_name' => [ "/^.{1,255}$/", false ],
-        'upload_mime' => [ "/^.{1,255}$/", false ],
-        'upload_size' => [ "/^[1-9][0-9]{0,20}$/", false ],
-        'upload_file' => [ "/^.{1,255}$/", false ],
-    ]);
-
-    foreach( $data as $key=>$value ) {
-        $user->$key = $value;
-    }
-
-    return $upload;
 });
 
 //===========================================================
@@ -307,58 +152,14 @@ Flight::map( 'delete', function( $entity ) {
 });
 
 // datetime
-Flight::map( 'datetime', function() {
+Flight::map( 'time', function() {
 
     $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-    return $repository->datetime();
+    return $repository->time();
 });
 
 
 /*
-// insert
-Flight::map( 'insert', function( $row, $data ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$row->set( $data )) {
-            Flight::set( 'e', $row->e );
-            Flight::set( 'error', $row->error );
-        }
-    }
-});
-
-// update
-Flight::map( 'update', function( $row, $data ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$row->put( $data )) {
-            Flight::set( 'e', $row->e );
-            Flight::set( 'error', $row->error );
-        }
-    }
-});
-
-// select
-Flight::map( 'select', function( $row, $args ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$row->get( $args )) {
-            Flight::set( 'e', $row->e );
-            Flight::set( 'error', $row->error );
-        }
-    }
-});
-
-// delete
-Flight::map( 'delete', function( $row ) {
-
-    if( Flight::empty( 'error' )) {
-        if( !$row->del()) {
-            Flight::set( 'e', $row->e );
-            Flight::set( 'error', $row->error );
-        }
-    }
-});
-
 // auth
 Flight::map( 'auth', function( $user_token ) {
 
@@ -402,7 +203,7 @@ Flight::after('stop', function(&$params, &$output){
 
 // json
 Flight::before('json', function(&$params, &$output){
-    $params[0]['time']    = Flight::datetime();
+    $params[0]['time']    = Flight::time();
     $params[0]['success'] = Flight::empty( 'error' ) ? 'true' : 'false';
     $params[0]['error']   = Flight::empty( 'error' ) ? '' : Flight::get( 'error' );
 });

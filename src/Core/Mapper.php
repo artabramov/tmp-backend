@@ -67,7 +67,7 @@ class Mapper
                     $this->error = $key . ' is incorrect';
                     break;
 
-                } elseif( $property_params[ 'unique' ] == 'true' and $this->repository->is_exists( $entity_params[ 'table' ], [[ $key, '=', $value ]] ) ) {
+                } elseif( $property_params[ 'unique' ] == 'true' and $this->exists( $entity, [[ $key, '=', $value ]] ) ) {
                     $this->error = $key . ' is occupied';
                     break;
                 }
@@ -114,7 +114,7 @@ class Mapper
                     $this->error = $key . ' is incorrect';
                     break;
 
-                } elseif( $property_params[ 'unique' ] == 'true' and $this->repository->is_exists( $entity_params[ 'table' ], [[ $key, '=', $value ]] ) ) {
+                } elseif( $property_params[ 'unique' ] == 'true' and $this->exists( $entity, [[ $key, '=', $value ]] ) ) {
                     $this->error = $key . ' is occupied';
                     break;
                 }
@@ -181,6 +181,15 @@ class Mapper
         }
 
         return empty( $this->error );
+    }
+
+    public function exists( $entity, $args ) {
+        $this->error = '';
+
+        $class = new \ReflectionClass( $entity );
+        $params = $this->get_entity_params( $class );
+        $rows = $this->repository->select( ['id'], $params['table'], $args, 1, 0 );
+        return !empty( $rows[0]->id );
     }
 
 
