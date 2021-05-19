@@ -1,5 +1,5 @@
 <?php
-$user_email = (string) Flight::request()->query['user_email'];
+$user_email = strtolower((string) Flight::request()->query['user_email'] );
 $user_name = (string) Flight::request()->query['user_name'];
 
 // insert user
@@ -10,7 +10,6 @@ Flight::insert( $user, [
     'user_name' => $user_name,
     'user_token' => $user->token()
 ]);
-
 
 // insert hub
 $hub = new \App\Entities\Hub;

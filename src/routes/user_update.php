@@ -3,11 +3,12 @@ $user_token = (string) Flight::request()->query['user_token'];
 $user_name = (string) Flight::request()->query['user_name'];
 
 // auth
-$master = Flight::auth( $user_token );
+$user = new \App\Entities\User;
+Flight::auth( $user, $user_token );
 
 // update me
-if( !empty( $user_name )) {
-    Flight::update( $master, [
+if( !empty( $hub_status )) {
+    Flight::update( $user, [
         'user_name' => $user_name
     ]);
 }

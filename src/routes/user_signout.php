@@ -2,11 +2,12 @@
 $user_token = (string) Flight::request()->query['user_token'];
 
 // auth
-$master = Flight::auth( $user_token );
+$user = new \App\Entities\User;
+Flight::auth( $user, $user_token );
 
-// update me
-Flight::update( $master, [
-    'user_token' => Flight::token(),
+// update user
+Flight::update( $user, [
+    'user_token' => $user->token()
 ]);
 
 // json

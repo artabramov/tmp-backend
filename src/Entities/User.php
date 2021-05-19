@@ -4,7 +4,7 @@ namespace App\Entities;
 /**
  * @entity(table=users alias=user)
  */
-class User extends \App\Core\Entity
+class User extends \artabramov\Echidna\Entity
 {
     /**
      * @column(nullable=true unique=true regex=/^[0-9]{1,20}$/)

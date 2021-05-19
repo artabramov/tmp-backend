@@ -85,15 +85,12 @@ Flight::map( 'upload', function( $file, $upload_file ) {
     }
 });
 
-//===========================================================
-
-// insert
+// insert entity
 Flight::map( 'insert', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
-
-        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \App\Core\Mapper( $repository );
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \artabramov\Echidna\Mapper( $repository );
         $mapper->insert( $entity, $data );
 
         if( !empty( $mapper->error )) {
@@ -103,13 +100,12 @@ Flight::map( 'insert', function( $entity, $data ) {
     }
 });
 
-// update
+// update entity
 Flight::map( 'update', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
-
-        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \App\Core\Mapper( $repository );
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \artabramov\Echidna\Mapper( $repository );
         $mapper->update( $entity, $data );
 
         if( !empty( $mapper->error )) {
@@ -119,13 +115,12 @@ Flight::map( 'update', function( $entity, $data ) {
     }
 });
 
-// select
+// select entity
 Flight::map( 'select', function( $entity, $args ) {
 
     if( Flight::empty( 'error' )) {
-
-        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \App\Core\Mapper( $repository );
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \artabramov\Echidna\Mapper( $repository );
         $mapper->select( $entity, $args );
 
         if( !empty( $mapper->error )) {
@@ -135,13 +130,12 @@ Flight::map( 'select', function( $entity, $args ) {
     }
 });
 
-// delete
+// delete entity
 Flight::map( 'delete', function( $entity ) {
 
     if( Flight::empty( 'error' )) {
-
-        $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \App\Core\Mapper( $repository );
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \artabramov\Echidna\Mapper( $repository );
         $mapper->delete( $entity );
 
         if( !empty( $mapper->error )) {
@@ -151,42 +145,45 @@ Flight::map( 'delete', function( $entity ) {
     }
 });
 
-// datetime
-Flight::map( 'time', function() {
+// entity exists
+Flight::map( 'exists', function( $entity, $args ) {
 
-    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
+    if( Flight::empty( 'error' )) {
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $mapper = new \artabramov\Echidna\Mapper( $repository );
+        return $mapper->exists( $entity, $args );
+    }
+});
+
+// get repository datetime
+Flight::map( 'time', function() {
+    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
     return $repository->time();
 });
 
-
-/*
 // auth
-Flight::map( 'auth', function( $user_token ) {
+Flight::map( 'auth', function( $user, $user_token ) {
 
-    $user = Flight::user();
     Flight::select( $user, [
         ['user_token', '=', $user_token], 
         ['user_status', '=', 'approved']   
     ]);
 
-    $now = Flight::datetime();
-    if( Flight::empty( 'error' ) and strtotime( $now ) - strtotime( $user->restore_date ) > 60 * 60 * 24 * 1 ) {
+    $time = Flight::time();
+    if( Flight::empty( 'error' ) and strtotime( $time ) - strtotime( $user->restore_date ) > 60 * 60 * 24 * 1 ) {
         Flight::set( 'error', 'user_token is expired' );
     }
-
-    return $user;
 });
-*/
 
 // ==== FILTERING ====
 
 // before route
-Flight::before('start', function(&$params, &$output){
+Flight::before('start', function( &$params, &$output ) {
     Flight::get('pdo')->beginTransaction();
 });
 
 // after route
-Flight::after('stop', function(&$params, &$output){
+Flight::after('stop', function( &$params, &$output ) {
 
     // close transaction
     if( Flight::empty( 'error' )) {
@@ -202,7 +199,7 @@ Flight::after('stop', function(&$params, &$output){
 });
 
 // json
-Flight::before('json', function(&$params, &$output){
+Flight::before('json', function( &$params, &$output ) {
     $params[0]['time']    = Flight::time();
     $params[0]['success'] = Flight::empty( 'error' ) ? 'true' : 'false';
     $params[0]['error']   = Flight::empty( 'error' ) ? '' : Flight::get( 'error' );
@@ -212,109 +209,6 @@ Flight::before('json', function(&$params, &$output){
 
 
 Flight::route( 'GET /', function() {
-
-    /*
-    $table = 'users';
-    $columns = ['id', 'user_name'];
-    $args = [['user_status', '<>', 'trash'], ['create_date', '!=', '0000-00-00'], ['user_hash', 'IN', [1, 2, 3]]];
-    $limit = 1;
-    $offset = 0;
-
-    $select = implode( ', ', $columns );
-    $where = implode( ' AND ', array_map( fn( $value ) => !is_array( $value[2] ) ? $value[0] . ' ' . $value[1] . ' ?' : $value[0] . ' ' . $value[1] . ' (' . implode( ', ', array_map( fn() => '?', $value[2] ) ) . ')', $args ));
-
-    $params = [];
-    foreach( $args as $arg ) {
-        if( is_array( $arg[2] )) {
-            foreach( $arg[2] as $param ) {
-                $params[] = $param;
-            }
-        } else {
-            $params[] = $arg[2];
-        }
-    }
-    $params[] = $limit;
-    $params[] = $offset;
-
-    $sql = 'SELECT ' . $select . ' FROM ' . $table . ' WHERE ' . $where . ' LIMIT ?,?';
-    */
-
-    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-    $result = $repository->select( ['test_value'], 'tests', [['test_key', '=', 'key']], 1, 0 );
-    $a = 1;
-
-
-    //print_r( $args );
-    //print_r( $data );
-
-    //echo PHP_EOL;
-    //echo( $columns );
-    //echo PHP_EOL;
-    //echo( $values );
-
-    
-    //echo PHP_EOL;
-    //print_r( $params );
-    //echo PHP_EOL;
-    //echo( $sql );
-    
-
-
-    /*
-    $user_email = (string) Flight::request()->query['user_email'];
-    $user_name = (string) Flight::request()->query['user_name'];
-
-    $repository = new \App\Core\Repository( Flight::get( 'pdo' ) );
-    $mapper = new \App\Core\Mapper( $repository );
-
-    $user = new \App\Entities\User;
-    $user->user_email = $user_email;
-    $user->user_name = $user_name;
-    $user->user_pass = $user->pass();
-    $user->user_hash = $user->hash( $user->user_pass );
-    $user->user_token = $user->token();
-    $mapper->save( $user );
-
-    if( !empty( $mapper->error )) {
-        echo $mapper->error;
-
-    } else {
-        echo 'hurrah!';
-    }
-    */
-
-
-    //--------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-    $user = Flight::user([
-        'user_status' => 'pending',
-        'user_token'  => Flight::token(),
-        'user_email'  => Flight::request()->query['user_email'],
-        'user_name'   => Flight::request()->query['user_name'],
-    ]);
-    Flight::save( $user );
-
-    Flight::json([ 'error' => $user->error ]);
-    */
-
-    /*
-    $pdo = require __DIR__ . "/../src/init/pdo.php";
-    $attribute = new \App\Core\Attribute( $pdo );
-    $attribute->set(['create_date' => '0001-01-01 00:00:00', 'update_date' => '0001-01-01 00:00:00', 'user_id' => 1, 'attribute_key' => 'key', 'attribute_value' => 'value']);
-    
-    */
 });
 
 
@@ -348,19 +242,19 @@ Flight::route( 'PUT /user', function() {
     require_once( '../src/routes/user_update.php' );
 });
 
-// repo create
-Flight::route( 'POST /repo', function() {
-    require_once( '../src/routes/repo_insert.php' );
+// hub create
+Flight::route( 'POST /hub', function() {
+    require_once( '../src/routes/hub_insert.php' );
 });
 
-// repo update
-Flight::route( 'PUT /repo/@repo_id', function( $repo_id ) {
-    require_once( '../src/routes/repo_update.php' );
+// hub update
+Flight::route( 'PUT /hub/@hub_id', function( $hub_id ) {
+    require_once( '../src/routes/hub_update.php' );
 });
 
-// repo delete
-Flight::route( 'DELETE /repo/@repo_id', function( $repo_id ) {
-    require_once( '../src/routes/repo_delete.php' );
+// hub delete
+Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
+    require_once( '../src/routes/hub_delete.php' );
 });
 
 // role invite
