@@ -2,9 +2,9 @@
 namespace App\Entities;
 
 /**
- * @entity(table=hubs alias=hub)
+ * @entity(table=post_tags alias=tag)
  */
-class Hub extends \artabramov\Echidna\Entity
+class Tag extends \artabramov\Echidna\Entity
 {
     /**
      * @column(nullable=true unique=true regex=/^[0-9]{1,20}$/)
@@ -24,16 +24,11 @@ class Hub extends \artabramov\Echidna\Entity
     /**
      * @column(nullable=false unique=false regex=/^[0-9]{1,20}$/)
      */
-    protected $user_id;
+    protected $post_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^custom$|^trash$/)
+     * @column(nullable=false unique=false regex=/^.{0,255}$/)
      */
-    protected $hub_status;
-
-    /**
-     * @column(nullable=false unique=false regex=/^.{2,128}$/)
-     */
-    protected $hub_name;
+    protected $tag_value;
 
 }

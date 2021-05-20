@@ -20,6 +20,12 @@ if( !empty( $hub_status )) {
     Flight::update( $hub, [
         'hub_status' => $hub_status,
     ]);
+
+    // TODO: change code below
+    if( $hub_status == 'private' ) {
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
+        $repository->delete( 'user_roles', [['hub_id', '=', $hub->id], ['user_id', '<>', $user->id]] );
+    }
 }
 
 // update name

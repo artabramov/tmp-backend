@@ -3,9 +3,9 @@ $user_token = (string) Flight::request()->query['user_token'];
 $hub_id = (int) Flight::request()->query['hub_id'];
 $user_id = (int) Flight::request()->query['user_id'];
 
-// self user
-$self_user = new \App\Entities\User;
-Flight::auth( $self_user, $user_token );
+// user
+$user = new \App\Entities\User;
+Flight::auth( $user, $user_token );
 
 // hub
 $hub = new \App\Entities\Hub;
@@ -15,16 +15,16 @@ Flight::select( $hub, [
 ]);
 
 // self role
-$self_role = new \App\Entities\Role;
-Flight::select( $self_role, [
-    ['user_id', '=', $self_user->id], 
+$role = new \App\Entities\Role;
+Flight::select( $role, [
+    ['user_id', '=', $user->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', '=', 'admin']
 ]);
 
 // mate
-$mate_user = new \App\Entities\User;
-Flight::select( $mate_user, [
+$mate = new \App\Entities\User;
+Flight::select( $mate, [
     ['id', '=', $user_id], 
     ['user_status', '=', 'approved']
 ]);
@@ -35,10 +35,10 @@ if( Flight::empty( 'error' ) and Flight::exists( $mate_role, [['user_id', '=', $
     Flight::set( 'error', 'user_role already exists' );
 }
 
-// insert his role
+// insert mate's role
 Flight::insert( $mate_role, [
     'hub_id' => $hub->id,
-    'user_id' => $mate_user->id,
+    'user_id' => $mate->id,
     'user_role' => 'none',
 ]);
 

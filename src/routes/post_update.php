@@ -1,6 +1,6 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
-$hub_id = (int) Flight::request()->query['hub_id'];
+$post_id = (int) Flight::request()->query['post_id'];
 $post_status = (string) Flight::request()->query['post_status'];
 $post_title = (string) Flight::request()->query['post_title'];
 $post_tags = [];

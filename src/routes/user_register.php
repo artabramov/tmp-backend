@@ -15,8 +15,8 @@ Flight::insert( $user, [
 $hub = new \App\Entities\Hub;
 Flight::insert( $hub, [
     'user_id' => $user->id,
-    'hub_status' => 'private',
-    'hub_name' => 'my private repository'
+    'hub_status' => 'custom',
+    'hub_name' => 'my repository'
 ]);
 
 // insert role
