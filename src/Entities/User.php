@@ -42,7 +42,7 @@ class User extends \artabramov\Echidna\Entity
     protected $user_email;
 
     /**
-     * @column(nullable=false unique=false regex=/^.{2,128}$/)
+     * @column(nullable=false unique=false regex=/^.{2,255}$/)
      */
     protected $user_name;
 

@@ -32,7 +32,7 @@ class Hub extends \artabramov\Echidna\Entity
     protected $hub_status;
 
     /**
-     * @column(nullable=false unique=false regex=/^.{2,128}$/)
+     * @column(nullable=false unique=false regex=/^.{2,255}$/)
      */
     protected $hub_name;
 

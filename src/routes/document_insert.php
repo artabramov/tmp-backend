@@ -1,8 +1,7 @@
 <?php
 $user_token = (string) Flight::request()->query['user_token'];
 $hub_id = (int) Flight::request()->query['hub_id'];
-$post_status = (string) Flight::request()->query['post_status'];
-$post_title = (string) Flight::request()->query['post_title'];
+$post_excerpt = (string) Flight::request()->query['post_excerpt'];
 $post_tags = [];
 
 // post tags
@@ -13,8 +12,8 @@ if( !empty( Flight::request()->query['post_tags'] )) {
 }
 
 // self user
-$user = new \App\Entities\User;
-Flight::auth( $user, $user_token );
+$self_user = new \App\Entities\User;
+Flight::auth( $self_user, $user_token );
 
 // hub
 $hub = new \App\Entities\Hub;
@@ -24,28 +23,31 @@ Flight::select( $hub, [
 ]);
 
 // self role
-$role = new \App\Entities\Role;
-Flight::select( $role, [
-    ['user_id', '=', $user->id], 
+$self_role = new \App\Entities\Role;
+Flight::select( $self_role, [
+    ['user_id', '=', $self_user->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', 'IN', ['admin', 'author']]
 ]);
 
-// insert post
-$post = new \App\Entities\Post;
-Flight::insert( $post, [
-    'user_id' => $user->id,
+// insert document
+$document = new \App\Entities\Post;
+Flight::insert( $document, [
+    'user_id' => $self_user->id,
     'hub_id' => $hub->id,
-    'post_status' => $post_status,
-    'post_title' => $post_title,
+    'post_type' => 'document',
+    'post_status' => 'todo',
+    'post_excerpt' => $post_excerpt,
 ]);
 
-// post tags
+// tags
 foreach( $post_tags as $post_tag ) {
-    $tag = new \App\Entities\Tag;
-    Flight::insert( $tag, [
-        'post_id' => $post->id,
-        'tag_value' => trim( $post_tag ),
+    $document_meta = new \App\Entities\Meta;
+    Flight::insert( $document_meta, [
+        'parent_type' => 'posts',
+        'parent_id' => $document->id,
+        'meta_key' => 'post_tag',
+        'meta_value' => $post_tag,
     ]);
 }
 

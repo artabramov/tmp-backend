@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=post_comments alias=comment)
+ * @entity(table=comments alias=comment)
  */
 class Comment extends \artabramov\Echidna\Entity
 {

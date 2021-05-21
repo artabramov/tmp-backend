@@ -2,9 +2,9 @@
 namespace App\Entities;
 
 /**
- * @entity(table=roles alias=role)
+ * @entity(table=uploads alias=upload)
  */
-class Role extends \artabramov\Echidna\Entity
+class Upload extends \artabramov\Echidna\Entity
 {
     /**
      * @column(nullable=true unique=true regex=/^[0-9]{1,20}$/)
@@ -29,11 +29,26 @@ class Role extends \artabramov\Echidna\Entity
     /**
      * @column(nullable=false unique=false regex=/^[0-9]{1,20}$/)
      */
-    protected $hub_id;
+    protected $comment_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^admin$|^author$|^editor$|^reader$|^none$/)
+     * @column(nullable=false unique=false regex=/^.{2,255}$/)
      */
-    protected $user_role;
+    protected $upload_name;
+
+    /**
+     * @column(nullable=false unique=false regex=/^.{2,255}$/)
+     */
+    protected $upload_mime;
+
+    /**
+     * @column(nullable=false unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $upload_size;
+
+    /**
+     * @column(nullable=false unique=false regex=/^.{2,255}$/)
+     */
+    protected $upload_file;
 
 }

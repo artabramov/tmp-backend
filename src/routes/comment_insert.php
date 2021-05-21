@@ -4,12 +4,12 @@ $post_id = (int) Flight::request()->query['post_id'];
 $comment_text = (string) Flight::request()->query['comment_text'];
 
 // self user
-$user = new \App\Entities\User;
-Flight::auth( $user, $user_token );
+$self_user = new \App\Entities\User;
+Flight::auth( $self_user, $user_token );
 
-// post
-$post = new \App\Entities\Post;
-Flight::select( $post, [
+// document
+$document = new \App\Entities\Post;
+Flight::select( $document, [
     ['id', '=', $post_id], 
     ['post_status', '<>', 'trash'],
 ]);
@@ -17,14 +17,14 @@ Flight::select( $post, [
 // hub
 $hub = new \App\Entities\Hub;
 Flight::select( $hub, [
-    ['id', '=', $post->hub_id], 
+    ['id', '=', $document->hub_id], 
     ['hub_status', '<>', 'trash'],
 ]);
 
 // self role
-$role = new \App\Entities\Role;
-Flight::select( $role, [
-    ['user_id', '=', $user->id], 
+$self_role = new \App\Entities\Role;
+Flight::select( $self_role, [
+    ['user_id', '=', $self_user->id], 
     ['hub_id', '=', $hub->id], 
     ['user_role', 'IN', ['admin', 'author']]
 ]);
@@ -32,13 +32,13 @@ Flight::select( $role, [
 // insert comment
 $comment = new \App\Entities\Comment;
 Flight::insert( $comment, [
-    'user_id' => $user->id,
-    'post_id' => $post->id,
+    'user_id' => $self_user->id,
+    'post_id' => $document->id,
     'comment_text' => $comment_text,
 ]);
 
 // comments sequence
-$tmp = Flight::sequence( new \App\Entities\Comment, [['post_id', '<>', 0]], ['ORDER BY' => 'id DESC'] );
+//$tmp = Flight::sequence( new \App\Entities\Comment, [['post_id', '<>', 0]], ['ORDER BY' => 'id DESC'] );
 
 // json
 Flight::json();

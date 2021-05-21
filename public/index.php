@@ -148,11 +148,9 @@ Flight::map( 'delete', function( $entity ) {
 // entity exists
 Flight::map( 'exists', function( $entity, $args ) {
 
-    if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        return $mapper->exists( $entity, $args );
-    }
+    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+    $mapper = new \artabramov\Echidna\Mapper( $repository );
+    return $mapper->exists( $entity, $args );
 });
 
 // get sequence (entity for sample)
@@ -162,8 +160,10 @@ Flight::map( 'sequence', function( $entity, $args, $extras ) {
         $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
         $mapper = new \artabramov\Echidna\Mapper( $repository );
         $sequence = new \artabramov\Echidna\Sequence( $repository, $mapper );
-        return $sequence->select( $entity, $args, $extras );
+        $result = $sequence->select( $entity, $args, $extras );
     }
+
+    return isset( $result ) ? $result : [];
 });
 
 // get repository datetime
@@ -289,8 +289,18 @@ Flight::route( 'DELETE /role', function() {
 });
 
 // post insert
-Flight::route( 'POST /post', function() {
-    require_once( '../src/routes/post_insert.php' );
+Flight::route( 'POST /document', function() {
+    require_once( '../src/routes/document_insert.php' );
+});
+
+// update document
+Flight::route( 'PUT /document/@post_id', function( $post_id ) {
+    require_once( '../src/routes/document_update.php' );
+});
+
+// delete document
+Flight::route( 'DELETE /document/@post_id', function( $post_id ) {
+    require_once( '../src/routes/document_delete.php' );
 });
 
 // comment insert
@@ -299,7 +309,7 @@ Flight::route( 'POST /comment', function() {
 });
 
 // comment delete
-Flight::route( 'DELETE /comment', function() {
+Flight::route( 'DELETE /comment/@comment_id', function( $comment_id ) {
     require_once( '../src/routes/comment_delete.php' );
 });
 

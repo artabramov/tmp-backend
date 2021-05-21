@@ -5,14 +5,14 @@ $hub_status = (string) Flight::request()->query['hub_status'];
 $hub_name = (string) Flight::request()->query['hub_name'];
 
 // auth
-$user = new \App\Entities\User;
-Flight::auth( $user, $user_token );
+$self_user = new \App\Entities\User;
+Flight::auth( $self_user, $user_token );
 
 // hub
 $hub = new \App\Entities\Hub;
 Flight::select( $hub, [
     ['id', '=', $hub_id], 
-    ['user_id', '=', $user->id],
+    ['user_id', '=', $self_user->id],
 ]);
 
 // update status
@@ -20,12 +20,6 @@ if( !empty( $hub_status )) {
     Flight::update( $hub, [
         'hub_status' => $hub_status,
     ]);
-
-    // TODO: change code below
-    if( $hub_status == 'private' ) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
-        $repository->delete( 'user_roles', [['hub_id', '=', $hub->id], ['user_id', '<>', $user->id]] );
-    }
 }
 
 // update name
