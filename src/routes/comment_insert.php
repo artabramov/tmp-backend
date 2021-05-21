@@ -37,6 +37,28 @@ Flight::insert( $comment, [
     'comment_text' => $comment_text,
 ]);
 
+// upload the files
+foreach( Flight::request()->files as $file ) {
+
+    $tmp = explode( '.', $file['name'] );
+    $ext = count( $tmp ) > 0 ? '.' . end( $tmp ) : '';
+    $upload_mime = mime_content_type( $file['tmp_name'] );
+    $upload_name = $file['name'];
+    $upload_file = '/echidna/' . $self_user->id . '/' . sha1( date('U') . $file['name'] ) . $ext;
+
+    $upload = new \App\Entities\Upload;
+    Flight::insert( $upload, [
+        'user_id' => $self_user->id,
+        'comment_id' => $comment->id,
+        'upload_name' => $upload_name,
+        'upload_mime' => $upload_mime,
+        'upload_size' => $file['size'],
+        'upload_file' => $upload_file,
+    ]);
+
+    Flight::upload( $file, $upload->upload_file );
+}
+
 // comments sequence
 //$tmp = Flight::sequence( new \App\Entities\Comment, [['post_id', '<>', 0]], ['ORDER BY' => 'id DESC'] );
 
