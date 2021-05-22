@@ -1,9 +1,18 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
+/*
 use \Kunnu\Dropbox\Dropbox;
 use \Kunnu\Dropbox\DropboxApp;
 use \Kunnu\Dropbox\DropboxFile;
+*/
+
+/*
+use \Upload\Storage\FileSystem;
+use \Upload\File;
+use \Upload\Validation\Mimetype;
+use \Upload\Validation\Size;
+*/
 
 // init
 Flight::set( 'e', null );
@@ -57,8 +66,8 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
     }
 });
 
-// upload the file
-Flight::map( 'upload', function( $file, $upload_file ) {
+// upload the file to dropbox
+Flight::map( 'dropbox_upload', function( $file, $upload_file ) {
 
     if( Flight::empty( 'error' )) {
 
@@ -81,6 +90,72 @@ Flight::map( 'upload', function( $file, $upload_file ) {
         } catch( \Exception $e ) {
             Flight::set( 'e', $e );
             Flight::set( 'error', 'upload error' );
+        }
+    }
+});
+
+// upload the file
+Flight::map( 'upload', function( $keys, $user_id, $comment_id ) {
+
+    if( Flight::empty( 'error' )) {
+
+        $path = __DIR__ . '/uploads/' . date('Y-m-d');
+        if (!file_exists($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        $storage = new \Upload\Storage\FileSystem( $path );
+        $file = new \Upload\File( $keys[0], $storage );
+        
+        // Optionally you can rename the file on upload
+        $new_filename = $user_id . uniqid();
+        $file->setName( $new_filename );
+        
+        // Validate file upload
+        // MimeType List => http://www.iana.org/assignments/media-types/media-types.xhtml
+        $file->addValidations(array(
+
+            //You can also add multi mimetype validation
+            new \Upload\Validation\Mimetype(array('image/png', 'image/gif')),
+        
+            // Ensure file is no larger than 5M (use "B", "K", M", or "G")
+            new \Upload\Validation\Size('5M')
+        ));
+        
+        // Access data about the file that has been uploaded
+        $data = array(
+            'original_name' => Flight::request()->files[$keys[0]]['name'],
+            '_name'     => $file->getName(),
+            'name'       => $file->getNameWithExtension(),
+            'extension'  => $file->getExtension(),
+            'mime'       => $file->getMimetype(),
+            'size'       => $file->getSize(),
+            'md5'        => $file->getMd5(),
+            'dimensions' => $file->getDimensions()
+        );
+        
+        // Try to upload file
+        try {
+            $file->upload();
+
+            $upload = new \App\Entities\Upload;
+            Flight::insert( $upload, [
+                'user_id' => $user_id,
+                'comment_id' => $comment_id,
+                'upload_name' => $data['original_name'],
+                'upload_mime' => $data['mime'],
+                'upload_size' => $data['size'],
+                'upload_file' => $path . '/' . $data['name'],
+            ]);
+
+            if( !Flight::empty( 'error' )) {
+                unlink( $path . '/' . $data['name'] );
+            }
+
+        } catch (\Exception $e) {
+            //Flight::set( 'e', $e );
+            $errors = $file->getErrors();
+            Flight::set( 'error', strtolower($errors[0]) );
         }
     }
 });
@@ -181,7 +256,7 @@ Flight::map( 'auth', function( $user, $user_token ) {
     ]);
 
     $time = Flight::time();
-    if( Flight::empty( 'error' ) and strtotime( $time ) - strtotime( $user->restore_date ) > 60 * 60 * 24 * 1 ) {
+    if( Flight::empty( 'error' ) and strtotime( $time ) - strtotime( $user->restore_date ) > 60 * 60 * 24 * 30 ) {
         Flight::set( 'error', 'user_token is expired' );
     }
 });
@@ -311,6 +386,21 @@ Flight::route( 'POST /comment', function() {
 // comment delete
 Flight::route( 'DELETE /comment/@comment_id', function( $comment_id ) {
     require_once( '../src/routes/comment_delete.php' );
+});
+
+// insert upload and file
+Flight::route( 'POST /upload', function() {
+    require_once( '../src/routes/upload_insert.php' );
+});
+
+// upload delete
+Flight::route( 'DELETE /upload/@upload_id', function( $upload_id ) {
+    require_once( '../src/routes/upload_delete.php' );
+});
+
+// upload update
+Flight::route( 'PUT /upload/@upload_id', function( $upload_id ) {
+    require_once( '../src/routes/upload_update.php' );
 });
 
 /*
