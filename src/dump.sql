@@ -217,6 +217,39 @@ END;
 DELIMITER ;
 
 
+DELIMITER |
+CREATE TRIGGER upload_insert
+AFTER INSERT
+ON uploads 
+FOR EACH ROW 
+BEGIN
+    SET @upload_sum := (SELECT SUM(upload_size) FROM uploads WHERE user_id = NEW.user_id);
+    IF EXISTS (SELECT id FROM meta WHERE parent_type = 'users' AND parent_id = NEW.user_id AND meta_key='upload_sum') THEN
+        UPDATE meta SET meta_value=@upload_sum WHERE parent_type = 'users' AND parent_id = NEW.user_id AND meta_key='upload_sum';
+    ELSE
+        INSERT INTO meta (parent_type, parent_id, meta_key, meta_value) VALUES ('users', NEW.user_id, 'upload_sum', @upload_sum);
+    END IF;
+END;
+| 
+DELIMITER ;
+
+
+DELIMITER |
+CREATE TRIGGER upload_delete
+AFTER DELETE
+ON uploads 
+FOR EACH ROW 
+BEGIN
+    SET @upload_sum := (SELECT SUM(upload_size) FROM uploads WHERE user_id = OLD.user_id);
+    IF @upload_sum = 0 THEN
+        DELETE FROM meta WHERE parent_type = 'users' AND parent_id = OLD.user_id AND meta_key = 'upload_sum';
+    ELSE
+        UPDATE meta SET meta_value=@upload_sum WHERE parent_type = 'users' AND parent_id = OLD.user_id AND meta_key='upload_sum';
+    END IF;
+END;
+| 
+DELIMITER ;
+
 
 DROP TABLE IF EXISTS meta;
 DROP TABLE IF EXISTS uploads;

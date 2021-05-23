@@ -43,7 +43,7 @@ Flight::select( $self_role, [
     ['user_role', 'IN', ['admin', 'author', 'editor']]
 ]);
 
-// remove the upload
+// update the upload
 Flight::update( $upload, ['upload_name' => $upload_name] );
 
 // json

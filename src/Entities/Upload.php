@@ -27,7 +27,7 @@ class Upload extends \artabramov\Echidna\Entity
     protected $user_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^[0-9]{1,20}$/)
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
      */
     protected $comment_id;
 

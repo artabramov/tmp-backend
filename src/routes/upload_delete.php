@@ -44,7 +44,14 @@ Flight::select( $self_role, [
 
 // remove the upload
 if( Flight::empty( 'error' )) {
-    if( unlink( $upload->upload_file )) {
+
+    Flight::update( $upload, ['comment_id' => null] );
+
+    if( file_exists( $upload->upload_file )) {
+        unlink( $upload->upload_file );
+    }
+
+    if( !file_exists( $upload->upload_file )) {
         Flight::delete( $upload );
     }
 }
