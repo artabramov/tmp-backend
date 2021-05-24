@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     create_date  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     update_date  DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
     restore_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00',
-    user_status  ENUM('pending', 'approved', 'trash') NOT NULL,
+    user_status  ENUM('pending', 'approved', 'premium', 'trash') NOT NULL,
     user_token   CHAR(80)     NOT NULL,
     user_email   VARCHAR(255) NOT NULL,
     user_name    VARCHAR(255) NOT NULL,

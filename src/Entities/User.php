@@ -27,7 +27,7 @@ class User extends \artabramov\Echidna\Entity
     protected $restore_date;
 
     /**
-     * @column(nullable=false unique=false regex=/^pending$|^approved$|^trash$/)
+     * @column(nullable=false unique=false regex=/^pending$|^approved$|^premium$|^trash$/)
      */
     protected $user_status;
 

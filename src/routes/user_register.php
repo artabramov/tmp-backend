@@ -27,6 +27,7 @@ Flight::insert( $self_role, [
     'user_role' => 'admin'
 ]);
 
+/*
 // insert meta: ip
 $self_meta = new \App\Entities\Meta;
 Flight::insert( $self_meta, [
@@ -44,6 +45,7 @@ Flight::insert( $self_meta, [
     'meta_key' => 'register_agent',
     'meta_value' => Flight::request()->user_agent
 ]);
+*/
 
 // json
 Flight::json();

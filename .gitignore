@@ -2,9 +2,9 @@
 .nginx/
 .vscode/
 .xdebug/
-composer-setup.php
 vendor/
-tmp/
+composer-setup.php
+public/tmp/
 composer.lock
 composer.phar
 

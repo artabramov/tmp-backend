@@ -1,18 +1,7 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-/*
-use \Kunnu\Dropbox\Dropbox;
-use \Kunnu\Dropbox\DropboxApp;
-use \Kunnu\Dropbox\DropboxFile;
-*/
-
-/*
-use \Upload\Storage\FileSystem;
-use \Upload\File;
-use \Upload\Validation\Mimetype;
-use \Upload\Validation\Size;
-*/
+define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
 Flight::set( 'e', null );
@@ -20,7 +9,7 @@ Flight::set( 'error', '' );
 Flight::set( 'pdo', require_once( __DIR__ . "/../src/init/pdo.php" ) );
 Flight::set( 'phpmailer', require_once( __DIR__ . "/../src/init/phpmailer.php" ) );
 Flight::set( 'monolog', require_once( __DIR__ . "/../src/init/monolog.php" ) );
-Flight::set( 'dropbox', require_once( __DIR__ . "/../src/init/dropbox.php" ) );
+//Flight::set( 'dropbox', require_once( __DIR__ . "/../src/init/dropbox.php" ) );
 
 // ================ MAPPING ================
 
@@ -66,34 +55,6 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
     }
 });
 
-// upload the file to dropbox
-Flight::map( 'dropbox_upload', function( $file, $upload_file ) {
-
-    if( Flight::empty( 'error' )) {
-
-        //Configure Dropbox Application
-        $app_key = 'ir3ndpahsbnyru0';
-        $app_secret = '1bwvj9amy1ai55f';
-        $access_token = 'WSpPvkMfiVEAAAAAAAAAAe-DJD3Ot3stp7ci2Mpvi_hZhvdbYJjSrtfYTdKPD3Rm';
-        $dropbox_app = new DropboxApp( $app_key, $app_secret, $access_token );
-
-        try{
-            //Configure Dropbox service
-            $dropbox = new Dropbox( $dropbox_app );
-
-            // create Dropbox file
-            $dropbox_file = new DropboxFile( $file['tmp_name'] ); 
-
-            // dropbox upload
-            $dropbox_upload = $dropbox->simpleUpload( $dropbox_file, $upload_file, ['autorename' => true] );
-
-        } catch( \Exception $e ) {
-            Flight::set( 'e', $e );
-            Flight::set( 'error', 'upload error' );
-        }
-    }
-});
-
 // upload the file
 Flight::map( 'upload', function( $keys, $user_id, $comment_id ) {
 
@@ -116,7 +77,7 @@ Flight::map( 'upload', function( $keys, $user_id, $comment_id ) {
         $file->addValidations(array(
 
             //You can also add multi mimetype validation
-            new \Upload\Validation\Mimetype(array('image/png', 'image/gif')),
+            new \Upload\Validation\Mimetype(array('image/png', 'image/gif', 'image/jpeg')),
         
             // Ensure file is no larger than 5M (use "B", "K", M", or "G")
             new \Upload\Validation\Size('5M')
@@ -252,7 +213,7 @@ Flight::map( 'auth', function( $user, $user_token ) {
 
     Flight::select( $user, [
         ['user_token', '=', $user_token], 
-        ['user_status', '=', 'approved']   
+        ['user_status', 'IN', ['approved', 'premium']]   
     ]);
 
     $time = Flight::time();
@@ -293,10 +254,27 @@ Flight::before('json', function( &$params, &$output ) {
 
 //================ ROUTES ================
 
-
+// index
 Flight::route( 'GET /', function() {
+    Flight::render( __DIR__ . '/pages/index.php', array('var' => 'world'));
 });
 
+// register
+Flight::route( 'GET /register', function() {
+    Flight::render( __DIR__ . '/pages/register.php', array('var' => 'world'));
+});
+
+// restore
+Flight::route( 'GET /restore', function() {
+    Flight::render( __DIR__ . '/pages/restore.php' );
+});
+
+// signin
+Flight::route( 'GET /signin', function() {
+    Flight::render( __DIR__ . '/pages/signin.php' );
+});
+
+// ===================================================================
 
 // user register
 Flight::route( 'POST /user', function() {
