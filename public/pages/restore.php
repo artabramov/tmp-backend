@@ -44,7 +44,6 @@
 
                 }).done(function( msg ) {
                     console.log(msg);
-                    console.log(msg.error);
 
                     if(msg.success == 'false') {
                         $("#error").html('<div class="alert alert-warning" role="alert">' + msg.error + '</div>');

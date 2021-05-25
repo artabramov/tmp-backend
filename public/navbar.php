@@ -52,7 +52,7 @@
       <!-- user -->
       <li id="navbar-user" class="nav-item dropdown d-none">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <span id="navbar-user-name"></span>
+          <span id="user-name"></span>
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="#">Select user</a>
@@ -74,55 +74,52 @@
   $(document).ready(function(){
 
     // user token
-    user_token = $.cookie("echidna-token");
+    user_token = typeof $.cookie("echidna-token") !== 'undefined' ? $.cookie("echidna-token") : '';
 
     // navbar
-    if (typeof user_token !== 'undefined') {
-      $.ajax({
+    $.ajax({
         method: "GET",
         url: "http://project.local/auth?user_token=" + user_token,
         dataType: 'json'
 
-      }).done(function( msg ) {
+    }).done(function( msg ) {
         console.log(msg);
         console.log(msg.error);
 
         if(msg.success == 'true') {
-          $("#navbar-user").removeClass('d-none');
-          $("#navbar-user").addClass('d-inline');
+            $("#navbar-user").removeClass('d-none');
+            $("#navbar-user").addClass('d-inline');
 
-          $("#navbar-signout").removeClass('d-none');
-          $("#navbar-signout").addClass('d-inline');
+            $("#navbar-signout").removeClass('d-none');
+            $("#navbar-signout").addClass('d-inline');
 
-          $("#navbar-user-name").text(msg.user.user_name);
+            $("#user-name").text(msg.user.user_name);
 
         } else {
-          $("#navbar-register").removeClass('d-none');
-          $("#navbar-register").addClass('d-inline');
+            $("#navbar-register").removeClass('d-none');
+            $("#navbar-register").addClass('d-inline');
 
-          $("#navbar-signin").removeClass('d-none');
-          $("#navbar-signin").addClass('d-inline');
+            $("#navbar-signin").removeClass('d-none');
+            $("#navbar-signin").addClass('d-inline');
         }
 
-      });
-    }
+    });
 
     // signout
     $("#a-signout").click(function() {
-      $.ajax({
-        method: "PUT",
-        url: "http://project.local/token?user_token=" + user_token,
-        dataType: 'json'
+        $.ajax({
+            method: "PUT",
+            url: "http://project.local/token?user_token=" + user_token,
+            dataType: 'json'
 
-      }).done(function( msg ) {
-        console.log(msg);
-        console.log(msg.error);
+        }).done(function( msg ) {
+            console.log(msg);
 
-        if(msg.success == 'true') {
-          user_token = $.cookie("echidna-token", null);
-          window.location.href = "http://project.local/signout";
-        }
-      });
+            if(msg.success == 'true') {
+                user_token = $.cookie("echidna-token", null);
+                window.location.href = "http://project.local/signout";
+            }
+        });
     });
 
 
