@@ -4,9 +4,11 @@ $user_name = (string) Flight::request()->query['user_name'];
 
 // insert user
 $self_user = new \App\Entities\User;
+$self_user->user_pass = $self_user->pass();
 Flight::insert( $self_user, [
     'user_status' => 'pending',
     'user_email' => $user_email,
+    'user_hash' => $self_user->hash( $self_user->user_pass ),
     'user_name' => $user_name,
     'user_token' => $self_user->token()
 ]);
@@ -26,6 +28,9 @@ Flight::insert( $self_role, [
     'hub_id' => $hub->id,
     'user_role' => 'admin'
 ]);
+
+// send email
+//Flight::email( $self_user->user_email, 'User', 'User restore', 'One-time pass: <i>' . $self_user->user_pass . '</i>' );
 
 /*
 // insert meta: ip

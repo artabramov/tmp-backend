@@ -1,45 +1,39 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- header -->
+    <?php require_once('./header.php'); ?>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
-    <title>Hello, world!</title>
-  </head>
-  <body>
-
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- navbar -->
+    <?php require_once('./navbar.php'); ?>
 
     <!-- body -->
-
     <div class="align_center">
         <div class="align_center_to_left">
             <div class="align_center_to_right">
-                <h1>Signin</h1>
-                <span id="error"></span>
-                
-                <div class="form-group">
-                    <label for="user_email">Email address</label>
-                    <input id="user_email" type="text" class="form-control" aria-describedby="email_help" placeholder="noreply@noreply.no">
-                    <small id="email_help" class="form-text text-muted">We'll never share your email with anyone else.</small>
+
+                <!-- signin form -->
+                <div id="signin-form" class="d-inline">
+                    <h1>Signin</h1>
+                    <span id="error"></span>
+                    <div class="form-group">
+                        <label for="user_email">Email address</label>
+                        <input id="user_email" type="text" class="form-control" aria-describedby="email_help" placeholder="">
+                        <small id="email_help" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="user_pass">User pass</label>
+                        <input id="user_pass" class="form-control" type="text" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        Get the <a href="http://project.local/restore">one-time password</a>.
+                    </div>
+                    <button id="signin" type="submit" class="btn btn-primary">Submit</button>
                 </div>
-                <div class="form-group">
-                    <label for="user_pass">User pass</label>
-                    <input id="user_pass" class="form-control" type="text" placeholder="">
-                </div>
-                <button id="signin" type="submit" class="btn btn-primary">Submit</button>
                     
+                <!-- done -->
+                <div id="signin-text" class="d-none">
+                    <h1>Done!</h1>
+                    You signed in.<br/>
+                </div>
+
             </div>
         </div>
     </div>
@@ -65,8 +59,14 @@
 
                     } else {
                         $("#error").text('');
-                        //window.location.href = "http://project.local/restore";
 
+                        $("#signin-form").removeClass('d-inline');
+                        $("#signin-form").addClass('d-none');
+
+                        $("#signin-text").removeClass('d-none');
+                        $("#signin-text").addClass('d-inline');
+
+                        $.cookie("echidna-token", msg.user_token);
                     }
                 });
 

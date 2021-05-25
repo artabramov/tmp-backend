@@ -274,6 +274,11 @@ Flight::route( 'GET /signin', function() {
     Flight::render( __DIR__ . '/pages/signin.php' );
 });
 
+// signin
+Flight::route( 'GET /signout', function() {
+    Flight::render( __DIR__ . '/pages/signout.php' );
+});
+
 // ===================================================================
 
 // user register
@@ -299,6 +304,11 @@ Flight::route( 'PUT /token', function() {
 // user select
 Flight::route( 'GET /user/@user_id', function( $user_id ) {
     require_once( '../src/routes/user_select.php' );
+});
+
+// user auth
+Flight::route( 'GET /auth', function() {
+    require_once( '../src/routes/user_auth.php' );
 });
 
 // user rename

@@ -267,6 +267,7 @@ DELETE FROM roles;
 DELETE FROM hubs;
 DELETE FROM users;
 
+
 SELECT * FROM users; SELECT * FROM hubs; SELECT * FROM roles; SELECT * FROM posts; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM meta; 
 
 
