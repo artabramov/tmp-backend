@@ -1,33 +1,36 @@
 <script>
     $(document).ready(function(){
         $("#register-submit").click(function(){
+            user_email = $("#register-user-email").val();
+            user_name = $("#register-user-name").val();
 
-            /*
             $.ajax({
                 method: "POST",
-                url: "http://project.local/user?user_email=" + $("#user_email").val() + "&user_name=" + $("#user_name").val(),
+                url: ECHIDNA_URI + "/user?user_email=" + user_email + "&user_name=" + user_name,
                 dataType: 'json'
 
             }).done(function( msg ) {
-                console.log(msg);
+                if(ECHIDNA_DEBUG) {
+                    console.log(msg);
+                }
 
-                if(msg.success == 'false') {
-                    $("#error").html('<div class="alert alert-warning" role="alert">' + msg.error + '</div>');
+                if(msg.success == "false") {
+                    $("#register-error").removeClass('d-none');
+                    $("#register-error").addClass('d-block');
+                    $("#register-error").text(msg.error);
 
                 } else {
-                    $("#error").text('');
+                    $('#register-modal').modal('hide');
+                    $('#registered-modal').modal('show');
 
-                    $("#register-form").removeClass('d-inline');
-                    $("#register-form").addClass('d-none');
+                    $("#register-error").removeClass('d-block');
+                    $("#register-error").addClass('d-none');
+                    $("#register-error").text("");
 
-                    $("#register-text").removeClass('d-none');
-                    $("#register-text").addClass('d-inline');
+                    $("#register-user-email").val("");
+                    $("#register-user-name").val("");
                 }
             });
-            */
-
-            console.log('register');
-
         });
     });
 </script>
