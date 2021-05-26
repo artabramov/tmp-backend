@@ -1,3 +1,4 @@
+<!-- navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
 
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,9 +40,14 @@
 
     <ul class="navbar-nav ml-auto">
 
+      <!-- MODAL register -->
+      <li id="navbar-modal-register" class="nav-item d-inline">
+          <a href="#" class="btn btn-outline-light" data-toggle="modal" data-target="#exampleModal">Modal</a>
+      </li>
+
       <!-- register -->
-      <li id="navbar-register" class="nav-item d-none">
-          <a href="http://project.local/register" class="btn btn-outline-light" type="submit">Register</a>
+      <li id="navbar-register" class="pl-2 nav-item d-none">
+          <a href="http://project.local/register" class="btn btn-outline-light">Register</a>
       </li>
 
       <!-- signin -->
@@ -52,7 +58,7 @@
       <!-- user -->
       <li id="navbar-user" class="nav-item dropdown d-none">
         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <span id="user-name"></span>
+          <span id="navbar-user-name"></span>
         </a>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="#">Select user</a>
@@ -62,7 +68,7 @@
 
       <!-- signout -->
       <li id="navbar-signout" class="pl-2 nav-item d-none">
-        <a id="a-signout" class="nav-link" href="#">Signout</a>
+        <a class="nav-link" href="http://project.local/signout">Signout</a>
       </li>
 
     </ul>
@@ -70,41 +76,70 @@
   </div>
 </nav>
 
+<!-- MODALS -->
+
+
+
+<!-------------------------------------------------------------------------------------------------------------->
+
 <script>
   $(document).ready(function(){
 
-    // user token
-    user_token = typeof $.cookie("echidna-token") !== 'undefined' ? $.cookie("echidna-token") : '';
+    // user auth
+    function user_auth() {
 
-    // navbar
-    $.ajax({
-        method: "GET",
-        url: "http://project.local/auth?user_token=" + user_token,
-        dataType: 'json'
+      if( typeof $.cookie("echidna-user-token") !== 'undefined' && $.cookie("echidna-user-token") !== null ) {
+        $.ajax({
+            method: "GET",
+            url: "http://project.local/auth?user_token=" + $.cookie("echidna-user-token"),
+            dataType: 'json'
 
-    }).done(function( msg ) {
-        console.log(msg);
-        console.log(msg.error);
+        }).done(function( msg ) {
+          console.log(msg);
 
-        if(msg.success == 'true') {
-            $("#navbar-user").removeClass('d-none');
-            $("#navbar-user").addClass('d-inline');
+          if(msg.success == 'true') {
+            $.cookie("echidna-user-id", msg.user.id);
+            $.cookie("echidna-user-email", msg.user.user_email);
+            $.cookie("echidna-user-name", msg.user.user_name);
 
-            $("#navbar-signout").removeClass('d-none');
-            $("#navbar-signout").addClass('d-inline');
+          } else {
+            $.cookie("echidna-user-token", null);
+            $.cookie("echidna-user-id", null);
+            $.cookie("echidna-user-email", null);
+            $.cookie("echidna-user-name", null);
+          }
+            
+        });
+      }
 
-            $("#user-name").text(msg.user.user_name);
 
-        } else {
-            $("#navbar-register").removeClass('d-none');
-            $("#navbar-register").addClass('d-inline');
 
-            $("#navbar-signin").removeClass('d-none');
-            $("#navbar-signin").addClass('d-inline');
-        }
+    }
 
-    });
+    // update navbar
+    function update_navbar() {
 
+      if( typeof $.cookie("echidna-user-token") !== 'undefined' && $.cookie("echidna-user-token") !== null ) {
+
+        $("#navbar-user").removeClass('d-none');
+        $("#navbar-user").addClass('d-inline');
+
+        $("#navbar-signout").removeClass('d-none');
+        $("#navbar-signout").addClass('d-inline');
+
+      } else {
+
+        $("#navbar-register").removeClass('d-none');
+        $("#navbar-register").addClass('d-inline');
+
+        $("#navbar-signin").removeClass('d-none');
+        $("#navbar-signin").addClass('d-inline');
+
+        $("#navbar-user-name").text( $.cookie("echidna-user-name") );
+      }
+    }
+
+    /*
     // signout
     $("#a-signout").click(function() {
         $.ajax({
@@ -121,9 +156,13 @@
             }
         });
     });
+    */
 
+    // main code
+    user_auth();
+    update_navbar();
 
-
+    
 
 
   });

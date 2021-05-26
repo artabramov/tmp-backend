@@ -40,12 +40,9 @@
         $(document).ready(function(){
             $("#register").click(function(){
 
-                user_email = $("#user_email").val();
-                user_name = $("#user_name").val();
-
                 $.ajax({
                     method: "POST",
-                    url: "http://project.local/user?user_email=" + user_email + "&user_name=" + user_name,
+                    url: "http://project.local/user?user_email=" + $("#user_email").val() + "&user_name=" + $("#user_name").val(),
                     dataType: 'json'
 
                 }).done(function( msg ) {
@@ -62,7 +59,6 @@
 
                         $("#register-text").removeClass('d-none');
                         $("#register-text").addClass('d-inline');
-
                     }
                 });
 

@@ -35,11 +35,9 @@
         $(document).ready(function(){
             $("#restore").click(function(){
 
-                user_email = $("#user_email").val();
-
                 $.ajax({
                     method: "GET",
-                    url: "http://project.local/pass?user_email=" + user_email,
+                    url: "http://project.local/pass?user_email=" + $("#user_email").val(),
                     dataType: 'json'
 
                 }).done(function( msg ) {

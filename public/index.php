@@ -256,7 +256,7 @@ Flight::before('json', function( &$params, &$output ) {
 
 // index
 Flight::route( 'GET /', function() {
-    Flight::render( __DIR__ . '/pages/index.php', array('var' => 'world'));
+    Flight::render( __DIR__ . '/webapp/index.php', array('var' => 'world'));
 });
 
 // register

@@ -42,12 +42,9 @@
         $(document).ready(function(){
             $("#signin").click(function(){
 
-                user_email = $("#user_email").val();
-                user_pass = $("#user_pass").val();
-
                 $.ajax({
                     method: "POST",
-                    url: "http://project.local/pass?user_email=" + user_email + "&user_pass=" + user_pass,
+                    url: "http://project.local/pass?user_email=" + $("#user_email").val() + "&user_pass=" + $("#user_pass").val(),
                     dataType: 'json'
 
                 }).done(function( msg ) {
@@ -66,6 +63,9 @@
                         $("#signin-text").addClass('d-inline');
 
                         $.cookie("echidna-token", msg.user_token);
+
+                        user_auth();
+                        update_navbar();
                     }
                 });
 
