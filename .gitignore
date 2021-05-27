@@ -3,9 +3,9 @@
 .vscode/
 .xdebug/
 vendor/
-composer-setup.php
 public/tmp/
 public/uploads/
-composer.lock
+public/webapp/
 composer.phar
-
+composer.lock
+composer-setup.php

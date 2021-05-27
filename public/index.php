@@ -257,9 +257,18 @@ Flight::before('json', function( &$params, &$output ) {
 
 // default
 Flight::route( 'GET /', function() {
-    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'default', 'title' => 'Echidna'));
+    $page = Flight::request()->query['page'];
+    Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page ));
 });
 
+/*
+// default
+Flight::route( 'GET /', function() {
+    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'default', 'title' => 'Echidna'));
+});
+*/
+
+/*
 // welcome
 Flight::route( 'GET /hello', function() {
     Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'hello', 'title' => 'Echidna: Hello!'));
@@ -269,6 +278,7 @@ Flight::route( 'GET /hello', function() {
 Flight::route( 'GET /documents', function() {
     Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'documents', 'title' => 'Echidna: Documents'));
 });
+*/
 
 // ===================================================================
 

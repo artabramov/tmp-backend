@@ -23,7 +23,7 @@
 
       <!-- documents -->
       <li id="documents-navbar" class="pl-2 nav-item d-none">
-        <a class="nav-link" href="<?php echo URI; ?>/documents">Documents <span class="badge badge-pill badge-light">+2</span></a>
+        <a class="nav-link" href="<?php echo $uri; ?>/documents">Documents <span class="badge badge-pill badge-light">+2</span></a>
       </li>
 
       <!-- add document -->

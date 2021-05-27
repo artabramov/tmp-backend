@@ -1,4 +1,2 @@
-footer here
-
 </body>
 </html>

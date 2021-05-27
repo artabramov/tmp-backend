@@ -1,3 +1,8 @@
+<?php
+$uri = sprintf("%s://%s", isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' ? 'https' : 'http', $_SERVER['SERVER_NAME'] );
+$title = 'Echidna Docs';
+?>
+
 <!-- header -->
 <?php require_once(__DIR__ . '/header.php'); ?>
 
@@ -20,7 +25,11 @@
 
 <!-- body -->
 <?php 
-require_once( __DIR__ . '/pages/' . $page . '.php' );
+if( file_exists( __DIR__ . '/pages/' . $page . '.php' )) {
+    require_once( __DIR__ . '/pages/' . $page . '.php' );
+} else {
+    require_once( __DIR__ . '/pages/default.php' );
+}
 ?>
 
 <!-- footer -->
