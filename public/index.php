@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
+define( 'URI', 'http://project.local' );
 define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
@@ -254,29 +255,19 @@ Flight::before('json', function( &$params, &$output ) {
 
 //================ ROUTES ================
 
-// index
+// default
 Flight::route( 'GET /', function() {
-    Flight::render( __DIR__ . '/webapp/index.php', array('var' => 'world'));
+    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'default', 'title' => 'Echidna'));
 });
 
-// register
-Flight::route( 'GET /register', function() {
-    Flight::render( __DIR__ . '/pages/register.php', array('var' => 'world'));
+// welcome
+Flight::route( 'GET /hello', function() {
+    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'hello', 'title' => 'Echidna: Hello!'));
 });
 
-// restore
-Flight::route( 'GET /restore', function() {
-    Flight::render( __DIR__ . '/pages/restore.php' );
-});
-
-// signin
-Flight::route( 'GET /signin', function() {
-    Flight::render( __DIR__ . '/pages/signin.php' );
-});
-
-// signin
-Flight::route( 'GET /signout', function() {
-    Flight::render( __DIR__ . '/pages/signout.php' );
+// documents
+Flight::route( 'GET /documents', function() {
+    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'documents', 'title' => 'Echidna: Documents'));
 });
 
 // ===================================================================
