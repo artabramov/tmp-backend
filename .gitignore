@@ -3,7 +3,6 @@
 .vscode/
 .xdebug/
 vendor/
-public/tmp/
 public/uploads/
 public/webapp/
 composer.phar

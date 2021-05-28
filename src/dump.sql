@@ -251,6 +251,40 @@ END;
 DELIMITER ;
 
 
+DELIMITER |
+CREATE TRIGGER role_insert
+AFTER INSERT
+ON roles 
+FOR EACH ROW 
+BEGIN
+    SET @role_count := (SELECT COUNT(id) FROM roles WHERE hub_id = NEW.hub_id AND user_role <> 'none');
+    IF EXISTS (SELECT id FROM meta WHERE parent_type = 'hubs' AND parent_id = NEW.hub_id AND meta_key='role_count') THEN
+        UPDATE meta SET meta_value=@role_count WHERE parent_type = 'hubs' AND parent_id = NEW.hub_id AND meta_key='role_count';
+    ELSE
+        INSERT INTO meta (parent_type, parent_id, meta_key, meta_value) VALUES ('hubs', NEW.hub_id, 'role_count', @role_count);
+    END IF;
+END;
+| 
+DELIMITER ;
+
+
+DELIMITER |
+CREATE TRIGGER role_delete
+AFTER DELETE
+ON roles 
+FOR EACH ROW 
+BEGIN
+    SET @role_count := (SELECT COUNT(id) FROM roles WHERE hub_id = OLD.hub_id AND user_role <> 'none');
+    IF @role_count = 0 THEN
+        DELETE FROM meta WHERE parent_type = 'hubs' AND parent_id = OLD.hub_id AND meta_key = 'role_count';
+    ELSE
+        UPDATE meta SET meta_value=@role_count WHERE parent_type = 'hubs' AND parent_id = OLD.hub_id AND meta_key='role_count';
+    END IF;
+END;
+| 
+DELIMITER ;
+
+
 DROP TABLE IF EXISTS meta;
 DROP TABLE IF EXISTS uploads;
 DROP TABLE IF EXISTS comments;

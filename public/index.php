@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-define( 'URI', 'http://project.local' );
 define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
@@ -203,6 +202,17 @@ Flight::map( 'sequence', function( $entity, $args, $extras ) {
     return isset( $result ) ? $result : [];
 });
 
+// custom query
+Flight::map( 'query', function( $sql, $params ) {
+
+    if( Flight::empty( 'error' )) {
+        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+        $result = $repository->query( $sql, $params );
+    }
+
+    return isset( $result ) ? $result : [];
+});
+
 // get repository datetime
 Flight::map( 'time', function() {
     $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
@@ -255,32 +265,11 @@ Flight::before('json', function( &$params, &$output ) {
 
 //================ ROUTES ================
 
-// default
+// webapp
 Flight::route( 'GET /', function() {
     $page = Flight::request()->query['page'];
     Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page ));
 });
-
-/*
-// default
-Flight::route( 'GET /', function() {
-    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'default', 'title' => 'Echidna'));
-});
-*/
-
-/*
-// welcome
-Flight::route( 'GET /hello', function() {
-    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'hello', 'title' => 'Echidna: Hello!'));
-});
-
-// documents
-Flight::route( 'GET /documents', function() {
-    Flight::render( __DIR__ . '/webapp/index.php', array('page' => 'documents', 'title' => 'Echidna: Documents'));
-});
-*/
-
-// ===================================================================
 
 // user register
 Flight::route( 'POST /user', function() {
@@ -330,6 +319,11 @@ Flight::route( 'PUT /hub/@hub_id', function( $hub_id ) {
 // hub delete
 Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
     require_once( '../src/routes/hub_delete.php' );
+});
+
+// hubs list
+Flight::route( 'GET /hubs', function() {
+    require_once( '../src/routes/hub_sequence.php' );
 });
 
 // role invite
