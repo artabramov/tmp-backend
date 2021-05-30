@@ -5,6 +5,7 @@
 vendor/
 public/uploads/
 public/webapp/
+geekbrains/
 composer.phar
 composer.lock
 composer-setup.php

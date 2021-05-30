@@ -265,6 +265,64 @@ Flight::before('json', function( &$params, &$output ) {
 
 //================ ROUTES ================
 
+// test
+Flight::route( 'GET /test', function() {
+
+    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
+    $mapper = new \artabramov\Echidna\Mapper( $repository );
+
+    $query1 = $repository->select( 
+        ['parent_id'], 
+        'meta', 
+        [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'tag2']]
+    );
+
+    $query2 = $repository->select(
+        ['*'], 
+        'users', 
+        [['user_name', '<>', 'admin'], ['user_status', 'IN', ['pending', 'approved']], ['id', 'IN', $query1]], 
+        ['LIMIT 1', 'OFFSET 0'] 
+    );
+
+    $result2 = $repository->execute( $query2 );
+
+
+    //$repository->custom('SELECT NOW()', []);
+    //$query4 = $repository->query;
+    //$result4 = $repository->execute( $query4 );
+
+    //$user = new \App\Entities\User;
+    //$query = $mapper->select( $entity, [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']] );
+    /*
+    $query = $repository->select( 
+        ['user_email', 'user_name'], 
+        'users', 
+        [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']], 
+        ['LIMIT 1', 'OFFSET 0'] 
+    );
+    */
+
+    $a = 1;
+
+    /*
+    $repository->select( 
+        ['user_email', 'user_name'], 
+        'users', 
+        [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']], 
+        ['LIMIT 1', 'OFFSET 0'] 
+    );
+
+    echo $repository->query;
+    echo '<br>';
+    print_r($repository->params);
+    */
+
+    
+
+
+
+});
+
 // webapp
 Flight::route( 'GET /', function() {
     $page = Flight::request()->query['page'];
