@@ -215,8 +215,9 @@ Flight::map( 'query', function( $sql, $params ) {
 
 // get repository datetime
 Flight::map( 'time', function() {
-    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-    return $repository->time();
+    //$repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
+    //return $repository->time();
+    return '';
 });
 
 // auth
@@ -270,11 +271,39 @@ Flight::route( 'GET /test', function() {
 
     $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
     $mapper = new \artabramov\Echidna\Mapper( $repository );
+    //$sequence = new \artabramov\Echidna\Sequence( $repository );
+    //$time = new \artabramov\Echidna\Time( $repository );
+    $user = new \App\Entities\User;
+    
+    /*
+    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']] );
+    $query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
+    $sequence->execute( $query2, new \App\Entities\User );
+    */
+    
 
+    // insert
+    $query = $mapper->insert( $user, ['user_status' => 'pending', 'user_token' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'aaaa@aaaa.aa', 'user_name' => 'aaaa'] );
+
+
+    $a = 1;
+
+    /*
+    $user = new \App\Entities\User;
+    $mapper->select( $user, [
+        ['id', '=', 11], 
+        ['user_status', '<>', 'trash']
+    ]);
+    var_dump( $user );
+    */
+
+
+
+    /*
     $query1 = $repository->select( 
         ['parent_id'], 
         'meta', 
-        [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'tag2']]
+        [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']]
     );
 
     $query2 = $repository->select(
@@ -285,39 +314,11 @@ Flight::route( 'GET /test', function() {
     );
 
     $result2 = $repository->execute( $query2 );
-
-
-    //$repository->custom('SELECT NOW()', []);
-    //$query4 = $repository->query;
-    //$result4 = $repository->execute( $query4 );
-
-    //$user = new \App\Entities\User;
-    //$query = $mapper->select( $entity, [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']] );
-    /*
-    $query = $repository->select( 
-        ['user_email', 'user_name'], 
-        'users', 
-        [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']], 
-        ['LIMIT 1', 'OFFSET 0'] 
-    );
     */
 
     $a = 1;
 
-    /*
-    $repository->select( 
-        ['user_email', 'user_name'], 
-        'users', 
-        [['user_status', 'IN', ['pending', 'approved']], ['user_token', '=', 'token123']], 
-        ['LIMIT 1', 'OFFSET 0'] 
-    );
 
-    echo $repository->query;
-    echo '<br>';
-    print_r($repository->params);
-    */
-
-    
 
 
 

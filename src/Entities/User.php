@@ -51,6 +51,16 @@ class User extends \artabramov\Echidna\Entity
      */
     protected $user_hash;
 
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $uploads_count;
+
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $uploads_sum;
+
     protected $user_pass;
 
     public function pass() {
