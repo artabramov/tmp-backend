@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=meta alias=meta)
+ * @entity(table=meta entity=meta)
  */
 class Meta extends \artabramov\Echidna\Entity
 {

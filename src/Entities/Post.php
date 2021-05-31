@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=posts alias=post)
+ * @entity(table=posts entity=post)
  */
 class Post extends \artabramov\Echidna\Entity
 {

@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=hubs alias=hub)
+ * @entity(table=hubs entity=hub)
  */
 class Hub extends \artabramov\Echidna\Entity
 {

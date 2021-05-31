@@ -271,20 +271,33 @@ Flight::route( 'GET /test', function() {
 
     $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
     $mapper = new \artabramov\Echidna\Mapper( $repository );
-    //$sequence = new \artabramov\Echidna\Sequence( $repository );
     //$time = new \artabramov\Echidna\Time( $repository );
-    $user = new \App\Entities\User;
     
+
     /*
-    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']] );
+    // sequence
+    $sequence = new \artabramov\Echidna\Sequence( $repository, new \App\Entities\User );
+    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user_value']] );
     $query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
-    $sequence->execute( $query2, new \App\Entities\User );
+    $sequence->execute( $query2 );
     */
     
+    /*
+    // select
+    $user = new \App\Entities\User;
+    $mapper->select( $user, [['id', '=', 1]] );
+    */
 
+    /*
     // insert
-    $query = $mapper->insert( $user, ['user_status' => 'pending', 'user_token' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'aaaa@aaaa.aa', 'user_name' => 'aaaa'] );
+    $user = new \App\Entities\User;
+    $mapper->insert( $user, ['user_status' => 'pending', 'user_token' => 'daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'dd@bb.bb', 'user_name' => 'aaaa'] );
+    */
 
+    // update
+    $user = new \App\Entities\User;
+    $mapper->select( $user, [['id', '=', 1]] );
+    $mapper->update( $user, ['user_status' => 'approved'] );
 
     $a = 1;
 

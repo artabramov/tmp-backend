@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=uploads alias=upload)
+ * @entity(table=uploads entity=upload)
  */
 class Upload extends \artabramov\Echidna\Entity
 {

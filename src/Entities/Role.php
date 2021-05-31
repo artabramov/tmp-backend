@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=roles alias=role)
+ * @entity(table=roles entity=role)
  */
 class Role extends \artabramov\Echidna\Entity
 {

@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=users alias=user)
+ * @entity(table=users entity=user)
  */
 class User extends \artabramov\Echidna\Entity
 {
