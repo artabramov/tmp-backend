@@ -4,12 +4,16 @@ require_once __DIR__ . '/../vendor/autoload.php';
 define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
-Flight::set( 'e', null );
 Flight::set( 'error', '' );
 Flight::set( 'pdo', require_once( __DIR__ . "/../src/init/pdo.php" ) );
 Flight::set( 'phpmailer', require_once( __DIR__ . "/../src/init/phpmailer.php" ) );
 Flight::set( 'monolog', require_once( __DIR__ . "/../src/init/monolog.php" ) );
 //Flight::set( 'dropbox', require_once( __DIR__ . "/../src/init/dropbox.php" ) );
+
+// data mapper and sequence
+$repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
+$mapper = new \artabramov\Echidna\Mapper( $repository );
+Flight::set( 'mapper', $mapper );
 
 // ================ MAPPING ================
 
@@ -125,13 +129,10 @@ Flight::map( 'upload', function( $keys, $user_id, $comment_id ) {
 Flight::map( 'insert', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        $mapper->insert( $entity, $data );
+        Flight::get('mapper')->insert( $entity, $data );
 
-        if( !empty( $mapper->error )) {
-            Flight::set( 'e', $repository->e );
-            Flight::set( 'error', $mapper->error );
+        if( !empty( Flight::get('mapper')->error )) {
+            Flight::set( 'error', Flight::get('mapper')->error );
         }
     }
 });
@@ -140,13 +141,10 @@ Flight::map( 'insert', function( $entity, $data ) {
 Flight::map( 'update', function( $entity, $data ) {
 
     if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        $mapper->update( $entity, $data );
+        Flight::get('mapper')->update( $entity, $data );
 
-        if( !empty( $mapper->error )) {
-            Flight::set( 'e', $repository->e );
-            Flight::set( 'error', $mapper->error );
+        if( !empty( Flight::get('mapper')->error )) {
+            Flight::set( 'error', Flight::get('mapper')->error );
         }
     }
 });
@@ -155,13 +153,10 @@ Flight::map( 'update', function( $entity, $data ) {
 Flight::map( 'select', function( $entity, $args ) {
 
     if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        $mapper->select( $entity, $args );
+        Flight::get('mapper')->select( $entity, $args );
 
-        if( !empty( $mapper->error )) {
-            Flight::set( 'e', $repository->e );
-            Flight::set( 'error', $mapper->error );
+        if( !empty( Flight::get('mapper')->error )) {
+            Flight::set( 'error', Flight::get('mapper')->error );
         }
     }
 });
@@ -170,54 +165,22 @@ Flight::map( 'select', function( $entity, $args ) {
 Flight::map( 'delete', function( $entity ) {
 
     if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        $mapper->delete( $entity );
+        Flight::get('mapper')->delete( $entity );
 
-        if( !empty( $mapper->error )) {
-            Flight::set( 'e', $repository->e );
-            Flight::set( 'error', $mapper->error );
+        if( !empty( Flight::get('mapper')->error )) {
+            Flight::set( 'error', Flight::get('mapper')->error );
         }
     }
 });
 
 // entity exists
 Flight::map( 'exists', function( $entity, $args ) {
-
-    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-    $mapper = new \artabramov\Echidna\Mapper( $repository );
-    return $mapper->exists( $entity, $args );
+    return Flight::get('mapper')->exists( $entity, $args );
 });
 
-// get sequence (entity for sample)
-Flight::map( 'sequence', function( $entity, $args, $extras ) {
-
-    if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $mapper = new \artabramov\Echidna\Mapper( $repository );
-        $sequence = new \artabramov\Echidna\Sequence( $repository, $mapper );
-        $result = $sequence->select( $entity, $args, $extras );
-    }
-
-    return isset( $result ) ? $result : [];
-});
-
-// custom query
-Flight::map( 'query', function( $sql, $params ) {
-
-    if( Flight::empty( 'error' )) {
-        $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-        $result = $repository->query( $sql, $params );
-    }
-
-    return isset( $result ) ? $result : [];
-});
-
-// get repository datetime
+// get time
 Flight::map( 'time', function() {
-    //$repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ) );
-    //return $repository->time();
-    return '';
+    return Flight::get('mapper')->time();
 });
 
 // auth
@@ -238,23 +201,12 @@ Flight::map( 'auth', function( $user, $user_token ) {
 
 // before route
 Flight::before('start', function( &$params, &$output ) {
-    Flight::get('pdo')->beginTransaction();
+    Flight::get('mapper')->start();
 });
 
 // after route
 Flight::after('stop', function( &$params, &$output ) {
-
-    // close transaction
-    if( Flight::empty( 'error' )) {
-        Flight::get( 'pdo' )->commit();
-    } else {
-        Flight::get( 'pdo' )->rollBack();
-    }
-
-    // debug
-    if( !Flight::empty( 'e' )) {
-        Flight::debug( Flight::get('e') );
-    }
+    Flight::get('mapper')->stop();
 });
 
 // json
@@ -269,71 +221,48 @@ Flight::before('json', function( &$params, &$output ) {
 // test
 Flight::route( 'GET /test', function() {
 
-    $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
-    $mapper = new \artabramov\Echidna\Mapper( $repository );
-    //$time = new \artabramov\Echidna\Time( $repository );
-    
+    // select
+    //$user = new \App\Entities\User;
+    //Flight::select( $user, [['id', '=', 1]] );
+
+    // insert
+    //$meta = new \App\Entities\Meta;
+    //Flight::insert( $meta, ['user_id' => 1, 'parent_type' => 'users', 'parent_id' => 1, 'meta_key' => 'user_tag', 'meta_value' => 'tag !'] );
+
+    // update
+    //$meta = new \App\Entities\Meta;
+    //Flight::select( $meta, [['id', '=', 1]] );
+    //Flight::update( $meta, ['meta_value' => 'trash'] );
+
+    // delete
+    //$meta = new \App\Entities\Meta;
+    //Flight::select( $meta, [['id', '=', 3]] );
+    //Flight::delete( $meta );
+
+    // time
+    //$time = Flight::time();
+
+    // exists
+    //$user = new \App\Entities\User;
+    //$exists = Flight::exists( $user, [['id', '=', 3]] );
 
     /*
     // sequence
     $sequence = new \artabramov\Echidna\Sequence( $repository, new \App\Entities\User );
-    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user_value']] );
+    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']] );
     $query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
     $sequence->execute( $query2 );
     */
-    
-    /*
-    // select
-    $user = new \App\Entities\User;
-    $mapper->select( $user, [['id', '=', 1]] );
-    */
 
     /*
-    // insert
-    $user = new \App\Entities\User;
-    $mapper->insert( $user, ['user_status' => 'pending', 'user_token' => 'daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'dd@bb.bb', 'user_name' => 'aaaa'] );
-    */
-
-    // update
-    $user = new \App\Entities\User;
-    $mapper->select( $user, [['id', '=', 1]] );
-    $mapper->update( $user, ['user_status' => 'approved'] );
-
-    $a = 1;
-
-    /*
-    $user = new \App\Entities\User;
-    $mapper->select( $user, [
-        ['id', '=', 11], 
-        ['user_status', '<>', 'trash']
-    ]);
-    var_dump( $user );
-    */
-
-
-
-    /*
-    $query1 = $repository->select( 
-        ['parent_id'], 
-        'meta', 
-        [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']]
-    );
-
-    $query2 = $repository->select(
-        ['*'], 
-        'users', 
-        [['user_name', '<>', 'admin'], ['user_status', 'IN', ['pending', 'approved']], ['id', 'IN', $query1]], 
-        ['LIMIT 1', 'OFFSET 0'] 
-    );
-
-    $result2 = $repository->execute( $query2 );
+    // transaction
+    $meta = new \App\Entities\User;
+    Flight::insert( $user, ['user_status' => 'pending', 'user_token' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'aa@zz.zz', 'user_name' => 'zzzzz'] );
+    Flight::insert( $user, ['user_status' => 'pending', 'user_token' => 'baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'ba@zz.zz', 'user_name' => 'zzzzz'] );
+    $error = Flight::get('error');
     */
 
     $a = 1;
-
-
-
-
 
 });
 
