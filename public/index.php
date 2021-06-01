@@ -12,8 +12,9 @@ Flight::set( 'monolog', require_once( __DIR__ . "/../src/init/monolog.php" ) );
 
 // data mapper and sequence
 $repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
-$mapper = new \artabramov\Echidna\Mapper( $repository );
-Flight::set( 'mapper', $mapper );
+Flight::set( 'mapper', new \artabramov\Echidna\Mapper( $repository ) );
+Flight::set( 'sequence', new \artabramov\Echidna\Sequence( $repository ) );
+Flight::set( 'time', new \artabramov\Echidna\Time( $repository ) );
 
 // ================ MAPPING ================
 
@@ -180,7 +181,7 @@ Flight::map( 'exists', function( $entity, $args ) {
 
 // get time
 Flight::map( 'time', function() {
-    return Flight::get('mapper')->time();
+    return Flight::get('time')->time;
 });
 
 // auth
@@ -240,19 +241,18 @@ Flight::route( 'GET /test', function() {
     //Flight::delete( $meta );
 
     // time
-    //$time = Flight::time();
+    $time = Flight::time();
 
     // exists
     //$user = new \App\Entities\User;
     //$exists = Flight::exists( $user, [['id', '=', 3]] );
 
-    /*
     // sequence
-    $sequence = new \artabramov\Echidna\Sequence( $repository, new \App\Entities\User );
-    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user 1']] );
+    $sequence = Flight::get('sequence');
+    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user_value']] );
     $query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
-    $sequence->execute( $query2 );
-    */
+    $sequence->execute( $query2, new \App\Entities\User );
+    $count = $sequence->count( 'meta', [['parent_type', '=', 'users']] );
 
     /*
     // transaction
@@ -261,6 +261,7 @@ Flight::route( 'GET /test', function() {
     Flight::insert( $user, ['user_status' => 'pending', 'user_token' => 'baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'ba@zz.zz', 'user_name' => 'zzzzz'] );
     $error = Flight::get('error');
     */
+
 
     $a = 1;
 
