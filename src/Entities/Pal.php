@@ -2,9 +2,9 @@
 namespace App\Entities;
 
 /**
- * @entity(table=comment_uploads entity=upload)
+ * @entity(table=user_pals entity=pal)
  */
-class Upload extends \artabramov\Echidna\Entity
+class Pal extends \artabramov\Echidna\Entity
 {
     /**
      * @column(nullable=true unique=true regex=/^[0-9]{1,20}$/)
@@ -27,28 +27,8 @@ class Upload extends \artabramov\Echidna\Entity
     protected $user_id;
 
     /**
-     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
-     */
-    protected $comment_id;
-
-    /**
-     * @column(nullable=false unique=false regex=/^.{2,255}$/)
-     */
-    protected $upload_name;
-
-    /**
-     * @column(nullable=false unique=false regex=/^.{2,255}$/)
-     */
-    protected $upload_mime;
-
-    /**
      * @column(nullable=false unique=false regex=/^[0-9]{1,20}$/)
      */
-    protected $upload_size;
-
-    /**
-     * @column(nullable=false unique=false regex=/^.{2,255}$/)
-     */
-    protected $upload_file;
+    protected $pal_id;
 
 }

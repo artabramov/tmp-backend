@@ -4,6 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
+Flight::set( 'e', null );
 Flight::set( 'error', '' );
 Flight::set( 'pdo', require_once( __DIR__ . "/../src/init/pdo.php" ) );
 Flight::set( 'phpmailer', require_once( __DIR__ . "/../src/init/phpmailer.php" ) );
@@ -11,10 +12,19 @@ Flight::set( 'monolog', require_once( __DIR__ . "/../src/init/monolog.php" ) );
 //Flight::set( 'dropbox', require_once( __DIR__ . "/../src/init/dropbox.php" ) );
 
 // data mapper and sequence
-$repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
+//$repository = new \artabramov\Echidna\Repository( Flight::get( 'pdo' ));
+
+/*
+Flight::set( 'repository', new \artabramov\Echidna\Repository( Flight::get( 'pdo' )) );
 Flight::set( 'mapper', new \artabramov\Echidna\Mapper( $repository ) );
 Flight::set( 'sequence', new \artabramov\Echidna\Sequence( $repository ) );
 Flight::set( 'time', new \artabramov\Echidna\Time( $repository ) );
+*/
+
+Flight::set( 'repository', new \artabramov\Echidna\Repository( Flight::get( 'pdo' )) );
+Flight::set( 'mapper', new \artabramov\Echidna\Mapper( Flight::get( 'repository' ) ) );
+Flight::set( 'sequence', new \artabramov\Echidna\Sequence( Flight::get( 'repository' ) ) );
+Flight::set( 'time', new \artabramov\Echidna\Time( Flight::get( 'repository' ) ) );
 
 // ================ MAPPING ================
 
@@ -135,6 +145,10 @@ Flight::map( 'insert', function( $entity, $data ) {
         if( !empty( Flight::get('mapper')->error )) {
             Flight::set( 'error', Flight::get('mapper')->error );
         }
+
+        if( !empty( Flight::get('repository')->e )) {
+            Flight::set( 'e', Flight::get('repository')->e );
+        }
     }
 });
 
@@ -146,6 +160,10 @@ Flight::map( 'update', function( $entity, $data ) {
 
         if( !empty( Flight::get('mapper')->error )) {
             Flight::set( 'error', Flight::get('mapper')->error );
+        }
+
+        if( !empty( Flight::get('repository')->e )) {
+            Flight::set( 'e', Flight::get('repository')->e );
         }
     }
 });
@@ -159,6 +177,10 @@ Flight::map( 'select', function( $entity, $args ) {
         if( !empty( Flight::get('mapper')->error )) {
             Flight::set( 'error', Flight::get('mapper')->error );
         }
+
+        if( !empty( Flight::get('repository')->e )) {
+            Flight::set( 'e', Flight::get('repository')->e );
+        }
     }
 });
 
@@ -170,6 +192,10 @@ Flight::map( 'delete', function( $entity ) {
 
         if( !empty( Flight::get('mapper')->error )) {
             Flight::set( 'error', Flight::get('mapper')->error );
+        }
+
+        if( !empty( Flight::get('repository')->e )) {
+            Flight::set( 'e', Flight::get('repository')->e );
         }
     }
 });
@@ -184,6 +210,7 @@ Flight::map( 'time', function() {
     return Flight::get('time')->time;
 });
 
+/*
 // auth
 Flight::map( 'auth', function( $user, $user_token ) {
 
@@ -197,6 +224,7 @@ Flight::map( 'auth', function( $user, $user_token ) {
         Flight::set( 'error', 'user_token is expired' );
     }
 });
+*/
 
 // ==== FILTERING ====
 
@@ -208,6 +236,10 @@ Flight::before('start', function( &$params, &$output ) {
 // after route
 Flight::after('stop', function( &$params, &$output ) {
     Flight::get('mapper')->stop();
+
+    if( !empty( Flight::get('e'))) {
+        Flight::debug( Flight::get('e') );
+    }
 });
 
 // json
@@ -241,27 +273,18 @@ Flight::route( 'GET /test', function() {
     //Flight::delete( $meta );
 
     // time
-    $time = Flight::time();
+    //$time = Flight::time();
 
     // exists
     //$user = new \App\Entities\User;
     //$exists = Flight::exists( $user, [['id', '=', 3]] );
 
     // sequence
-    $sequence = Flight::get('sequence');
-    $query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user_value']] );
-    $query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
-    $sequence->execute( $query2, new \App\Entities\User );
-    $count = $sequence->count( 'meta', [['parent_type', '=', 'users']] );
-
-    /*
-    // transaction
-    $meta = new \App\Entities\User;
-    Flight::insert( $user, ['user_status' => 'pending', 'user_token' => 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'aa@zz.zz', 'user_name' => 'zzzzz'] );
-    Flight::insert( $user, ['user_status' => 'pending', 'user_token' => 'baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'user_email' => 'ba@zz.zz', 'user_name' => 'zzzzz'] );
-    $error = Flight::get('error');
-    */
-
+    //$sequence = Flight::get('sequence');
+    //$query1 = $sequence->select( ['parent_id'], 'meta', [['parent_type', '=', 'users'], ['meta_key', '=', 'user_tag'], ['meta_value', '=', 'user_value']] );
+    //$query2 = $sequence->select( ['*'], 'users', [['user_status', '<>', 'trash'], ['id', 'IN', $query1]] );
+    //$sequence->execute( $query2, new \App\Entities\User );
+    //$count = $sequence->count( 'meta', [['parent_type', '=', 'users']] );
 
     $a = 1;
 
@@ -299,13 +322,19 @@ Flight::route( 'GET /user/@user_id', function( $user_id ) {
 });
 
 // user auth
-Flight::route( 'GET /auth', function() {
+Flight::route( 'GET /user', function() {
     require_once( '../src/routes/user_auth.php' );
 });
 
 // user rename
 Flight::route( 'PUT /user', function() {
     require_once( '../src/routes/user_update.php' );
+});
+
+
+// pal create
+Flight::route( 'POST /pal', function() {
+    require_once( '../src/routes/pal_insert.php' );
 });
 
 // hub create

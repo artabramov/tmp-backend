@@ -36,4 +36,14 @@ class Hub extends \artabramov\Echidna\Entity
      */
     protected $hub_name;
 
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $roles_count;
+
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $posts_count;
+
 }

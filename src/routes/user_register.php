@@ -14,15 +14,6 @@ Flight::insert( $self_user, [
     'user_token' => $self_user->token()
 ]);
 
-/*
-// create pass
-$self_user->user_pass = $self_user->pass();
-Flight::update( $self_user, [
-    'user_hash' => $self_user->hash( $self_user->user_pass ),
-    'restore_date' => Flight::time()
-]);
-*/
-
 // insert hub
 $hub = new \App\Entities\Hub;
 Flight::insert( $hub, [
@@ -40,27 +31,7 @@ Flight::insert( $self_role, [
 ]);
 
 // send email
-Flight::email( $self_user->user_email, 'User', 'User restore', 'One-time pass: <i>' . $self_user->user_pass . '</i>' );
-
-/*
-// insert meta: ip
-$self_meta = new \App\Entities\Meta;
-Flight::insert( $self_meta, [
-    'parent_type' => 'users',
-    'parent_id' => $self_user->id,
-    'meta_key' => 'register_ip',
-    'meta_value' => Flight::request()->ip
-]);
-
-// insert meta: user_agent
-$self_meta = new \App\Entities\Meta;
-Flight::insert( $self_meta, [
-    'parent_type' => 'users',
-    'parent_id' => $self_user->id,
-    'meta_key' => 'register_agent',
-    'meta_value' => Flight::request()->user_agent
-]);
-*/
+Flight::email( $self_user->user_email, 'User', 'User register', 'One-time pass: <i>' . $self_user->user_pass . '</i>' );
 
 // json
 Flight::json();

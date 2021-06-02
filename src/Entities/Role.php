@@ -2,7 +2,7 @@
 namespace App\Entities;
 
 /**
- * @entity(table=roles entity=role)
+ * @entity(table=user_roles entity=role)
  */
 class Role extends \artabramov\Echidna\Entity
 {
@@ -32,7 +32,7 @@ class Role extends \artabramov\Echidna\Entity
     protected $hub_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^admin$|^author$|^editor$|^reader$|^none$/)
+     * @column(nullable=false unique=false regex=/^admin$|^author$|^editor$|^reader$|^invited$|^banned$/)
      */
     protected $user_role;
 

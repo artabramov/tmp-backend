@@ -27,7 +27,7 @@ class Meta extends \artabramov\Echidna\Entity
     protected $user_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^users$|^hubs$|^roles$|^posts$|^comments$|^uploads$/)
+     * @column(nullable=false unique=false regex=/^users$|^hubs$|^posts$/)
      */
     protected $parent_type;
 

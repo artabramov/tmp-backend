@@ -32,11 +32,6 @@ class Post extends \artabramov\Echidna\Entity
     protected $hub_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^document$/)
-     */
-    protected $post_type;
-
-    /**
      * @column(nullable=false unique=false regex=/^todo$|^doing$|^done$|^trash$/)
      */
     protected $post_status;
@@ -45,5 +40,10 @@ class Post extends \artabramov\Echidna\Entity
      * @column(nullable=false unique=false regex=/^.{2,255}$/)
      */
     protected $post_excerpt;
+
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $comments_count;
 
 }
