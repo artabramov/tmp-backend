@@ -1,7 +1,10 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
+// constants
+define( 'PALS_LIMIT', 2 );
+define( 'HUBS_LIMIT', 5 );
+//define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
 Flight::set( 'e', null );
@@ -205,6 +208,11 @@ Flight::map( 'exists', function( $entity, $args ) {
     return Flight::get('mapper')->exists( $entity, $args );
 });
 
+// count entities
+Flight::map( 'count', function( $entity, $args ) {
+    return Flight::get('sequence')->count( $entity, $args );
+});
+
 // get time
 Flight::map( 'time', function() {
     return Flight::get('time')->time;
@@ -337,6 +345,12 @@ Flight::route( 'POST /pal', function() {
     require_once( '../src/routes/pal_insert.php' );
 });
 
+// get pals
+Flight::route( 'GET /pals', function() {
+    require_once( '../src/routes/pal_sequence.php' );
+});
+
+
 // hub create
 Flight::route( 'POST /hub', function() {
     require_once( '../src/routes/hub_insert.php' );
@@ -353,7 +367,7 @@ Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
 });
 
 // hubs list
-Flight::route( 'GET /hubs', function() {
+Flight::route( 'GET /hub', function() {
     require_once( '../src/routes/hub_sequence.php' );
 });
 

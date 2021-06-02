@@ -21,6 +21,9 @@ Flight::select( $mate_user, [
 $pal = new \App\Entities\Pal;
 if( Flight::empty( 'error' ) and Flight::exists( $pal, [['user_id', '=', $self_user->id], ['pal_id', '=', $user_id]] )) {
     Flight::set( 'error', 'pal already exists' );
+
+} elseif ( Flight::count( 'user_pals', [['user_id', '=', $self_user->id]] ) >= PALS_LIMIT ) {
+    Flight::set( 'error', 'pals limit reached' );
 }
 
 // insert pal

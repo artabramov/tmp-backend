@@ -6,7 +6,10 @@ $hub_name = (string) Flight::request()->query['hub_name'];
 
 // auth
 $self_user = new \App\Entities\User;
-Flight::auth( $self_user, $user_token );
+Flight::select( $self_user, [
+    ['user_token', '=', $user_token], 
+    ['user_status', 'IN', ['approved', 'premium']]
+]);
 
 // hub
 $hub = new \App\Entities\Hub;

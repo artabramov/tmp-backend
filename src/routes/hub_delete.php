@@ -4,7 +4,10 @@ $hub_id = (int) $hub_id;
 
 // auth
 $self_user = new \App\Entities\User;
-Flight::auth( $self_user, $user_token );
+Flight::select( $self_user, [
+    ['user_token', '=', $user_token], 
+    ['user_status', 'IN', ['approved', 'premium']]
+]);
 
 // hub
 $hub = new \App\Entities\Hub;
