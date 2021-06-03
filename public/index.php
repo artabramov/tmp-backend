@@ -3,7 +3,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // constants
 define( 'PALS_LIMIT', 2 );
-define( 'HUBS_LIMIT', 5 );
+define( 'HUBS_LIMIT', 50 );
 //define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
@@ -301,7 +301,10 @@ Flight::route( 'GET /test', function() {
 // webapp
 Flight::route( 'GET /', function() {
     $page = Flight::request()->query['page'];
-    Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page ));
+    $hub_status = Flight::request()->query['hub_status'];
+    $offset = Flight::request()->query['offset'];
+
+    Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page, 'hub_status' => $hub_status, 'offset' => $offset ));
 });
 
 // user register

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     user_hash     VARCHAR(40)  NOT NULL DEFAULT '',
     uploads_count BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
     uploads_sum   BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
+    notices_count BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
 
     PRIMARY KEY (id),
             KEY (create_date),

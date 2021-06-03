@@ -61,6 +61,11 @@ class User extends \artabramov\Echidna\Entity
      */
     protected $uploads_sum;
 
+    /**
+     * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
+     */
+    protected $notices_count;
+
     protected $user_pass;
 
     public function pass() {
