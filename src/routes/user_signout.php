@@ -5,12 +5,10 @@ $user_token = (string) Flight::request()->query['user_token'];
 $self_user = new \App\Entities\User;
 Flight::select( $self_user, [
     ['user_token', '=', $user_token], 
-    ['user_status', 'IN', ['approved', 'premium']]
+    ['user_status', '=', 'approved']
 ]);
 
-//Flight::auth( $self_user, $user_token );
-
-// update user
+// sign out
 Flight::update( $self_user, [
     'user_token' => $self_user->token()
 ]);

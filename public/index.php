@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 // constants
-define( 'PALS_LIMIT', 2 );
-define( 'HUBS_LIMIT', 50 );
+define( 'HUBS_INSERT_LIMIT', 50 );
+define( 'HUBS_SELECT_LIMIT', 3 );
 //define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
@@ -301,10 +301,10 @@ Flight::route( 'GET /test', function() {
 // webapp
 Flight::route( 'GET /', function() {
     $page = Flight::request()->query['page'];
-    $hub_status = Flight::request()->query['hub_status'];
+    $user_id = Flight::request()->query['user_id'];
+    $hub_id = Flight::request()->query['hub_id'];
     $offset = Flight::request()->query['offset'];
-
-    Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page, 'hub_status' => $hub_status, 'offset' => $offset ));
+    Flight::render( __DIR__ . '/webapp/index.php', array( 'page' => $page, 'user_id' => $user_id, 'hub_id' => $hub_id, 'offset' => $offset ));
 });
 
 // user register
@@ -342,21 +342,14 @@ Flight::route( 'PUT /user', function() {
     require_once( '../src/routes/user_update.php' );
 });
 
-
-// pal create
-Flight::route( 'POST /pal', function() {
-    require_once( '../src/routes/pal_insert.php' );
-});
-
-// get pals
-Flight::route( 'GET /pals', function() {
-    require_once( '../src/routes/pal_sequence.php' );
-});
-
-
-// hub create
+// hub insert
 Flight::route( 'POST /hub', function() {
     require_once( '../src/routes/hub_insert.php' );
+});
+
+// hub select
+Flight::route( 'GET /hub/@hub_id', function( $hub_id ) {
+    require_once( '../src/routes/hub_select.php' );
 });
 
 // hub update
@@ -369,19 +362,14 @@ Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
     require_once( '../src/routes/hub_delete.php' );
 });
 
-// hubs list
-Flight::route( 'GET /hub', function() {
-    require_once( '../src/routes/hub_sequence.php' );
+// hubs sequence
+Flight::route( 'GET /hubs', function() {
+    require_once( '../src/routes/hub_rows.php' );
 });
 
 // role invite
 Flight::route( 'POST /role', function() {
     require_once( '../src/routes/role_insert.php' );
-});
-
-// role confirm
-Flight::route( 'GET /role', function() {
-    require_once( '../src/routes/role_confirm.php' );
 });
 
 // role update

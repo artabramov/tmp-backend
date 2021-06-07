@@ -18,7 +18,6 @@ Flight::insert( $self_user, [
 $hub = new \App\Entities\Hub;
 Flight::insert( $hub, [
     'user_id' => $self_user->id,
-    'hub_status' => 'custom',
     'hub_name' => 'my repository'
 ]);
 

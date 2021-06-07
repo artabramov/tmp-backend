@@ -27,7 +27,7 @@ class User extends \artabramov\Echidna\Entity
     protected $restore_date;
 
     /**
-     * @column(nullable=false unique=false regex=/^pending$|^approved$|^premium$|^trash$/)
+     * @column(nullable=false unique=false regex=/^pending$|^approved$|^trash$/)
      */
     protected $user_status;
 
@@ -64,7 +64,7 @@ class User extends \artabramov\Echidna\Entity
     /**
      * @column(nullable=true unique=false regex=/^[0-9]{1,20}$/)
      */
-    protected $notices_count;
+    protected $alerts_count;
 
     protected $user_pass;
 

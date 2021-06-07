@@ -5,7 +5,7 @@ $user_token = (string) Flight::request()->query['user_token'];
 $self_user = new \App\Entities\User;
 Flight::select( $self_user, [
     ['user_token', '=', $user_token], 
-    ['user_status', 'IN', ['approved', 'premium']]
+    ['user_status', '=', 'approved']
 ]);
 
 // json

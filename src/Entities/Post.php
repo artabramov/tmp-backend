@@ -32,7 +32,7 @@ class Post extends \artabramov\Echidna\Entity
     protected $hub_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^todo$|^doing$|^done$|^trash$/)
+     * @column(nullable=false unique=false regex=/^todo$|^doing$|^done$/)
      */
     protected $post_status;
 

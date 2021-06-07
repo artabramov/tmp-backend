@@ -32,7 +32,7 @@ class Role extends \artabramov\Echidna\Entity
     protected $hub_id;
 
     /**
-     * @column(nullable=false unique=false regex=/^admin$|^author$|^editor$|^reader$|^invited$|^banned$/)
+     * @column(nullable=false unique=false regex=/^admin$|^author$|^editor$|^reader$/)
      */
     protected $user_role;
 

@@ -6,19 +6,18 @@ $hub_name = (string) Flight::request()->query['hub_name'];
 $self_user = new \App\Entities\User;
 Flight::select( $self_user, [
     ['user_token', '=', $user_token], 
-    ['user_status', 'IN', ['approved', 'premium']]
+    ['user_status', '=', 'approved']
 ]);
 
 // hubs limit reached?
 $hub = new \App\Entities\Hub;
-if ( Flight::count( 'hubs', [['user_id', '=', $self_user->id]] ) >= HUBS_LIMIT ) {
+if ( Flight::count( 'hubs', [['user_id', '=', $self_user->id]] ) >= HUBS_INSERT_LIMIT ) {
     Flight::set( 'error', 'hubs limit reached' );
 }
 
 // hub
 Flight::insert( $hub, [
     'user_id' => $self_user->id,
-    'hub_status' => 'custom',
     'hub_name' => $hub_name,
 ]);
 

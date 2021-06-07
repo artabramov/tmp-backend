@@ -6,7 +6,7 @@ $user_id = (int) $user_id;
 $self_user = new \App\Entities\User;
 Flight::select( $self_user, [
     ['user_token', '=', $user_token], 
-    ['user_status', 'IN', ['approved', 'premium']]
+    ['user_status', '=', 'approved']
 ]);
 
 // select mate
