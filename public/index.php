@@ -4,6 +4,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // constants
 define( 'HUBS_INSERT_LIMIT', 50 );
 define( 'HUBS_SELECT_LIMIT', 3 );
+define( 'ROLES_SELECT_LIMIT', 3 );
 //define( 'UPLOADS_LIMIT', 1024 * 1024 * 2 );
 
 // init
@@ -362,7 +363,7 @@ Flight::route( 'DELETE /hub/@hub_id', function( $hub_id ) {
     require_once( '../src/routes/hub_delete.php' );
 });
 
-// hubs sequence
+// hubs
 Flight::route( 'GET /hubs', function() {
     require_once( '../src/routes/hub_rows.php' );
 });
@@ -380,6 +381,11 @@ Flight::route( 'PUT /role', function() {
 // role delete
 Flight::route( 'DELETE /role', function() {
     require_once( '../src/routes/role_delete.php' );
+});
+
+// roles
+Flight::route( 'GET /roles', function() {
+    require_once( '../src/routes/role_rows.php' );
 });
 
 // post insert
