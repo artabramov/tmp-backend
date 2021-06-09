@@ -383,11 +383,6 @@ Flight::route( 'DELETE /role', function() {
     require_once( '../src/routes/role_delete.php' );
 });
 
-// roles
-Flight::route( 'GET /roles', function() {
-    require_once( '../src/routes/role_rows.php' );
-});
-
 // post insert
 Flight::route( 'POST /document', function() {
     require_once( '../src/routes/document_insert.php' );
