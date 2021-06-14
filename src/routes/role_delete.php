@@ -5,14 +5,16 @@ $user_id = (int) Flight::request()->query['user_id'];
 
 // auth
 $self_user = new \App\Entities\User;
-Flight::auth( $self_user, $user_token );
+Flight::select( $self_user, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
 
 // hub
 $hub = new \App\Entities\Hub;
 Flight::select( $hub, [
     ['id', '=', $hub_id], 
     ['user_id', '<>', $user_id], 
-    ['hub_status', '=', 'custom'],
 ]);
 
 // self role

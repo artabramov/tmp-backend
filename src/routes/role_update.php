@@ -6,14 +6,16 @@ $user_role = (string) Flight::request()->query['user_role'];
 
 // auth
 $self_user = new \App\Entities\User;
-Flight::auth( $self_user, $user_token );
+Flight::select( $self_user, [
+    ['user_token', '=', $user_token], 
+    ['user_status', '=', 'approved']
+]);
 
 // hub
 $hub = new \App\Entities\Hub;
 Flight::select( $hub, [
     ['id', '=', $hub_id], 
     ['user_id', '<>', $user_id], 
-    ['hub_status', '=', 'custom'],
 ]);
 
 // self role
@@ -36,13 +38,7 @@ $mate_role = new \App\Entities\Role;
 Flight::select( $mate_role, [
     ['user_id', '=', $mate_user->id], 
     ['hub_id', '=', $hub->id], 
-    ['user_role', '<>', 'none']
 ]);
-
-// cant set the 'none' role
-if( Flight::empty( 'error' ) and $user_role == 'none' ) {
-    Flight::set( 'error', 'user_role not available' );
-}
 
 // update mate role
 Flight::update( $mate_role, [
