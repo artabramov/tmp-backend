@@ -10,7 +10,9 @@
         "phpmailer/phpmailer": "^6.1",
         "codeguy/upload": "~1.3",
         "monolog/monolog": "^2.0",
-        "artabramov/echidna": "@dev"
+        "doctrine/orm": "^2.9",
+        "doctrine/cache": "^1.11",
+        "doctrine/event-manager": "^1.1"
     },
 
     "autoload": {

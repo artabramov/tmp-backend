@@ -1,153 +1,174 @@
+-- tmp
 
-SET sql_mode = '';
+CREATE TABLE IF NOT EXISTS tmp (
+    id    BIGSERIAL NOT NULL PRIMARY KEY,
+    value VARCHAR(255) NOT NULL
+);
+
+-- users
+
+CREATE TYPE user_status AS ENUM ('pending', 'approved', 'premium', 'trash');
+
 CREATE TABLE IF NOT EXISTS users (
-    id            BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date   DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    restore_date  DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00',
-    user_status   ENUM('pending', 'approved', 'trash') NOT NULL,
-    user_token    CHAR(80)     NOT NULL,
-    user_email    VARCHAR(255) NOT NULL,
-    user_name     VARCHAR(255) NOT NULL,
-    user_hash     VARCHAR(40)  NOT NULL DEFAULT '',
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    remind_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_status user_status,
+    user_token  CHAR(80) NOT NULL UNIQUE,
+    user_email  VARCHAR(255) NOT NULL UNIQUE,
+    user_hash   CHAR(40) NOT NULL,
+    user_name   VARCHAR(128) NOT NULL
+);
 
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-            KEY (restore_date),
-            KEY (user_status),
-     UNIQUE KEY (user_token),
-     UNIQUE KEY (user_email),
-            KEY (user_name),
-            KEY (user_hash)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- users meta
 
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS hubs (
-    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)   UNSIGNED NOT NULL,
-    hub_status  ENUM('custom', 'trash') NOT NULL,
-    hub_name    VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (hub_status),
-            KEY (hub_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS roles (
-    id          BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)  UNSIGNED NOT NULL,
-    hub_id      BIGINT(20)  UNSIGNED NOT NULL,
-    role_name   ENUM('admin', 'author', 'editor', 'reader') NOT NULL,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
-     UNIQUE KEY (user_id, hub_id),
-            KEY (role_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS posts (
-    id             BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date    DATETIME   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date    DATETIME   NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id        BIGINT(20) UNSIGNED NOT NULL,
-    hub_id         BIGINT(20) UNSIGNED NOT NULL,
-    post_type      ENUM('doc') NOT NULL,
-    post_status    ENUM('todo', 'doing', 'done', 'trash') NOT NULL,
-    post_title     VARCHAR(255) NOT NULL,
-    post_text      TEXT NOT NULL,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-    FOREIGN KEY (hub_id) REFERENCES hubs (id) ON DELETE CASCADE,
-            KEY (post_type),
-            KEY (post_status),
-            KEY (post_title)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS comments (
-    id           BIGINT(20)  UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date  DATETIME    NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id      BIGINT(20)  UNSIGNED NOT NULL,
-    parent_type  ENUM('post') NOT NULL,
-    parent_id    BIGINT(20) UNSIGNED NOT NULL,
-    comment_text TEXT        NOT NULL,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (parent_type),
-            KEY (parent_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS uploads (
-    id            BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date   DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id       BIGINT(20)   UNSIGNED NOT NULL,
-    parent_type  ENUM('post', 'comment') NOT NULL,
-    parent_id    BIGINT(20) UNSIGNED NOT NULL,
-    upload_name   VARCHAR(255) NOT NULL,
-    upload_mime   VARCHAR(255) NOT NULL,
-    upload_size   BIGINT(20)   NOT NULL,
-    upload_file   VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (parent_type),
-            KEY (parent_id),
-            KEY (upload_name),
-            KEY (upload_mime),
-            KEY (upload_size),
-     UNIQUE KEY (upload_file)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS meta (
-    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
-    parent_type ENUM('user', 'hub', 'post') NOT NULL,
-    parent_id   BIGINT(20)   UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS users_meta (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
-    meta_value  VARCHAR(255) NOT NULL DEFAULT '',
+    meta_value  VARCHAR(255) NOT NULL,
+    CONSTRAINT user_meta_id UNIQUE(user_id, meta_key)
+);
 
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (parent_type),
-            KEY (parent_id),
-            KEY (meta_key),
-            KEY (meta_value)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- hubs
+
+CREATE TYPE hub_status AS ENUM ('custom', 'trash');
+
+CREATE TABLE IF NOT EXISTS hubs (
+    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    user_id    BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    hub_status hub_status NOT NULL,
+    hub_name   VARCHAR(255) NOT NULL
+);
+
+-- hubs meta
+
+CREATE TABLE IF NOT EXISTS hubs_meta (
+    hub_id     BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    meta_key   VARCHAR(20)  NOT NULL,
+    meta_value VARCHAR(255) NOT NULL,
+    CONSTRAINT hub_meta_id PRIMARY KEY(hub_id, meta_key)
+);
+
+-- users roles
+
+CREATE TYPE role_status AS ENUM ('admin', 'author', 'editor', 'reader');
+
+CREATE TABLE IF NOT EXISTS users_roles (
+    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    role_status role_status NOT NULL,
+    CONSTRAINT user_role_id PRIMARY KEY(user_id, hub_id)
+);
+
+-- posts
+
+CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
+
+CREATE TABLE IF NOT EXISTS posts (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    hub_id      BIGSERIAL REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    expired_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    post_status post_status NOT NULL,
+    post_title  VARCHAR(255) NOT NULL
+);
+
+-- posts meta
+
+CREATE TABLE IF NOT EXISTS posts_meta (
+    post_id    BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    meta_key   VARCHAR(20)  NOT NULL,
+    meta_value VARCHAR(255) NOT NULL,
+    CONSTRAINT post_meta_id PRIMARY KEY(post_id, meta_key)
+);
+
+-- comments
+
+CREATE TABLE IF NOT EXISTS comments (
+    id           BIGSERIAL NOT NULL PRIMARY KEY,
+    post_id      SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    user_id      SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at   TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    comment_text TEXT NOT NULL
+);
+
+-- comments uploads
+
+CREATE TABLE IF NOT EXISTS comments_uploads (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    comment_id  BIGSERIAL REFERENCES comments(id) ON DELETE SET NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    upload_name VARCHAR(255) NOT NULL,
+    upload_file VARCHAR(255) NOT NULL,
+    upload_mime VARCHAR(255) NOT NULL,
+    upload_size INT NOT NULL
+);
+
+
+-- ...
+
+DROP TABLE IF EXISTS users_meta;
+DROP TABLE IF EXISTS users_roles;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS hubs_meta;
+DROP TABLE IF EXISTS hubs;
+DROP TABLE IF EXISTS posts_meta;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS comments_uploads;
+DROP TABLE IF EXISTS comments;
+
+DROP TYPE IF EXISTS user_status;
+DROP TYPE IF EXISTS hub_status;
+DROP TYPE IF EXISTS role_status;
+DROP TYPE IF EXISTS post_status;
+
+-- ...
+
+INSERT INTO users (user_status, user_token, user_email, user_hash, user_name) VALUES ('pending', '01234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply@noreply.no', '0123456789012345678901234567890123456789', 'noname');
+INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (1, 'key1', 'value1');
+INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (1, 'key2', 'value2');
+INSERT INTO hubs (user_id, hub_status, hub_name) VALUES (1, 'custom', 'hubname');
+INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (1, 'hkey1', 'hvalue1');
+INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (1, 1, 'admin');
+INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (1, 1, 'todo', 'Lorem ipsum');
+INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (1, 'pkey1', 'pvalue1');
+INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (1, 'pkey2', 'pvalue2');
+INSERT INTO comments (post_id, user_id, comment_text) VALUES (1, 1, 'Dolores sit amet');
+INSERT INTO comments_uploads (comment_id, user_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, 1, 'Upload name', './path/file.ext', 'image/png', 100);
+
+SELECT * FROM users; 
+SELECT * FROM users_meta; 
+SELECT * FROM hubs; 
+SELECT * FROM hubs_meta; 
+SELECT * FROM users_roles; 
+SELECT * FROM posts; 
+SELECT * FROM posts_meta; 
+SELECT * FROM comments; 
+SELECT * FROM comments_uploads; 
+
+
+-- ===
+
+
+
+
 
 
 SET sql_mode = '';
