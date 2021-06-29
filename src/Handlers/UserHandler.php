@@ -1,7 +1,7 @@
 <?php
-namespace App\Filters;
+namespace App\Handlers;
 
-class UserFilter
+class UserHandler
 {
     protected $error;
     protected $em;
