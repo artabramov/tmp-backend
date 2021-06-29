@@ -3,74 +3,51 @@ namespace App\Routes;
 
 class UserPost
 {
-    protected $error;
-    protected $em;
+    public function run() {
 
-    public function __construct() {
-
-        $user_name = (string) Flight::request()->query['user_name'];
-
-        // Insert user
+        // Create user
         $user = new \App\Entities\User();
-        $user->user_status = 'pending';
-        $user->user_token = sha1(rand(1,10000)) . sha1(rand(1,10000));
-        $user->user_email = sha1(rand(1,10000)) . '@noreply.no';
-        $user->user_hash = sha1(rand(1,10000));
-        $user->user_name = $user_name;
-        Flight::save($user);
+        $user->user_email = (string) \Flight::request()->query['user_email'];
+        $user->user_name = (string) \Flight::request()->query['user_name'];
 
-    /*
-    // insert user meta 1
-    $usermeta = new \App\Entities\Usermeta();
-    $usermeta->user_id = $user;
-    $usermeta->meta_key = 'key1';
-    $usermeta->meta_value = 'value1';
-    $usermeta->user = $user;
-    Flight::get('em')->persist($usermeta);
+        // Save user
+        if(\Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user->user_email])) {
+            \Flight::set('error', 'User error: email already exists.');
+        } else {
+            \Flight::save($user);
+        }
 
-    // insert user meta 2
-    $usermeta = new \App\Entities\Usermeta();
-    $usermeta->user_id = $user;
-    $usermeta->meta_key = 'key2';
-    $usermeta->meta_value = 'value2';
-    $usermeta->user = $user;
-    Flight::get('em')->persist($usermeta);
+        // User meta
+        $meta = new \App\Entities\Usermeta();
+        $meta->user_id = $user->id;
+        $meta->meta_key = 'user_addr';
+        $meta->meta_value = (string) \Flight::request()->query['user_addr'];
+        $meta->user = $user;
+        \Flight::save($meta);
 
-    if(empty($user->error)) {
-        Flight::get('em')->flush();
+        // Hub
+        $hub = new \App\Entities\Hub();
+        $hub->user_id = $user->id;
+        $hub->hub_name = 'My hub';
+        \Flight::save($hub);
 
-        echo PHP_EOL;
-        echo $user->id;
-    } else {
+        // Role
+        $role = new \App\Entities\Role();
+        $role->user_id = $user->id;
+        $role->hub_id = $hub->id;
+        $role->role_status = 'admin';
+        $role->user = $user;
+        $role->hub = $hub;
+        \Flight::save($role);
 
-        echo PHP_EOL;
-        echo $user->error;
+        // Stop
+        \Flight::json([ 
+            'user' => \Flight::empty('error') ? [
+                'id' => $user->id, 
+                'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
+                'user_status' => $user->user_status,
+                'user_name' => $user->user_name ] 
+            : [],
+        ]);
     }
-    */
-
-    echo(Flight::get('error'));
-
-
-});
-
-// -- Select user - 
-Flight::route( 'GET /user/@user_id', function( $user_id ) {
-
-    $starttime = microtime(true);
-    
-    // select user
-    $user = Flight::get('em')->find('\App\Entities\User', $user_id);
-    echo $user->id . ': ' . $user->user_name . PHP_EOL;
-
-    $user_meta = $user->user_meta;
-    foreach($user_meta as $meta) {
-        echo $meta->id . ': ' . $meta->meta_key . ': ' . $meta->meta_value . PHP_EOL;
-    }
-
-    echo PHP_EOL;
-    echo microtime(true) - $starttime;
-
-});
-
-// -- Go! --
-Flight::start();
+}
