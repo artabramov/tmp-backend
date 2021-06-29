@@ -38,7 +38,7 @@ class User
     protected $remind_date;
 
     /** 
-     * @Column(type="string", columnDefinition="ENUM('pending', 'approved', 'premium', 'trash')") 
+     * @Column(type="string", columnDefinition="ENUM('pending', 'approved', 'trash')") 
      * @var string
      */
     private $user_status;
@@ -76,6 +76,14 @@ class User
      * @JoinColumn(name="user_id", referencedColumnName="id")
      */
     private $user_meta;
+
+    /**
+     * One user has many roles.
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Role", mappedBy="user", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
+     */
+    private $user_roles;
 
     public function __construct() {
         $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
@@ -130,19 +138,22 @@ class User
         $this->user_hash = sha1($this->user_pass);
 
         if(empty($this->user_email)) {
-            $this->error = 'User error: email is empty.';
+            $this->error = 'User email is empty.';
+
+        } elseif(mb_strlen($this->user_email) > 255) {
+            $this->error = 'User email is too long.';
 
         } elseif(!preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            $this->error = 'User error: email is incorrect.';
+            $this->error = 'User email is incorrect.';
 
         } elseif(empty($this->user_name)) {
-            $this->error = 'User error: name is empty.';
+            $this->error = 'User name is empty.';
 
         } elseif(mb_strlen($this->user_name) < 4) {
-            $this->error = 'User error: name is too short.';
+            $this->error = 'User name is too short.';
 
         } elseif(mb_strlen($this->user_name) > 128) {
-            $this->error = 'User error: name is too long.';
+            $this->error = 'User name is too long.';
         }
     }
 

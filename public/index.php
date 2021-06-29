@@ -92,17 +92,35 @@ Flight::set('em', \Doctrine\ORM\EntityManager::create($conn, $config));
 Flight::map('save', function($entity) {
     if(Flight::empty('error')) {
         Flight::get('em')->persist($entity);
+        Flight::get('em')->flush();
+
         if(!empty($entity->error)) {
             Flight::set('error', $entity->error);
         }
     }
 });
 
-// -- After route --
+// -- Open transaction --
+Flight::before('start', function( &$params, &$output ) {
+    Flight::get('em')->getConnection()->beginTransaction();
+});
+
+// -- Close transaction --
 Flight::after('stop', function( &$params, &$output ) {
     if(Flight::empty('error')) {
-        Flight::get('em')->flush();
+        Flight::get('em')->getConnection()->commit();
+    } else {
+        Flight::get('em')->getConnection()->rollBack();
     }
+});
+
+// -- Send json --
+Flight::before('json', function( &$params, &$output ) {
+    $date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
+    $params[0]['time']['datetime'] = $date->format('Y-m-d H:i:s');
+    $params[0]['time']['timezone'] = 'Europe/Moscow';
+    $params[0]['success'] = Flight::empty('error') ? 'true' : 'false';
+    $params[0]['error'] = Flight::empty('error') ? '' : Flight::get('error');
 });
 
 // -- Default route --
@@ -124,47 +142,38 @@ Flight::route( 'POST /user', function() {
         Flight::save($user);
     }
 
-    // Save user addr
-    $usermeta = new \App\Entities\Usermeta();
-    $usermeta->user_id = $user->id;
-    $usermeta->meta_key = 'user_addr';
-    $usermeta->meta_value = (string) Flight::request()->query['user_addr'];;
-    $usermeta->user = $user;
-    Flight::save($usermeta);
+    // User meta
+    $meta = new \App\Entities\Usermeta();
+    $meta->user_id = $user->id;
+    $meta->meta_key = 'user_addr';
+    $meta->meta_value = (string) Flight::request()->query['user_addr'];
+    $meta->user = $user;
+    Flight::save($meta);
 
+    // Hub
+    $hub = new \App\Entities\Hub();
+    $hub->user_id = $user->id;
+    $hub->hub_name = 'My hub';
+    Flight::save($hub);
 
+    // Role
+    $role = new \App\Entities\Role();
+    $role->user_id = $user->id;
+    $role->hub_id = $hub->id;
+    $role->role_status = 'admin';
+    $role->user = $user;
+    $role->hub = $hub;
+    Flight::save($role);
 
-    /*
-    // insert user meta 1
-    $usermeta = new \App\Entities\Usermeta();
-    $usermeta->user_id = $user;
-    $usermeta->meta_key = 'key1';
-    $usermeta->meta_value = 'value1';
-    $usermeta->user = $user;
-    Flight::get('em')->persist($usermeta);
-
-    // insert user meta 2
-    $usermeta = new \App\Entities\Usermeta();
-    $usermeta->user_id = $user;
-    $usermeta->meta_key = 'key2';
-    $usermeta->meta_value = 'value2';
-    $usermeta->user = $user;
-    Flight::get('em')->persist($usermeta);
-
-    if(empty($user->error)) {
-        Flight::get('em')->flush();
-
-        echo PHP_EOL;
-        echo $user->id;
-    } else {
-
-        echo PHP_EOL;
-        echo $user->error;
-    }
-    */
-
-    echo(Flight::get('error'));
-
+    // Stop
+    Flight::json([ 
+        'user' => Flight::empty('error') ? [
+            'id' => $user->id, 
+            'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
+            'user_status' => $user->user_status,
+            'user_name' => $user->user_name ] 
+        : [],
+    ]);
 
 });
 
@@ -180,6 +189,11 @@ Flight::route( 'GET /user/@user_id', function( $user_id ) {
     $user_meta = $user->user_meta;
     foreach($user_meta as $meta) {
         echo $meta->id . ': ' . $meta->meta_key . ': ' . $meta->meta_value . PHP_EOL;
+    }
+
+    $user_roles = $user->user_roles;
+    foreach($user_roles as $user_role) {
+        echo $user_role->hub_id . ': ' . $user_role->role_status . PHP_EOL;
     }
 
     echo PHP_EOL;

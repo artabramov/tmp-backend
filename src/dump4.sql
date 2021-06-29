@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS tmp (
 
 -- users
 
-CREATE TYPE user_status AS ENUM ('pending', 'approved', 'premium', 'trash');
+CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 
 CREATE TABLE IF NOT EXISTS users (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
@@ -39,35 +39,25 @@ CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 
 CREATE TABLE IF NOT EXISTS hubs (
     id         BIGSERIAL NOT NULL PRIMARY KEY,
-    user_id    BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_status hub_status NOT NULL,
-    hub_name   VARCHAR(255) NOT NULL
-);
-
--- hubs meta
-
-CREATE TABLE IF NOT EXISTS hubs_meta (
-    hub_id     BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
-    meta_key   VARCHAR(20)  NOT NULL,
-    meta_value VARCHAR(255) NOT NULL,
-    CONSTRAINT hub_meta_id PRIMARY KEY(hub_id, meta_key)
+    hub_name   VARCHAR(128) NOT NULL
 );
 
 -- users roles
 
-CREATE TYPE role_status AS ENUM ('admin', 'author', 'editor', 'reader');
+CREATE TYPE role_status AS ENUM ('admin', 'writer', 'reader');
 
 CREATE TABLE IF NOT EXISTS users_roles (
-    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
-    CONSTRAINT user_role_id PRIMARY KEY(user_id, hub_id)
+    CONSTRAINT user_role_id UNIQUE(user_id, hub_id)
 );
 
 -- posts
@@ -76,11 +66,11 @@ CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
 
 CREATE TABLE IF NOT EXISTS posts (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    hub_id      BIGSERIAL REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    expire_date TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
-    expired_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,
     post_title  VARCHAR(255) NOT NULL
 );
@@ -88,12 +78,13 @@ CREATE TABLE IF NOT EXISTS posts (
 -- posts meta
 
 CREATE TABLE IF NOT EXISTS posts_meta (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
     post_id    BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
     meta_key   VARCHAR(20)  NOT NULL,
     meta_value VARCHAR(255) NOT NULL,
-    CONSTRAINT post_meta_id PRIMARY KEY(post_id, meta_key)
+    CONSTRAINT post_meta_id UNIQUE(post_id, meta_key)
 );
 
 -- comments
