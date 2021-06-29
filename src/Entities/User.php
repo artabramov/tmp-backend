@@ -55,6 +55,8 @@ class User
      */
     private $user_email;
 
+    private $user_pass;
+
     /** 
      * @Column(type="string", length="40")
      * @var string
@@ -76,10 +78,8 @@ class User
     private $user_meta;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
-        $this->remind_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
         $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->error = '';
     }
 
     public function __set( $key, $value ) {
@@ -102,10 +102,47 @@ class User
         return false;
     }
 
+    protected function create_token() {
+        return sha1(date('U')) . bin2hex(random_bytes(20));
+    }
+
+    public function create_pass() {
+        $pass_symbols = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
+        $pass_len = 8;
+    
+        $symbols_length = mb_strlen($pass_symbols, 'utf-8') - 1;
+        $user_pass = '';
+    
+        for($i = 0; $i < $pass_len; $i++) {
+            $user_pass .= $pass_symbols[random_int(0, $symbols_length)];
+        }
+        return $user_pass;
+    }
+
     /** @PrePersist */
-    public function doOtherStuffOnPrePersist() {
-        if(empty($this->user_name)) {
-            $this->error = 'error!';
+    public function pre_persist() {
+        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->remind_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->user_status = 'pending';
+        $this->user_token = $this->create_token();
+        $this->user_pass = $this->create_pass();
+        $this->user_hash = sha1($this->user_pass);
+
+        if(empty($this->user_email)) {
+            $this->error = 'User error: email is empty.';
+
+        } elseif(!preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
+            $this->error = 'User error: email is incorrect.';
+
+        } elseif(empty($this->user_name)) {
+            $this->error = 'User error: name is empty.';
+
+        } elseif(mb_strlen($this->user_name) < 4) {
+            $this->error = 'User error: name is too short.';
+
+        } elseif(mb_strlen($this->user_name) > 128) {
+            $this->error = 'User error: name is too long.';
         }
     }
 

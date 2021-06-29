@@ -24,10 +24,10 @@ Flight::map('error', function(Throwable $e) {
 Flight::map('log', function(Throwable $e) {
     if(APP_DEBUG) {
         Flight::get('monolog')->debug( $e->getMessage(), [
-            'method'  => Flight::request()->method,
-            'url'     => Flight::request()->url,
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine()
+            'method' => Flight::request()->method,
+            'url' => Flight::request()->url,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
         ]);
     }
 });
@@ -112,16 +112,27 @@ Flight::route( 'GET /', function() {
 // -- Insert user --
 Flight::route( 'POST /user', function() {
 
-    $user_name = (string) Flight::request()->query['user_name'];
-
-    // Insert user
+    // Create user
     $user = new \App\Entities\User();
-    $user->user_status = 'pending';
-    $user->user_token = sha1(rand(1,10000)) . sha1(rand(1,10000));
-    $user->user_email = sha1(rand(1,10000)) . '@noreply.no';
-    $user->user_hash = sha1(rand(1,10000));
-    $user->user_name = $user_name;
-    Flight::save($user);
+    $user->user_email = (string) Flight::request()->query['user_email'];
+    $user->user_name = (string) Flight::request()->query['user_name'];
+
+    // Save user
+    if(Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user->user_email])) {
+        Flight::set('error', 'User error: email already exists.');
+    } else {
+        Flight::save($user);
+    }
+
+    // Save user addr
+    $usermeta = new \App\Entities\Usermeta();
+    $usermeta->user_id = $user->id;
+    $usermeta->meta_key = 'user_addr';
+    $usermeta->meta_value = (string) Flight::request()->query['user_addr'];;
+    $usermeta->user = $user;
+    Flight::save($usermeta);
+
+
 
     /*
     // insert user meta 1
