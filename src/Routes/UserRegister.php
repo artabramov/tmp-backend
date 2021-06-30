@@ -1,7 +1,7 @@
 <?php
 namespace App\Routes;
 
-class UserPost
+class UserRegister
 {
     public function run() {
 
@@ -40,13 +40,16 @@ class UserPost
         $role->hub = $hub;
         \Flight::save($role);
 
+        // send email
+        // \Flight::email($user->user_email, 'User', 'User register', 'One-time pass: <i>' . $user->user_pass . '</i>');
+
         // Stop
         \Flight::json([ 
             'user' => \Flight::empty('error') ? [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
                 'user_status' => $user->user_status,
-                'user_name' => $user->user_name ] 
+                'user_name' => $user->user_name]
             : [],
         ]);
     }

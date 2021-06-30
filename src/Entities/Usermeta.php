@@ -59,8 +59,8 @@ class Usermeta
     private $user;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
     }
 
     public function __set( $key, $value ) {
@@ -85,8 +85,8 @@ class Usermeta
 
     /** @PrePersist */
     public function prePersist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
 
         if(empty($this->user_id)) {
             $this->error = 'Meta error: user id is empty.';

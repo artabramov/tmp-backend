@@ -5,7 +5,7 @@ require_once __DIR__ . '/../src/config.php';
 // -- Error --
 Flight::set('error', '');
 
-// -- Check is flight-variable empty --
+// -- Check is flight variable empty --
 Flight::map('empty', function($key) {
     return empty( Flight::get($key));
 });
@@ -14,13 +14,13 @@ Flight::map('empty', function($key) {
 Flight::set('monolog', new \Monolog\Logger('app'));
 Flight::get('monolog')->pushHandler(new \Monolog\Handler\StreamHandler(MONOLOG_PATH . date('Y-m-d') . '.log'));
 
-// -- Errors handle --
+// -- Error handle --
 Flight::map('error', function(Throwable $e) {
     Flight::log($e);
     Flight::halt(500, 'Internal Server Error!');
 });
 
-// -- Logs write --
+// -- Log write --
 Flight::map('log', function(Throwable $e) {
     if(APP_DEBUG) {
         Flight::get('monolog')->debug( $e->getMessage(), [
@@ -88,10 +88,52 @@ $conn = array(
 // -- Entity manager --
 Flight::set('em', \Doctrine\ORM\EntityManager::create($conn, $config));
 
+// -- Set timezone --
+//Flight::get('em')->getConnection()->exec("SET time_zone = '" . APP_TIMEZONE . "'");
+
+// -- Phpmailer --
+$phpmailer = new \PHPMailer\PHPMailer\PHPMailer( true );
+$phpmailer->isSMTP(); 
+$phpmailer->SMTPDebug = PHPMAILER_DEBUG;
+$phpmailer->Host = PHPMAILER_HOST;
+$phpmailer->Port = PHPMAILER_PORT;
+$phpmailer->SMTPSecure = PHPMAILER_SECURE;
+$phpmailer->SMTPAuth = PHPMAILER_AUTH;
+$phpmailer->Username = PHPMAILER_USER;
+$phpmailer->Password = PHPMAILER_PASS;
+$phpmailer->isHTML(true);
+$phpmailer->setFrom(PHPMAILER_FROM, PHPMAILER_NAME);
+Flight::set('phpmailer', $phpmailer);
+
+// -- Send email --
+Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
+    if( Flight::empty( 'error' )) {
+        Flight::get('phpmailer')->addAddress( $user_email, $user_name );
+        Flight::get('phpmailer')->Subject = $email_subject;
+        Flight::get('phpmailer')->Body = $email_body;
+        try {
+            Flight::get('phpmailer')->send();
+        } catch(\Exception $e) {
+            Flight::set('error', 'Server error: email not sent.');
+        }
+    }
+});
+
 // -- Save entity --
 Flight::map('save', function($entity) {
     if(Flight::empty('error')) {
         Flight::get('em')->persist($entity);
+        Flight::get('em')->flush();
+
+        if(!empty($entity->error)) {
+            Flight::set('error', $entity->error);
+        }
+    }
+});
+
+// -- Update entity
+Flight::map('update', function($entity) {
+    if(Flight::empty('error')) {
         Flight::get('em')->flush();
 
         if(!empty($entity->error)) {
@@ -114,11 +156,22 @@ Flight::after('stop', function( &$params, &$output ) {
     }
 });
 
+// -- Before route --
+Flight::before('route', function( &$params, &$output ) {
+    Flight::set('time_start', microtime(true));
+});
+
+// -- After route --
+Flight::before('route', function( &$params, &$output ) {
+    Flight::set('time_end', microtime(true));
+});
+
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
     $date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
     $params[0]['time']['datetime'] = $date->format('Y-m-d H:i:s');
     $params[0]['time']['timezone'] = 'Europe/Moscow';
+    $params[0]['time']['timediff'] = Flight::get('time_end') - Flight::get('time_start');
     $params[0]['success'] = Flight::empty('error') ? 'true' : 'false';
     $params[0]['error'] = Flight::empty('error') ? '' : Flight::get('error');
 });
@@ -127,34 +180,22 @@ Flight::before('json', function( &$params, &$output ) {
 Flight::route( 'GET /', function() {
 });
 
-// -- Insert user --
+// -- Register user --
 Flight::route( 'POST /user', function() {
-    $route_name = '\App\Routes\UserPost';
-    $route = new $route_name();
+    $route = new \App\Routes\UserRegister();
+    $route->run();
+});
+
+// -- Remind user pass
+Flight::route( 'GET /pass', function() {
+    $route = new \App\Routes\UserRemind();
     $route->run();
 });
 
 // -- Select user - 
-Flight::route( 'GET /user/@user_id', function( $user_id ) {
-
-    $starttime = microtime(true);
-    
-    // select user
-    $user = Flight::get('em')->find('\App\Entities\User', $user_id);
-    echo $user->id . ': ' . $user->user_name . PHP_EOL;
-
-    $user_meta = $user->user_meta;
-    foreach($user_meta as $meta) {
-        echo $meta->id . ': ' . $meta->meta_key . ': ' . $meta->meta_value . PHP_EOL;
-    }
-
-    $user_roles = $user->user_roles;
-    foreach($user_roles as $user_role) {
-        echo $user_role->hub_id . ': ' . $user_role->role_status . PHP_EOL;
-    }
-
-    echo PHP_EOL;
-    echo microtime(true) - $starttime;
+Flight::route( 'GET /user/@user_id', function($user_id) {
+    $route = new \App\Routes\UserSelect();
+    $route->run($user_id);
 });
 
 // -- Go! --

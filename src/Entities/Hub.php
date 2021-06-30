@@ -58,8 +58,8 @@ class Hub
     private $users_roles;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
         $this->user_roles = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
@@ -85,8 +85,8 @@ class Hub
 
     /** @PrePersist */
     public function prePersist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
         $this->hub_status = 'custom';
 
         if(empty($this->user_id)) {

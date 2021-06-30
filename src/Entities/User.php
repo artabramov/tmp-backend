@@ -110,7 +110,7 @@ class User
         return false;
     }
 
-    protected function create_token() {
+    public function create_token() {
         return sha1(date('U')) . bin2hex(random_bytes(20));
     }
 
@@ -129,33 +129,50 @@ class User
 
     /** @PrePersist */
     public function pre_persist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
-        $this->remind_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone('Europe/Moscow'));
+        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+        $this->remind_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
         $this->user_status = 'pending';
         $this->user_token = $this->create_token();
         $this->user_pass = $this->create_pass();
         $this->user_hash = sha1($this->user_pass);
 
         if(empty($this->user_email)) {
-            $this->error = 'User email is empty.';
+            $this->error = 'User error: email is empty.';
 
         } elseif(mb_strlen($this->user_email) > 255) {
-            $this->error = 'User email is too long.';
+            $this->error = 'User error: email is too long.';
 
         } elseif(!preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            $this->error = 'User email is incorrect.';
+            $this->error = 'User error: email is incorrect.';
 
         } elseif(empty($this->user_name)) {
-            $this->error = 'User name is empty.';
+            $this->error = 'User error: name is empty.';
 
         } elseif(mb_strlen($this->user_name) < 4) {
-            $this->error = 'User name is too short.';
+            $this->error = 'User error: name is too short.';
 
         } elseif(mb_strlen($this->user_name) > 128) {
-            $this->error = 'User name is too long.';
+            $this->error = 'User error: name is too long.';
         }
     }
 
+    /** @PreUpdate */
+    public function pre_update() {
+        $this->update_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+
+        /*
+        if(empty($this->user_name)) {
+            $this->error = 'User error: name is empty.';
+        }
+        */
+    }
+
+    /** @PostLoad */
+    public function post_load() {
+        //$this->create_date->setTimezone(new \DateTimeZone(APP_TIMEZONE));
+        //$this->update_date->setTimezone(new \DateTimeZone(APP_TIMEZONE));
+        //$this->remind_date->setTimezone(new \DateTimeZone(APP_TIMEZONE));
+    }
 
 }

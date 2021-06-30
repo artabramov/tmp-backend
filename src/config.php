@@ -16,5 +16,18 @@ define('POSTGRES_PASS', '123456');
 // Monolog
 define('MONOLOG_PATH', __DIR__ . '/../.monolog/');
 
+// Phpmailer
+define('PHPMAILER_DEBUG', 2); // 0 = off (for production use) - 1 = client messages - 2 = client and server messages
+define('PHPMAILER_HOST', 'echidna.io');
+define('PHPMAILER_PORT', 587);
+define('PHPMAILER_SECURE', 'tls');
+define('PHPMAILER_AUTH', true);
+define('PHPMAILER_USER', 'noreply@echidna.io');
+define('PHPMAILER_PASS', 'GxTE4nU8YInsWJRM');
+define('PHPMAILER_FROM', 'noreply@echidna.io');
+define('PHPMAILER_NAME', 'Echidna');
+
 // App
 define('APP_DEBUG', true);
+define('APP_TIMEZONE', 'Europe/Moscow');
+define('APP_REMIND_TIME', 30); // delay between remind emails
