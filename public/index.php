@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/config.php';
 
+// -- Default timezone --
+date_default_timezone_set(APP_TIMEZONE);
+
 // -- Error --
 Flight::set('error', '');
 
@@ -22,14 +25,12 @@ Flight::map('error', function(Throwable $e) {
 
 // -- Log write --
 Flight::map('log', function(Throwable $e) {
-    if(APP_DEBUG) {
-        Flight::get('monolog')->debug( $e->getMessage(), [
-            'method' => Flight::request()->method,
-            'url' => Flight::request()->url,
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ]);
-    }
+    Flight::get('monolog')->debug( $e->getMessage(), [
+        'method' => Flight::request()->method,
+        'url' => Flight::request()->url,
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ]);
 });
 
 // -- Redis --
@@ -60,10 +61,8 @@ $config->setAutoGenerateProxyClasses(true);
 $cacheConfig = new \Doctrine\ORM\Cache\CacheConfiguration();
 
 // -- Cache logger --
-if(APP_DEBUG) {
-    $cacheLogger = new \Doctrine\ORM\Cache\Logging\StatisticsCacheLogger();
-    $cacheConfig->setCacheLogger($cacheLogger);
-}
+$cacheLogger = new \Doctrine\ORM\Cache\Logging\StatisticsCacheLogger();
+$cacheConfig->setCacheLogger($cacheLogger);
 
 // -- Cache regions --
 $regionConfig = $cacheConfig->getRegionsConfiguration();
@@ -87,9 +86,6 @@ $conn = array(
 
 // -- Entity manager --
 Flight::set('em', \Doctrine\ORM\EntityManager::create($conn, $config));
-
-// -- Set timezone --
-//Flight::get('em')->getConnection()->exec("SET time_zone = '" . APP_TIMEZONE . "'");
 
 // -- Phpmailer --
 $phpmailer = new \PHPMailer\PHPMailer\PHPMailer( true );
@@ -122,21 +118,11 @@ Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_
 // -- Save entity --
 Flight::map('save', function($entity) {
     if(Flight::empty('error')) {
-        Flight::get('em')->persist($entity);
-        Flight::get('em')->flush();
-
-        if(!empty($entity->error)) {
-            Flight::set('error', $entity->error);
-        }
-    }
-});
-
-// -- Update entity
-Flight::map('update', function($entity) {
-    if(Flight::empty('error')) {
-        Flight::get('em')->flush();
-
-        if(!empty($entity->error)) {
+        $entity->validate();
+        if(empty($entity->error)) {
+            Flight::get('em')->persist($entity);
+            Flight::get('em')->flush();
+        } else {
             Flight::set('error', $entity->error);
         }
     }
@@ -145,6 +131,7 @@ Flight::map('update', function($entity) {
 // -- Open transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
+    Flight::set('time_start', microtime(true));
 });
 
 // -- Close transaction --
@@ -156,27 +143,17 @@ Flight::after('stop', function( &$params, &$output ) {
     }
 });
 
-// -- Before route --
-Flight::before('route', function( &$params, &$output ) {
-    Flight::set('time_start', microtime(true));
-});
-
-// -- After route --
-Flight::before('route', function( &$params, &$output ) {
-    Flight::set('time_end', microtime(true));
-});
-
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
     $date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
     $params[0]['time']['datetime'] = $date->format('Y-m-d H:i:s');
     $params[0]['time']['timezone'] = 'Europe/Moscow';
-    $params[0]['time']['timediff'] = Flight::get('time_end') - Flight::get('time_start');
+    $params[0]['time']['timediff'] = microtime(true) - Flight::get('time_start');
     $params[0]['success'] = Flight::empty('error') ? 'true' : 'false';
     $params[0]['error'] = Flight::empty('error') ? '' : Flight::get('error');
 });
 
-// -- Default route --
+// -- Default --
 Flight::route( 'GET /', function() {
 });
 
@@ -186,9 +163,27 @@ Flight::route( 'POST /user', function() {
     $route->run();
 });
 
-// -- Remind user pass
+// -- Remind user --
 Flight::route( 'GET /pass', function() {
     $route = new \App\Routes\UserRemind();
+    $route->run();
+});
+
+// -- Signin user --
+Flight::route( 'POST /pass', function() {
+    $route = new \App\Routes\UserSignin();
+    $route->run();
+});
+
+// -- Signout user --
+Flight::route( 'PUT /token', function() {
+    $route = new \App\Routes\UserSignout();
+    $route->run();
+});
+
+// -- Auth user --
+Flight::route( 'POST /token', function() {
+    $route = new \App\Routes\UserAuth();
     $route->run();
 });
 
@@ -196,6 +191,24 @@ Flight::route( 'GET /pass', function() {
 Flight::route( 'GET /user/@user_id', function($user_id) {
     $route = new \App\Routes\UserSelect();
     $route->run($user_id);
+});
+
+// -- Update user --
+Flight::route( 'PUT /user', function() {
+    $route = new \App\Routes\UserUpdate();
+    $route->run();
+});
+
+// -- Insert hub --
+Flight::route( 'POST /hub', function() {
+    $route = new \App\Routes\HubInsert();
+    $route->run();
+});
+
+// -- Huns sequence --
+Flight::route( 'GET /hub', function() {
+    $route = new \App\Routes\HubSequence();
+    $route->run();
 });
 
 // -- Go! --

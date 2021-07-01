@@ -3,7 +3,6 @@ namespace App\Entities;
 
 /**
  * @Entity
- * @HasLifecycleCallbacks
  * @Table(name="users_roles")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -66,8 +65,8 @@ class Role
     private $user;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+        $this->create_date = new \DateTime('now');
+        $this->update_date = new \DateTime('1970-01-01 00:00:00');
     }
 
     public function __set( $key, $value ) {
@@ -90,28 +89,25 @@ class Role
         return false;
     }
 
-    /** @PrePersist */
-    public function prePersist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+    public function validate() {
 
         if(empty($this->user_id)) {
-            $this->error = 'Role error: user id is empty.';
+            $this->error = 'Role error: user_id is empty.';
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Role error: user id is not numeric.';
+            $this->error = 'Role error: user_id is not numeric.';
 
         } elseif(empty($this->hub_id)) {
-            $this->error = 'Role error: hub id is empty.';
+            $this->error = 'Role error: hub_id is empty.';
 
         } elseif(!is_numeric($this->hub_id)) {
-            $this->error = 'Role error: hub id is not numeric.';
+            $this->error = 'Role error: hub_id is not numeric.';
 
         } elseif(empty($this->role_status)) {
-            $this->error = 'Role error: status is empty.';
+            $this->error = 'Role error: role_status is empty.';
 
         } elseif(!in_array($this->role_status, ['admin', 'writer', 'reader'])) {
-            $this->error = 'Role error: status is incorrect.';
+            $this->error = 'Role error: role_status is incorrect.';
         }
     }
 }

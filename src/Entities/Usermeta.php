@@ -3,7 +3,6 @@ namespace App\Entities;
 
 /**
  * @Entity
- * @HasLifecycleCallbacks
  * @Table(name="users_meta")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -59,8 +58,8 @@ class Usermeta
     private $user;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+        $this->create_date = new \DateTime('now');
+        $this->update_date = new \DateTime('1970-01-01 00:00:00');
     }
 
     public function __set( $key, $value ) {
@@ -83,28 +82,25 @@ class Usermeta
         return false;
     }
 
-    /** @PrePersist */
-    public function prePersist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+    public function validate() {
 
         if(empty($this->user_id)) {
-            $this->error = 'Meta error: user id is empty.';
+            $this->error = 'Meta error: user_id is empty.';
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Meta error: user id is not numeric.';
+            $this->error = 'Meta error: user_id is not numeric.';
 
         } elseif(empty($this->meta_key)) {
-            $this->error = 'Meta error: key is empty.';
+            $this->error = 'Meta error: meta_key is empty.';
 
         } elseif(mb_strlen($this->meta_key) > 20) {
-            $this->error = 'Meta error: key is too long.';
+            $this->error = 'Meta error: meta_key is too long.';
 
         } elseif(empty($this->meta_value)) {
-            $this->error = 'Meta error: value is empty.';
+            $this->error = 'Meta error: meta_value is empty.';
 
         } elseif(mb_strlen($this->meta_value) > 255) {
-            $this->error = 'Meta error: value is too long.';
+            $this->error = 'Meta error: meta_value is too long.';
         }
     }
 }

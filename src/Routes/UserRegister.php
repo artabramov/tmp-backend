@@ -7,12 +7,17 @@ class UserRegister
 
         // Create user
         $user = new \App\Entities\User();
+        $user->remind_date = new \DateTime('now');
+        $user->user_status = 'pending';
+        $user->user_token = $user->create_token();
+        $user->user_pass = $user->create_pass();
+        $user->user_hash = sha1($user->user_pass);
         $user->user_email = (string) \Flight::request()->query['user_email'];
         $user->user_name = (string) \Flight::request()->query['user_name'];
 
         // Save user
         if(\Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user->user_email])) {
-            \Flight::set('error', 'User error: email already exists.');
+            \Flight::set('error', 'User register error: user_email is occupied.');
         } else {
             \Flight::save($user);
         }
@@ -27,6 +32,7 @@ class UserRegister
 
         // Hub
         $hub = new \App\Entities\Hub();
+        $hub->hub_status = 'custom';
         $hub->user_id = $user->id;
         $hub->hub_name = 'My hub';
         \Flight::save($hub);
@@ -41,7 +47,7 @@ class UserRegister
         \Flight::save($role);
 
         // send email
-        // \Flight::email($user->user_email, 'User', 'User register', 'One-time pass: <i>' . $user->user_pass . '</i>');
+        \Flight::email($user->user_email, 'User', 'User register', 'One-time pass: <i>' . $user->user_pass . '</i>');
 
         // Stop
         \Flight::json([ 

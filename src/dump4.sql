@@ -1,23 +1,16 @@
--- tmp
-
-CREATE TABLE IF NOT EXISTS tmp (
-    id    BIGSERIAL NOT NULL PRIMARY KEY,
-    value VARCHAR(255) NOT NULL
-);
-
 -- users
 
 CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 
 CREATE TABLE IF NOT EXISTS users (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    remind_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
+    remind_date TIMESTAMP NOT NULL,
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
-    user_hash   CHAR(40) NOT NULL,
+    user_hash   VARCHAR(40) NOT NULL,
     user_name   VARCHAR(128) NOT NULL
 );
 
@@ -25,8 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS users_meta (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
@@ -39,8 +32,8 @@ CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 
 CREATE TABLE IF NOT EXISTS hubs (
     id         BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_status hub_status NOT NULL,
     hub_name   VARCHAR(128) NOT NULL
@@ -52,8 +45,8 @@ CREATE TYPE role_status AS ENUM ('admin', 'writer', 'reader');
 
 CREATE TABLE IF NOT EXISTS users_roles (
     id         BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
@@ -68,7 +61,6 @@ CREATE TABLE IF NOT EXISTS posts (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITH TIME ZONE NOT NULL,
     update_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    expire_date TIMESTAMP WITH TIME ZONE NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,

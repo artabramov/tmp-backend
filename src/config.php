@@ -28,6 +28,7 @@ define('PHPMAILER_FROM', 'noreply@echidna.io');
 define('PHPMAILER_NAME', 'Echidna');
 
 // App
-define('APP_DEBUG', true);
 define('APP_TIMEZONE', 'Europe/Moscow');
-define('APP_REMIND_TIME', 30); // delay between remind emails
+define('APP_REMIND_TIME', 30); // delay between reminds
+define('APP_PASS_TIME', 180); // pass expires time
+define('APP_SELECT_LIMIT', 3); // number of elements on one page

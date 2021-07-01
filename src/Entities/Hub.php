@@ -3,7 +3,6 @@ namespace App\Entities;
 
 /**
  * @Entity
- * @HasLifecycleCallbacks
  * @Table(name="hubs")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -58,8 +57,8 @@ class Hub
     private $users_roles;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
+        $this->create_date = new \DateTime('now');
+        $this->update_date = new \DateTime('1970-01-01 00:00:00');
         $this->user_roles = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
@@ -83,23 +82,28 @@ class Hub
         return false;
     }
 
-    /** @PrePersist */
-    public function prePersist() {
-        $this->create_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $this->update_date = new \DateTime('1970-01-01 00:00:00', new \DateTimeZone(APP_TIMEZONE));
-        $this->hub_status = 'custom';
+    public function validate() {
 
-        if(empty($this->user_id)) {
-            $this->error = 'Hub error: user id is empty.';
+        if(empty($this->hub_status)) {
+            $this->error = 'Hub error: hub_status is empty.';
+
+        } elseif(!in_array($this->hub_status, ['custom', 'trash'])) {
+            $this->error = 'Hub error: hub_status is incorrect.';
+
+        } elseif(empty($this->user_id)) {
+            $this->error = 'Hub error: user_id is empty.';
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Hub error: user id is not numeric.';
+            $this->error = 'Hub error: user_id is not numeric.';
 
         } elseif(empty($this->hub_name)) {
-            $this->error = 'Hub error: name is empty.';
+            $this->error = 'Hub error: hub_name is empty.';
+
+        } elseif(mb_strlen($this->hub_name) < 4) {
+            $this->error = 'Hub error: hub_name is too short.';
 
         } elseif(mb_strlen($this->hub_name) > 128) {
-            $this->error = 'Hub error: name is too long.';
+            $this->error = 'Hub error: hub_name is too long.';
         }
     }
 }

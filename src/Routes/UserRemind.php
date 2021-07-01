@@ -7,41 +7,26 @@ class UserRemind
 
         // Get user
         $user = \Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => (string) \Flight::request()->query['user_email']]);
-        $time = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-
-
-
-
-        $current_datetime = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
-        $remind_datetime = $user->remind_date;
-        //$remind_datetime->setTimezone(new \DateTimeZone(APP_TIMEZONE));
-
-        $current_timestamp = $current_datetime->getTimestamp();
-        $remind_timestamp = $remind_datetime->getTimestamp();
-        $diff = $current_timestamp - $remind_timestamp;
-
-
+        $time = new \DateTime('now');
 
         if(empty($user)) {
-            \Flight::set('error', 'User error: email not found.');
+            \Flight::set('error', 'User remind error: user_email not found.');
 
         } elseif($user->user_status == 'trash') {
-            \Flight::set('error', 'User error: status is trash.');
+            \Flight::set('error', 'User remind error: user_status is trash.');
 
         } elseif($time->getTimestamp() - $user->remind_date->getTimestamp() < APP_REMIND_TIME) {
-            \Flight::set('error', 'User error: wait a bit.');
+            \Flight::set('error', 'User remind error: wait a little bit.');
 
         } else {
-            //$user->remind_date = new \DateTime('now', new \DateTimeZone(APP_TIMEZONE));
+            $user->remind_date = new \DateTime('now');
             $user->user_pass = $user->create_pass();
             $user->user_hash = sha1($user->user_pass);
             \Flight::save($user);
         }
 
-
-
-
-
+        // send email
+        \Flight::email($user->user_email, 'User', 'User remind', 'One-time pass: <i>' . $user->user_pass . '</i>');
 
         // Stop
         \Flight::json();
