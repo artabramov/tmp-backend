@@ -1,8 +1,10 @@
 <?php
 namespace App\Entities;
+use \App\Exceptions\AppException;
 
 /**
  * @Entity 
+ * @HasLifecycleCallbacks
  * @Table(name="users")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -127,40 +129,44 @@ class User
         return $user_pass;
     }
 
+    /** 
+     * @PrePersist
+     * @PreUpdate
+     */
     public function validate() {
 
         if(empty($this->user_status)) {
-            $this->error = 'User error: user_status is empty.';
+            throw new AppException('User error: user_status is empty.');
 
         } elseif(!in_array($this->user_status, ['pending', 'approved', 'trash'])) {
-            $this->error = 'User error: user_status is incorrect.';
+            throw new AppException('User error: user_status is incorrect.');
 
         } elseif(empty($this->user_token)) {
-            $this->error = 'User error: user_token is empty.';
+            throw new AppException('User error: user_token is empty.');
 
         } elseif(!preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
-            $this->error = 'User error: user_token is incorrect.';
+            throw new AppException('User error: user_token is incorrect.');
 
         } elseif(!empty($this->user_hash) and !preg_match("/^[0-9a-f]{40}$/", $this->user_hash)) {
-            $this->error = 'User error: user_hash is incorrect.';
+            throw new AppException('User error: user_hash is incorrect.');
 
         } elseif(empty($this->user_email)) {
-            $this->error = 'User error: user_email is empty.';
+            throw new AppException('User error: user_email is empty.');
 
         } elseif(mb_strlen($this->user_email) > 255) {
-            $this->error = 'User error: user_email is too long.';
+            throw new AppException('User error: user_email is too long.');
 
         } elseif(!preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            $this->error = 'User error: user_email is incorrect.';
+            throw new AppException('User error: user_email is incorrect.');
 
         } elseif(empty($this->user_name)) {
-            $this->error = 'User error: user_name is empty.';
+            throw new AppException('User error: user_name is empty.');
 
         } elseif(mb_strlen($this->user_name) < 4) {
-            $this->error = 'User error: user_name is too short.';
+            throw new AppException('User error: user_name is too short.');
 
         } elseif(mb_strlen($this->user_name) > 128) {
-            $this->error = 'User error: user_name is too long.';
+            throw new AppException('User error: user_name is too long.');
         }
     }
 

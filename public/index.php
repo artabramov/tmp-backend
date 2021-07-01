@@ -5,32 +5,29 @@ require_once __DIR__ . '/../src/config.php';
 // -- Default timezone --
 date_default_timezone_set(APP_TIMEZONE);
 
-// -- Error --
-Flight::set('error', '');
-
-// -- Check is flight variable empty --
-Flight::map('empty', function($key) {
-    return empty( Flight::get($key));
-});
-
 // -- Monolog --
 Flight::set('monolog', new \Monolog\Logger('app'));
 Flight::get('monolog')->pushHandler(new \Monolog\Handler\StreamHandler(MONOLOG_PATH . date('Y-m-d') . '.log'));
 
 // -- Error handle --
 Flight::map('error', function(Throwable $e) {
-    Flight::log($e);
-    Flight::halt(500, 'Internal Server Error!');
-});
 
-// -- Log write --
-Flight::map('log', function(Throwable $e) {
-    Flight::get('monolog')->debug( $e->getMessage(), [
-        'method' => Flight::request()->method,
-        'url' => Flight::request()->url,
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
-    ]);
+    if($e instanceof \App\Exceptions\AppException) {
+        Flight::json([
+            'success' => 'false',
+            'error' => $e->getMessage()
+        ]);
+
+    } else {
+        Flight::get('monolog')->debug( $e->getMessage(), [
+            'method' => Flight::request()->method,
+            'url' => Flight::request()->url,
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+
+        Flight::halt(500, 'Internal Server Error!');  
+    }
 });
 
 // -- Redis --
@@ -101,46 +98,24 @@ $phpmailer->isHTML(true);
 $phpmailer->setFrom(PHPMAILER_FROM, PHPMAILER_NAME);
 Flight::set('phpmailer', $phpmailer);
 
-// -- Send email --
-Flight::map( 'email', function( $user_email, $user_name, $email_subject, $email_body ) {
-    if( Flight::empty( 'error' )) {
-        Flight::get('phpmailer')->addAddress( $user_email, $user_name );
-        Flight::get('phpmailer')->Subject = $email_subject;
-        Flight::get('phpmailer')->Body = $email_body;
-        try {
-            Flight::get('phpmailer')->send();
-        } catch(\Exception $e) {
-            Flight::set('error', 'Server error: email not sent.');
-        }
-    }
-});
-
 // -- Save entity --
 Flight::map('save', function($entity) {
-    if(Flight::empty('error')) {
-        $entity->validate();
-        if(empty($entity->error)) {
-            Flight::get('em')->persist($entity);
-            Flight::get('em')->flush();
-        } else {
-            Flight::set('error', $entity->error);
-        }
-    }
+    Flight::get('em')->persist($entity);
+    Flight::get('em')->flush();
 });
 
-// -- Open transaction --
+
+// -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
-    Flight::set('time_start', microtime(true));
 });
 
-// -- Close transaction --
+Flight::after('error', function( &$params, &$output ) {
+    Flight::get('em')->getConnection()->rollBack();
+});
+
 Flight::after('stop', function( &$params, &$output ) {
-    if(Flight::empty('error')) {
-        Flight::get('em')->getConnection()->commit();
-    } else {
-        Flight::get('em')->getConnection()->rollBack();
-    }
+    Flight::get('em')->getConnection()->commit();
 });
 
 // -- Send json --
@@ -148,9 +123,6 @@ Flight::before('json', function( &$params, &$output ) {
     $date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
     $params[0]['time']['datetime'] = $date->format('Y-m-d H:i:s');
     $params[0]['time']['timezone'] = 'Europe/Moscow';
-    $params[0]['time']['timediff'] = microtime(true) - Flight::get('time_start');
-    $params[0]['success'] = Flight::empty('error') ? 'true' : 'false';
-    $params[0]['error'] = Flight::empty('error') ? '' : Flight::get('error');
 });
 
 // -- Default --
