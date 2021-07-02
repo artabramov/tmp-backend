@@ -1,8 +1,10 @@
 <?php
 namespace App\Entities;
+use \App\Exceptions\AppException;
 
 /**
  * @Entity
+ * @HasLifecycleCallbacks
  * @Table(name="users_roles")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -89,25 +91,29 @@ class Role
         return false;
     }
 
+    /** 
+     * @PrePersist
+     * @PreUpdate
+     */
     public function validate() {
 
         if(empty($this->user_id)) {
-            $this->error = 'Role error: user_id is empty.';
+            throw new AppException('Role error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Role error: user_id is not numeric.';
+            throw new AppException('Role error: user_id is not numeric.');
 
         } elseif(empty($this->hub_id)) {
-            $this->error = 'Role error: hub_id is empty.';
+            throw new AppException('Role error: hub_id is empty.');
 
         } elseif(!is_numeric($this->hub_id)) {
-            $this->error = 'Role error: hub_id is not numeric.';
+            throw new AppException('Role error: hub_id is not numeric.');
 
         } elseif(empty($this->role_status)) {
-            $this->error = 'Role error: role_status is empty.';
+            throw new AppException('Role error: role_status is empty.');
 
         } elseif(!in_array($this->role_status, ['admin', 'writer', 'reader'])) {
-            $this->error = 'Role error: role_status is incorrect.';
+            throw new AppException('Role error: role_status is incorrect.');
         }
     }
 }

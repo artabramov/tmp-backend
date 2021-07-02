@@ -1,38 +1,42 @@
 <?php
 namespace App\Routes;
+use \Flight;
+use \App\Entities\User;
+use \App\Exceptions\AppException;
 
 class UserAuth
 {
-    public function run() {
+    public function do() {
 
-        // -- Auth --
-        $auth = \Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => (string) \Flight::request()->query['user_token']]);
+        // -- Auth user --
+        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
 
-        if(empty($auth)) {
-            \Flight::set('error', 'User auth error: user_token not found.');
+        // -- Validate user --
+        if(empty($auth_user)) {
+            throw new AppException('User auth error: user_token not found.');
 
-        } elseif($auth->user_status == 'trash') {
-            \Flight::set('error', 'User auth error: user_status is trash.');
+        } elseif($auth_user->user_status == 'trash') {
+            throw new AppException('User auth error: user_status is trash.');
+        }
 
-        } else {
-            $auth_meta = [];
-            foreach($auth->user_meta as $meta) {
-                $auth_meta[$meta->meta_key] = $meta->meta_value;
-            }
+        // -- Auth usermeta --
+        $auth_user_meta = [];
+        foreach($auth_user->user_meta as $meta) {
+            $auth_user_meta[$meta->meta_key] = $meta->meta_value;
         }
 
         // -- End --
-        \Flight::json([ 
-            'user' => \Flight::empty('error') ? [
-                'id' => $auth->id, 
-                'create_date' => $auth->create_date->format('Y-m-d H:i:s'), 
-                'user_status' => $auth->user_status,
-                'user_token' => $auth->user_token,
-                'user_email' => $auth->user_email,
-                'user_name' => $auth->user_name,
-                'user_meta' => $auth_meta]
-            : [],
+        Flight::json([ 
+            'success' => 'true',
+            'user' => [
+                'id' => $auth_user->id, 
+                'create_date' => $auth_user->create_date->format('Y-m-d H:i:s'), 
+                'user_status' => $auth_user->user_status,
+                'user_token' => $auth_user->user_token,
+                'user_email' => $auth_user->user_email,
+                'user_name' => $auth_user->user_name,
+                'user_meta' => $auth_user_meta
+            ]
         ]);
-
     }
 }

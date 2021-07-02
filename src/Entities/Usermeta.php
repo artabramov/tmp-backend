@@ -1,8 +1,10 @@
 <?php
 namespace App\Entities;
+use \App\Exceptions\AppException;
 
 /**
  * @Entity
+ * @HasLifecycleCallbacks
  * @Table(name="users_meta")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -82,25 +84,29 @@ class Usermeta
         return false;
     }
 
+    /** 
+     * @PrePersist
+     * @PreUpdate
+     */
     public function validate() {
 
         if(empty($this->user_id)) {
-            $this->error = 'Meta error: user_id is empty.';
+            throw new AppException('Meta error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Meta error: user_id is not numeric.';
+            throw new AppException('Meta error: user_id is not numeric.');
 
         } elseif(empty($this->meta_key)) {
-            $this->error = 'Meta error: meta_key is empty.';
+            throw new AppException('Meta error: meta_key is empty.');
 
         } elseif(mb_strlen($this->meta_key) > 20) {
-            $this->error = 'Meta error: meta_key is too long.';
+            throw new AppException('Meta error: meta_key is too long.');
 
         } elseif(empty($this->meta_value)) {
-            $this->error = 'Meta error: meta_value is empty.';
+            throw new AppException('Meta error: meta_value is empty.');
 
         } elseif(mb_strlen($this->meta_value) > 255) {
-            $this->error = 'Meta error: meta_value is too long.';
+            throw new AppException('Meta error: meta_value is too long.');
         }
     }
 }

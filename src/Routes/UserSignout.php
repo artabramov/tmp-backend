@@ -1,25 +1,30 @@
 <?php
 namespace App\Routes;
+use \Flight;
+use \App\Entities\User;
+use \App\Exceptions\AppException;
 
 class UserSignout
 {
-    public function run() {
+    public function do() {
 
-        // -- Auth --
-        $auth = \Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => (string) \Flight::request()->query['user_token']]);
+        // -- Auth user --
+        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
 
-        if(empty($auth)) {
-            \Flight::set('error', 'User signout error: user_token not found.');
+        // -- Validate user --
+        if(empty($auth_user)) {
+            throw new AppException('User signout error: user_token not found.');
 
-        } elseif($auth->user_status == 'trash') {
-            \Flight::set('error', 'User signout error: user_status is trash.');
-
-        } else {
-            $auth->user_token = $auth->create_token();
-            \Flight::save($auth);
+        } elseif($auth_user->user_status == 'trash') {
+            throw new AppException('User signout error: user_status is trash.');
         }
 
+        // -- Update user --
+        $auth_user->user_token = $auth_user->create_token();
+        Flight::get('em')->persist($auth_user);
+        Flight::get('em')->flush();
+
         // -- End --
-        \Flight::json();
+        Flight::json(['success' => 'true']);
     }
 }

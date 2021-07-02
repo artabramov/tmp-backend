@@ -1,8 +1,10 @@
 <?php
 namespace App\Entities;
+use \App\Exceptions\AppException;
 
 /**
  * @Entity
+ * @HasLifecycleCallbacks
  * @Table(name="hubs")
  * @Cache("NONSTRICT_READ_WRITE")
  */
@@ -82,28 +84,32 @@ class Hub
         return false;
     }
 
+    /** 
+     * @PrePersist
+     * @PreUpdate
+     */
     public function validate() {
 
         if(empty($this->hub_status)) {
-            $this->error = 'Hub error: hub_status is empty.';
+            throw new AppException('Hub error: hub_status is empty.');
 
         } elseif(!in_array($this->hub_status, ['custom', 'trash'])) {
-            $this->error = 'Hub error: hub_status is incorrect.';
+            throw new AppException('Hub error: hub_status is incorrect.');
 
         } elseif(empty($this->user_id)) {
-            $this->error = 'Hub error: user_id is empty.';
+            throw new AppException('Hub error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            $this->error = 'Hub error: user_id is not numeric.';
+            throw new AppException('Hub error: user_id is not numeric.');
 
         } elseif(empty($this->hub_name)) {
-            $this->error = 'Hub error: hub_name is empty.';
+            throw new AppException('Hub error: hub_name is empty.');
 
         } elseif(mb_strlen($this->hub_name) < 4) {
-            $this->error = 'Hub error: hub_name is too short.';
+            throw new AppException('Hub error: hub_name is too short.');
 
         } elseif(mb_strlen($this->hub_name) > 128) {
-            $this->error = 'Hub error: hub_name is too long.';
+            throw new AppException('Hub error: hub_name is too long.');
         }
     }
 }

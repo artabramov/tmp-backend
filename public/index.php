@@ -98,13 +98,6 @@ $phpmailer->isHTML(true);
 $phpmailer->setFrom(PHPMAILER_FROM, PHPMAILER_NAME);
 Flight::set('phpmailer', $phpmailer);
 
-// -- Save entity --
-Flight::map('save', function($entity) {
-    Flight::get('em')->persist($entity);
-    Flight::get('em')->flush();
-});
-
-
 // -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
@@ -132,55 +125,55 @@ Flight::route( 'GET /', function() {
 // -- Register user --
 Flight::route( 'POST /user', function() {
     $route = new \App\Routes\UserRegister();
-    $route->run();
+    $route->do();
 });
 
 // -- Remind user --
 Flight::route( 'GET /pass', function() {
     $route = new \App\Routes\UserRemind();
-    $route->run();
+    $route->do();
 });
 
 // -- Signin user --
 Flight::route( 'POST /pass', function() {
     $route = new \App\Routes\UserSignin();
-    $route->run();
+    $route->do();
 });
 
 // -- Signout user --
 Flight::route( 'PUT /token', function() {
     $route = new \App\Routes\UserSignout();
-    $route->run();
+    $route->do();
 });
 
 // -- Auth user --
 Flight::route( 'POST /token', function() {
     $route = new \App\Routes\UserAuth();
-    $route->run();
+    $route->do();
 });
 
 // -- Select user - 
 Flight::route( 'GET /user/@user_id', function($user_id) {
     $route = new \App\Routes\UserSelect();
-    $route->run($user_id);
+    $route->do($user_id);
 });
 
 // -- Update user --
 Flight::route( 'PUT /user', function() {
     $route = new \App\Routes\UserUpdate();
-    $route->run();
+    $route->do();
 });
 
 // -- Insert hub --
 Flight::route( 'POST /hub', function() {
     $route = new \App\Routes\HubInsert();
-    $route->run();
+    $route->do();
 });
 
 // -- Huns sequence --
-Flight::route( 'GET /hub', function() {
+Flight::route( 'GET /hubs', function() {
     $route = new \App\Routes\HubSequence();
-    $route->run();
+    $route->do();
 });
 
 // -- Go! --
