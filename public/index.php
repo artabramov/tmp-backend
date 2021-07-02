@@ -170,9 +170,15 @@ Flight::route( 'POST /hub', function() {
     $route->do();
 });
 
+// -- Select hub - 
+Flight::route( 'GET /hub/@hub_id', function($hub_id) {
+    $route = new \App\Routes\HubSelect();
+    $route->do($hub_id);
+});
+
 // -- Huns sequence --
 Flight::route( 'GET /hubs', function() {
-    $route = new \App\Routes\HubSequence();
+    $route = new \App\Routes\HubQueue();
     $route->do();
 });
 

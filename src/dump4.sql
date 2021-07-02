@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS hubs (
 
 -- users roles
 
-CREATE TYPE role_status AS ENUM ('admin', 'writer', 'reader');
+CREATE TYPE role_status AS ENUM ('admin', 'editor', 'reader');
 
 CREATE TABLE IF NOT EXISTS users_roles (
     id         BIGSERIAL NOT NULL PRIMARY KEY,
