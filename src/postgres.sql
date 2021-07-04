@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS users_roles (
     CONSTRAINT user_role_id UNIQUE(user_id, hub_id)
 );
 
+-- users quotas
+
+CREATE TABLE IF NOT EXISTS users_quotas (
+    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
+    expire_date TIMESTAMP NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    quota_size  INT NOT NULL
+);
+
 -- posts
 
 CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
