@@ -38,16 +38,11 @@ class HubQueue
 
         // -- Count total results --
         $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('role.hub_id')
+        $qb1->select('count(role.hub_id)')
             ->from('App\Entities\Role', 'role')
             ->where($qb1->expr()->eq('role.user_id', $auth_user->id));
 
-        $qb2 = Flight::get('em')->createQueryBuilder();
-        $qb2->select('count(hub.id)')
-            ->from('App\Entities\Hub', 'hub')
-            ->where($qb2->expr()->in('hub.id', $qb1->getDQL()));
-
-        $hubs_count = $qb2->getQuery()->getResult();
+        $hubs_count = $qb1->getQuery()->getResult();
 
         // -- End --
         Flight::json([

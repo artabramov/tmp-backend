@@ -188,5 +188,11 @@ Flight::route( 'GET /hubs', function() {
     $route->do();
 });
 
+// -- Insert role --
+Flight::route( 'POST /role', function() {
+    $route = new \App\Routes\RoleInsert();
+    $route->do();
+});
+
 // -- Go! --
 Flight::start();
