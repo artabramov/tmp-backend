@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS users_roles (
 -- users quotas
 
 CREATE TABLE IF NOT EXISTS users_quotas (
-    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
     expire_date TIMESTAMP NOT NULL,
@@ -78,15 +78,26 @@ CREATE TABLE IF NOT EXISTS posts (
     post_title  VARCHAR(255) NOT NULL
 );
 
+-- post tags
+
+CREATE TABLE IF NOT EXISTS posts_tags (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    tag_value   VARCHAR(255) NOT NULL,
+    CONSTRAINT post_meta_id UNIQUE(post_id, tag_value)
+);
+
 -- posts meta
 
 CREATE TABLE IF NOT EXISTS posts_meta (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITH TIME ZONE NOT NULL,
     update_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    post_id    BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
-    meta_key   VARCHAR(20)  NOT NULL,
-    meta_value VARCHAR(255) NOT NULL,
+    post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    meta_key    VARCHAR(20)  NOT NULL,
+    meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT post_meta_id UNIQUE(post_id, meta_key)
 );
 

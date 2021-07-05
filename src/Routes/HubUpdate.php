@@ -3,7 +3,7 @@ namespace App\Routes;
 use \Flight;
 use \App\Exceptions\AppException;
 
-class HubSelect
+class HubUpdate
 {
     public function do($hub_id) {
 
@@ -26,27 +26,18 @@ class HubSelect
             throw new AppException('Hub select error: hub_id not found.');
         }
 
-        // -- Check any user role --
-        if(!$hub->users_roles->exists(function($key, $value) use ($auth_user) {return $auth_user->id === $value->user_id;})) {
+        // -- Check admin user role --
+        if(!$hub->users_roles->exists(function($key, $value) use ($auth_user) {return $auth_user->id === $value->user_id and $value->role_status == 'admin';})) {
             throw new AppException('Hub select error: permission denied.');
         }
 
+        // -- Update hub --
+        $hub->hub_status = !empty(Flight::request()->query['hub_status']) ? Flight::request()->query['hub_status'] : $hub->hub_status;
+        $hub->hub_name = !empty(Flight::request()->query['hub_name']) ? Flight::request()->query['hub_name'] : $hub->hub_name;
+        Flight::get('em')->persist($hub);
+        Flight::get('em')->flush();
+
         // -- End --
-        Flight::json([
-            'success' => 'true',
-            'hub'=> [
-                'id' => $hub->id,
-                'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
-                'hub_status' => $hub->hub_status,
-                'hub_name' => $hub->hub_name,
-                'roles' => array_map(fn($m) => [
-                    'id' => $m->id,
-                    'create_date' => $m->create_date->format('Y-m-d H:i:s'),
-                    'user_id' => $m->user_id,
-                    'hub_id' => $m->hub_id,
-                    'role_status' => $m->role_status,
-                ], $hub->users_roles->toArray())
-            ]
-        ]);
+        Flight::json([ 'success' => 'true' ]);
     }
 }

@@ -18,8 +18,9 @@ class UserUpdate
         } elseif($auth_user->user_status == 'trash') {
             throw new AppException('User update error: user_status is trash.');
         }
-        
-        $auth_user->user_name = Flight::request()->query['user_name'];
+
+        // -- Update user --
+        $auth_user->user_name = !empty(Flight::request()->query['user_name']) ? Flight::request()->query['user_name'] : $auth_user->user_name;
         Flight::get('em')->persist($auth_user);
         Flight::get('em')->flush();
 

@@ -176,6 +176,12 @@ Flight::route( 'GET /hub/@hub_id', function($hub_id) {
     $route->do($hub_id);
 });
 
+// -- Update hub --
+Flight::route( 'PUT /hub/@hub_id', function($hub_id) {
+    $route = new \App\Routes\HubUpdate();
+    $route->do($hub_id);
+});
+
 // -- Huns sequence --
 Flight::route( 'GET /hubs', function() {
     $route = new \App\Routes\HubQueue();
