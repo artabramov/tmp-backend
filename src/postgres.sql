@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users_meta (
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
-    CONSTRAINT user_meta_id UNIQUE(user_id, meta_key)
+    CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
 );
 
 -- hubs
@@ -39,6 +39,18 @@ CREATE TABLE IF NOT EXISTS hubs (
     hub_name   VARCHAR(128) NOT NULL
 );
 
+-- hubs meta
+
+CREATE TABLE IF NOT EXISTS hubs_meta (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
+    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    meta_key    VARCHAR(20)  NOT NULL,
+    meta_value  VARCHAR(255) NOT NULL,
+    CONSTRAINT hub_meta_uid UNIQUE(hub_id, meta_key)
+);
+
 -- users roles
 
 CREATE TYPE role_status AS ENUM ('admin', 'editor', 'reader');
@@ -50,7 +62,7 @@ CREATE TABLE IF NOT EXISTS users_roles (
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
-    CONSTRAINT user_role_id UNIQUE(user_id, hub_id)
+    CONSTRAINT user_role_uid UNIQUE(user_id, hub_id)
 );
 
 -- users quotas
@@ -70,8 +82,8 @@ CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
 
 CREATE TABLE IF NOT EXISTS posts (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,
@@ -82,67 +94,73 @@ CREATE TABLE IF NOT EXISTS posts (
 
 CREATE TABLE IF NOT EXISTS posts_tags (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
-    CONSTRAINT post_meta_id UNIQUE(post_id, tag_value)
+    CONSTRAINT post_tag_uid UNIQUE(post_id, tag_value)
 );
 
 -- posts meta
 
 CREATE TABLE IF NOT EXISTS posts_meta (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    update_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
-    CONSTRAINT post_meta_id UNIQUE(post_id, meta_key)
+    CONSTRAINT post_meta_uid UNIQUE(post_id, meta_key)
 );
 
 -- comments
 
 CREATE TABLE IF NOT EXISTS comments (
     id           BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date  TIMESTAMP NOT NULL,
+    update_date  TIMESTAMP NOT NULL,
     post_id      SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     user_id      SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at   TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
     comment_text TEXT NOT NULL
 );
 
 -- comments uploads
 
-CREATE TABLE IF NOT EXISTS comments_uploads (
+CREATE TABLE IF NOT EXISTS uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
-    comment_id  BIGSERIAL REFERENCES comments(id) ON DELETE SET NULL,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at  TIMESTAMP WITH TIME ZONE DEFAULT '0001-01-01 00:00:00',
+    comment_id  BIGSERIAL REFERENCES comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
-    upload_file VARCHAR(255) NOT NULL,
+    upload_file VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size INT NOT NULL
 );
 
-
--- ...
+-- drop all
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS users_quotas;
 DROP TABLE IF EXISTS hubs_meta;
-DROP TABLE IF EXISTS hubs;
 DROP TABLE IF EXISTS posts_meta;
-DROP TABLE IF EXISTS posts;
-DROP TABLE IF EXISTS comments_uploads;
+DROP TABLE IF EXISTS posts_tags;
+DROP TABLE IF EXISTS uploads;
 DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS hubs;
+DROP TABLE IF EXISTS users;
 
 DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS hub_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
+
+-- select all
+
+\pset format wrapped
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_roles; SELECT * FROM users_quotas; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; 
 
 -- ...
 

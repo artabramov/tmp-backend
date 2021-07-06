@@ -182,7 +182,13 @@ Flight::route( 'PUT /hub/@hub_id', function($hub_id) {
     $route->do($hub_id);
 });
 
-// -- Huns sequence --
+// -- Delete hub --
+Flight::route( 'DELETE /hub/@hub_id', function($hub_id) {
+    $route = new \App\Routes\HubDelete();
+    $route->do($hub_id);
+});
+
+// -- Hubs sequence --
 Flight::route( 'GET /hubs', function() {
     $route = new \App\Routes\HubQueue();
     $route->do();
@@ -197,6 +203,12 @@ Flight::route( 'POST /role', function() {
 // -- Update role --
 Flight::route( 'PUT /role', function() {
     $route = new \App\Routes\RoleUpdate();
+    $route->do();
+});
+
+// -- Delete role --
+Flight::route( 'DELETE /role', function() {
+    $route = new \App\Routes\RoleDelete();
     $route->do();
 });
 

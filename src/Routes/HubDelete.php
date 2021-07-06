@@ -3,15 +3,13 @@ namespace App\Routes;
 use \Flight;
 use \App\Exceptions\AppException;
 
-class HubUpdate
+class HubDelete
 {
     public function do($hub_id) {
 
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) $hub_id;
-        $hub_status = (string) Flight::request()->query['hub_status'];
-        $hub_name = (string) Flight::request()->query['hub_name'];
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
@@ -35,6 +33,9 @@ class HubUpdate
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
+
+        } elseif($hub->hub_status != 'trash') {
+            throw new AppException('Hub error: hub_status must be trash.');
         }
 
         // -- Auth role --
@@ -47,10 +48,8 @@ class HubUpdate
             throw new AppException('Auth role error: user_role must be an admin.');
         }
 
-        // -- Update hub --
-        $hub->hub_status = !empty($hub_status) ? $hub_status : $hub->hub_status;
-        $hub->hub_name = !empty($hub_name) ? $hub_name : $hub->hub_name;
-        Flight::get('em')->persist($hub);
+        // -- Delete hub --
+        Flight::get('em')->remove($hub);
         Flight::get('em')->flush();
 
         // -- End --
