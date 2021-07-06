@@ -8,20 +8,30 @@ class UserUpdate
 {
     public function do() {
 
+        // -- Initial --
+        $user_token = (string) Flight::request()->query['user_token'];
+        $user_name = (string) Flight::request()->query['user_name'];
+
+        if(empty($user_token)) {
+            throw new AppException('Initial error: user_token is empty.');
+
+        } elseif(empty($user_name)) {
+            throw new AppException('Initial error: user_name is empty.');
+        } 
+
         // -- Auth --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
-        // -- Validate user --
-        if(empty($auth_user)) {
-            throw new AppException('User update error: user_token not found.');
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_token not found.');
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('User update error: user_status is trash.');
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_token is trash.');
         }
 
         // -- Update user --
-        $auth_user->user_name = !empty(Flight::request()->query['user_name']) ? Flight::request()->query['user_name'] : $auth_user->user_name;
-        Flight::get('em')->persist($auth_user);
+        $auth->user_name = !empty($user_name) ? $user_name : $auth->user_name;
+        Flight::get('em')->persist($auth);
         Flight::get('em')->flush();
 
         // -- End --

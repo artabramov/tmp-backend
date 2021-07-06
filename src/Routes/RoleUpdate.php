@@ -4,21 +4,21 @@ use \Flight;
 use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role;
 use \App\Exceptions\AppException;
 
-class RoleInsert
+class RoleUpdate
 {
     public function do() {
 
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
-        $user_email = (string) Flight::request()->query['user_email'];
+        $user_id = (int) Flight::request()->query['user_id'];
         $hub_id = (int) Flight::request()->query['hub_id'];
         $role_status = (string) Flight::request()->query['role_status'];
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
 
-        } elseif(empty($user_email)) {
-            throw new AppException('Initial error: user_email is empty.');
+        } elseif(empty($user_id)) {
+            throw new AppException('Initial error: user_id is empty.');
 
         } elseif(empty($hub_id)) {
             throw new AppException('Initial error: hub_id is empty.');
@@ -70,16 +70,12 @@ class RoleInsert
         // -- Mate role --
         $mate_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $mate->id]);
 
-        if(!empty($mate_user_role)) {
-            throw new AppException('Mate error: role_status is occupied.');
+        if(empty($mate_role)) {
+            throw new AppException('Mate role error: user_role not found.');
         }
 
-        $mate_role = new Role();
-        $mate_role->user_id = $mate->id;
-        $mate_role->hub_id = $hub->id;
+        // -- Mate role update --
         $mate_role->role_status = $role_status;
-        $mate_role->user = $mate;
-        $mate_role->hub = $hub;
         Flight::get('em')->persist($mate_role);
         Flight::get('em')->flush();
 

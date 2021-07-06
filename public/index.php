@@ -194,5 +194,11 @@ Flight::route( 'POST /role', function() {
     $route->do();
 });
 
+// -- Update role --
+Flight::route( 'PUT /role', function() {
+    $route = new \App\Routes\RoleUpdate();
+    $route->do();
+});
+
 // -- Go! --
 Flight::start();

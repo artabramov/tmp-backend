@@ -7,33 +7,55 @@ class HubUpdate
 {
     public function do($hub_id) {
 
-        // -- Auth user --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
+        // -- Initial --
+        $user_token = (string) Flight::request()->query['user_token'];
+        $hub_id = (int) $hub_id;
+        $hub_status = (string) Flight::request()->query['hub_status'];
+        $hub_name = (string) Flight::request()->query['hub_name'];
 
-        // -- Validate auth user --
-        if(empty($auth_user)) {
-            throw new AppException('Hub select error: user_token not found.');
+        if(empty($user_token)) {
+            throw new AppException('Initial error: user_token is empty.');
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('Hub select error: user_status is trash.');
+        } elseif(empty($hub_id)) {
+            throw new AppException('Initial error: hub_id is empty.');
+
+        } elseif(empty($hub_status)) {
+            throw new AppException('Initial error: hub_status is empty.');
+
+        } elseif(empty($hub_name)) {
+            throw new AppException('Initial error: hub_name is empty.');
+        } 
+
+        // -- Auth --
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_token not found.');
+
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Select hub --
+        // -- Hub --
         $hub = Flight::get('em')->find('App\Entities\Hub', $hub_id);
 
-        // -- Validate hub --
         if(empty($hub)) {
-            throw new AppException('Hub select error: hub_id not found.');
+            throw new AppException('Hub error: hub_id not found.');
         }
 
-        // -- Check admin user role --
-        if(!$hub->users_roles->exists(function($key, $value) use ($auth_user) {return $auth_user->id === $value->user_id and $value->role_status == 'admin';})) {
-            throw new AppException('Hub select error: permission denied.');
+        // -- Auth role --
+        $auth_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $auth->id]);
+
+        if(empty($auth_role)) {
+            throw new AppException('Auth role error: user_role not found.');
+
+        } elseif($auth_role->role_status != 'admin') {
+            throw new AppException('Auth role error: user_role must be an admin.');
         }
 
         // -- Update hub --
-        $hub->hub_status = !empty(Flight::request()->query['hub_status']) ? Flight::request()->query['hub_status'] : $hub->hub_status;
-        $hub->hub_name = !empty(Flight::request()->query['hub_name']) ? Flight::request()->query['hub_name'] : $hub->hub_name;
+        $hub->hub_status = $hub_status;
+        $hub->hub_name = $hub_name;
         Flight::get('em')->persist($hub);
         Flight::get('em')->flush();
 

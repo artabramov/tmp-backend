@@ -7,18 +7,25 @@ class HubQueue
 {
     public function do() {
 
-        // -- Auth user --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
+        // -- Initial --
+        $user_token = (string) Flight::request()->query['user_token'];
+        $offset = (int) Flight::request()->query['offset'];
 
-        // -- Validate auth user --
-        if(empty($auth_user)) {
-            throw new AppException('Hubs query error: user_token not found.');
+        if(empty($user_token)) {
+            throw new AppException('Initial error: user_token is empty.');
+        } 
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('Hubs query error: user_status is trash.');
+        // -- Auth --
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_token not found.');
+
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Select hubs --
+        // -- Hubs --
         $qb1 = Flight::get('em')->createQueryBuilder();
         $qb1->select('role.hub_id')
             ->from('App\Entities\Role', 'role')
@@ -32,11 +39,10 @@ class HubQueue
             ->setFirstResult((int) Flight::request()->query['offset'])
             ->setMaxResults(APP_SELECT_LIMIT);
 
-        // -- Get results --
         $hubs_ids = $qb2->getQuery()->getResult();
         $hubs = array_map(fn($n) => Flight::get('em')->find('App\Entities\Hub', $n['id']), $hubs_ids);
 
-        // -- Count total results --
+        // -- Count hubs --
         $qb1 = Flight::get('em')->createQueryBuilder();
         $qb1->select('count(role.hub_id)')
             ->from('App\Entities\Role', 'role')

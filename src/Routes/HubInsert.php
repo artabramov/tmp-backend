@@ -8,33 +8,43 @@ class HubInsert
 {
     public function do() {
 
-        // -- Auth user --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
+        // -- Initial --
+        $user_token = (string) Flight::request()->query['user_token'];
+        $hub_name = (string) Flight::request()->query['hub_name'];
 
-        // -- Validate auth user --
-        if(empty($auth_user)) {
-            throw new AppException('User select error: user_token not found.');
+        if(empty($user_token)) {
+            throw new AppException('Initial error: user_token is empty.');
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('User select error: user_status is trash.');
+        } elseif(empty($hub_name)) {
+            throw new AppException('Initial error: hub_name is empty.');
+        } 
+
+        // -- Auth --
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_token not found.');
+
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_token is trash.');
         }
 
         // -- Hub --
         $hub = new Hub();
         $hub->hub_status = 'custom';
-        $hub->user_id = $auth_user->id;
-        $hub->hub_name = Flight::request()->query['hub_name'];
+        $hub->user_id = $auth->id;
+        $hub->hub_name = $hub_name;
         Flight::get('em')->persist($hub);
         Flight::get('em')->flush();
 
-        // -- Auth user role --
-        $auth_user_role = new Role();
-        $auth_user_role->user_id = $auth_user->id;
-        $auth_user_role->hub_id = $hub->id;
-        $auth_user_role->role_status = 'admin';
-        $auth_user_role->user = $auth_user;
-        $auth_user_role->hub = $hub;
-        Flight::get('em')->persist($auth_user_role);
+        // -- Auth role --
+        $auth_role = new Role();
+        $auth_role->user_id = $auth->id;
+        $auth_role->hub_id = $hub->id;
+        $auth_role->role_status = 'admin';
+        $auth_role->user = $auth;
+        $auth_role->hub = $hub;
+        Flight::get('em')->persist($auth_role);
         Flight::get('em')->flush();
 
         // -- End --

@@ -8,20 +8,26 @@ class UserSignout
 {
     public function do() {
 
-        // -- Auth user --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => Flight::request()->query['user_token']]);
+        // -- Initial --
+        $user_token = (string) Flight::request()->query['user_token'];
 
-        // -- Validate user --
-        if(empty($auth_user)) {
-            throw new AppException('User signout error: user_token not found.');
+        if(empty($user_token)) {
+            throw new AppException('Initial error: user_token is empty.');
+        } 
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('User signout error: user_status is trash.');
+        // -- Auth --
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_token not found.');
+
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Update user --
-        $auth_user->user_token = $auth_user->create_token();
-        Flight::get('em')->persist($auth_user);
+        // -- Update auth --
+        $auth->user_token = $auth->create_token();
+        Flight::get('em')->persist($auth);
         Flight::get('em')->flush();
 
         // -- End --

@@ -47,7 +47,7 @@ class Role
     private $hub_id;
 
     /** 
-     * @Column(type="string", columnDefinition="ENUM('custom', 'trash')") 
+     * @Column(type="string", columnDefinition="ENUM('admin', 'editor', 'reader)") 
      * @var string
      */
     private $role_status;
@@ -112,7 +112,7 @@ class Role
         } elseif(empty($this->role_status)) {
             throw new AppException('Role error: role_status is empty.');
 
-        } elseif(!in_array($this->role_status, ['admin', 'writer', 'reader'])) {
+        } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
             throw new AppException('Role error: role_status is incorrect.');
         }
     }

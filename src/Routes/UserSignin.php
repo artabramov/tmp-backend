@@ -8,38 +8,48 @@ class UserSignin
 {
     public function do() {
 
-        // -- Signin auth user --
-        $auth_user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => Flight::request()->query['user_email'], 'user_hash' => sha1(Flight::request()->query['user_pass'])]);
+        // -- Initial --
+        $user_email = (string) Flight::request()->query['user_email'];
+        $user_pass = (string) Flight::request()->query['user_pass'];
+
+        if(empty($user_email)) {
+            throw new AppException('Initial error: user_email is empty.');
+
+        } elseif(empty($user_pass)) {
+            throw new AppException('Initial error: user_pass is empty.');
+        } 
+
+        // -- Auth --
+        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email, 'user_hash' => sha1($user_pass)]);
         $time = new DateTime('now');
 
-        // -- Validate auth user --
-        if(empty($auth_user)) {
-            throw new AppException('User signin error: user_email not found.');
+        if(empty($auth)) {
+            throw new AppException('Auth error: user_email not found or user_pass is incorrect.');
 
-        } elseif($auth_user->user_status == 'trash') {
-            throw new AppException('User signin error: user_status is trash.');
+        } elseif($auth->user_status == 'trash') {
+            throw new AppException('Auth error: user_status is trash.');
 
-        } elseif($time->getTimestamp() - $auth_user->remind_date->getTimestamp() > APP_PASS_TIME) {
-            throw new AppException('User signin error: user_pass expired.');
+        } elseif($time->getTimestamp() - $auth->remind_date->getTimestamp() > APP_PASS_TIME) {
+            throw new AppException('Auth error: user_pass expired.');
         }
 
         // -- Update auth user --    
-        $auth_user->user_status = 'approved';
-        $auth_user->user_pass = '';
-        $auth_user->user_hash = '';
-        Flight::get('em')->persist($auth_user);
+        $auth->user_status = 'approved';
+        $auth->user_pass = '';
+        $auth->user_hash = '';
+        Flight::get('em')->persist($auth);
         Flight::get('em')->flush();
 
         // -- End --
         Flight::json([ 
             'success' => 'true',
             'user' => [
-                'id' => $auth_user->id, 
-                'create_date' => $auth_user->create_date->format('Y-m-d H:i:s'), 
-                'user_status' => $auth_user->user_status,
-                'user_token' => $auth_user->user_token,
-                'user_email' => $auth_user->user_email,
-                'user_name' => $auth_user->user_name
+                'id' => $auth->id, 
+                'create_date' => $auth->create_date->format('Y-m-d H:i:s'), 
+                'user_status' => $auth->user_status,
+                'user_token' => $auth->user_token,
+                'user_email' => $auth->user_email,
+                'user_name' => $auth->user_name
             ]
         ]);
     }
