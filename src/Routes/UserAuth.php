@@ -21,7 +21,7 @@ class UserAuth
         if(empty($auth)) {
             throw new AppException('Auth error: user_token not found.');
 
-        } elseif($auth_user->user_status == 'trash') {
+        } elseif($auth->user_status == 'trash') {
             throw new AppException('Auth error: user_token is trash.');
         }
 
@@ -37,6 +37,8 @@ class UserAuth
             'user' => [
                 'id' => $auth->id, 
                 'create_date' => $auth->create_date->format('Y-m-d H:i:s'), 
+                'update_date' => $auth->update_date->format('Y-m-d H:i:s'), 
+                'remind_date' => $auth->remind_date->format('Y-m-d H:i:s'), 
                 'user_status' => $auth->user_status,
                 'user_token' => $auth->user_token,
                 'user_email' => $auth->user_email,

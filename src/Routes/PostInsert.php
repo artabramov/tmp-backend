@@ -69,9 +69,9 @@ class PostInsert
         $post->hub_id = $hub->id;
         $post->post_status = $post_status;
         $post->post_title = $post_title;
-        $post->post_meta = $mate;
+        $post->post_meta = $user;
         $post->post_tags = $hub;
-        Flight::get('em')->persist($mate_role);
+        Flight::get('em')->persist($user_role);
         Flight::get('em')->flush();
 
         // -- End --

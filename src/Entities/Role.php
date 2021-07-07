@@ -52,20 +52,6 @@ class Role
      */
     private $role_status;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Hub", inversedBy="users_roles", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="hub_id", referencedColumnName="id")
-     */
-    private $hub;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="users_roles", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user;
-
     public function __construct() {
         $this->create_date = new \DateTime('now');
         $this->update_date = new \DateTime('1970-01-01 00:00:00');

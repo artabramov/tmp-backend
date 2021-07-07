@@ -37,14 +37,14 @@ class RoleInsert
             throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Mate --
-        $mate = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
+        // -- User --
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
 
-        if(empty($mate)) {
-            throw new AppException('Mate error: user_id not found.');
+        if(empty($user)) {
+            throw new AppException('User error: user_id not found.');
 
         } elseif($auth->user_status == 'trash') {
-            throw new AppException('Mate error: user_id is trash.');
+            throw new AppException('User error: user_id is trash.');
         }
 
         // -- Hub --
@@ -67,20 +67,20 @@ class RoleInsert
             throw new AppException('Auth role error: role_status must be admin.');
         }
 
-        // -- Mate role --
-        $mate_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $mate->id]);
+        // -- User role --
+        $user_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $user->id]);
 
-        if(!empty($mate_user_role)) {
-            throw new AppException('Mate error: role_status is occupied.');
+        if(!empty($user_role)) {
+            throw new AppException('User role error: role_status is occupied.');
         }
 
-        $mate_role = new Role();
-        $mate_role->user_id = $mate->id;
-        $mate_role->hub_id = $hub->id;
-        $mate_role->role_status = $role_status;
-        $mate_role->user = $mate;
-        $mate_role->hub = $hub;
-        Flight::get('em')->persist($mate_role);
+        $user_role = new Role();
+        $user_role->user_id = $user->id;
+        $user_role->hub_id = $hub->id;
+        $user_role->role_status = $role_status;
+        $user_role->user = $user;
+        $user_role->hub = $hub;
+        Flight::get('em')->persist($user_role);
         Flight::get('em')->flush();
 
         // -- End --

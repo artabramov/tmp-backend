@@ -26,21 +26,21 @@ class UserSelect
             throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Mate ---
-        $mate = Flight::get('em')->find('\App\Entities\User', $user_id);
+        // -- User ---
+        $user = Flight::get('em')->find('\App\Entities\User', $user_id);
 
-        if(empty($mate)) {
-            throw new AppException('Mate error: user_id not found.');
+        if(empty($user)) {
+            throw new AppException('User error: user_id not found.');
         }
 
         // -- End --
         Flight::json([ 
             'success' => 'true',
             'user' => [
-                'id' => $mate->id, 
-                'create_date' => $mate->create_date->format('Y-m-d H:i:s'), 
-                'user_status' => $mate->user_status,
-                'user_name' => $mate->user_name
+                'id' => $user->id, 
+                'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
+                'user_status' => $user->user_status,
+                'user_name' => $user->user_name
             ]
         ]);
 

@@ -37,14 +37,14 @@ class RoleUpdate
             throw new AppException('Auth error: user_token is trash.');
         }
 
-        // -- Mate --
-        $mate = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
+        // -- User --
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
 
-        if(empty($mate)) {
-            throw new AppException('Mate error: user_id not found.');
+        if(empty($user)) {
+            throw new AppException('User error: user_id not found.');
 
         } elseif($auth->user_status == 'trash') {
-            throw new AppException('Mate error: user_id is trash.');
+            throw new AppException('User error: user_id is trash.');
         }
 
         // -- Hub --
@@ -67,16 +67,16 @@ class RoleUpdate
             throw new AppException('Auth role error: role_status must be admin.');
         }
 
-        // -- Mate role --
-        $mate_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $mate->id]);
+        // -- User role --
+        $user_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $user->id]);
 
-        if(empty($mate_role)) {
-            throw new AppException('Mate role error: user_role not found.');
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
         }
 
-        // -- Mate role update --
-        $mate_role->role_status = $role_status;
-        Flight::get('em')->persist($mate_role);
+        // -- User role update --
+        $user_role->role_status = $role_status;
+        Flight::get('em')->persist($user_role);
         Flight::get('em')->flush();
 
         // -- End --

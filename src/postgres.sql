@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS comments (
 
 -- comments uploads
 
-CREATE TABLE IF NOT EXISTS uploads (
+CREATE TABLE IF NOT EXISTS comments_uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
@@ -156,6 +156,20 @@ DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS hub_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
+
+-- truncate all
+
+TRUNCATE TABLE users_meta;
+TRUNCATE TABLE users_roles;
+TRUNCATE TABLE users_quotas;
+TRUNCATE TABLE hubs_meta;
+TRUNCATE TABLE posts_meta;
+TRUNCATE TABLE posts_tags;
+TRUNCATE TABLE uploads;
+TRUNCATE TABLE comments;
+TRUNCATE TABLE posts;
+TRUNCATE TABLE hubs;
+TRUNCATE TABLE users;
 
 -- select all
 

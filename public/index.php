@@ -212,5 +212,11 @@ Flight::route( 'DELETE /role', function() {
     $route->do();
 });
 
+// -- Queue role --
+Flight::route( 'GET /roles', function() {
+    $route = new \App\Routes\RoleQueue();
+    $route->do();
+});
+
 // -- Go! --
 Flight::start();

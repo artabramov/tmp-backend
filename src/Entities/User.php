@@ -78,14 +78,6 @@ class User
      */
     private $user_meta;
 
-    /**
-     * One user has many roles.
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Role", mappedBy="user", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user_roles;
-
     public function __construct() {
         $this->error = '';
         $this->create_date = new \DateTime('now');

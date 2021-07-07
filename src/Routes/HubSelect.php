@@ -42,6 +42,12 @@ class HubSelect
             throw new AppException('Auth role error: user_role not found.');
         }
 
+        // -- Hub meta --
+        $hub_meta = [];
+        foreach($hub->hub_meta as $meta) {
+            $hub_meta[$meta->meta_key] = $meta->meta_value;
+        }
+
         // -- End --
         Flight::json([
             'success' => 'true',
@@ -50,13 +56,7 @@ class HubSelect
                 'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
                 'hub_status' => $hub->hub_status,
                 'hub_name' => $hub->hub_name,
-                'roles' => array_map(fn($m) => [
-                    'id' => $m->id,
-                    'create_date' => $m->create_date->format('Y-m-d H:i:s'),
-                    'user_id' => $m->user_id,
-                    'hub_id' => $m->hub_id,
-                    'role_status' => $m->role_status,
-                ], $hub->users_roles->toArray())
+                'hub_meta' => $hub->hub_meta
             ]
         ]);
     }
