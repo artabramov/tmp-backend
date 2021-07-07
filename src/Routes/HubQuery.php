@@ -3,7 +3,7 @@ namespace App\Routes;
 use \Flight;
 use \App\Exceptions\AppException;
 
-class HubQueue
+class HubQuery
 {
     public function do() {
 
@@ -37,7 +37,7 @@ class HubQueue
             ->where($qb2->expr()->in('hub.id', $qb1->getDQL()))
             ->orderBy('hub.hub_name', 'ASC')
             ->setFirstResult($offset)
-            ->setMaxResults(APP_SELECT_LIMIT);
+            ->setMaxResults(APP_QUERY_LIMIT);
 
         $hubs_ids = $qb2->getQuery()->getResult();
         $hubs = array_map(fn($n) => Flight::get('em')->find('App\Entities\Hub', $n['id']), $hubs_ids);

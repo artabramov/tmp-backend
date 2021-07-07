@@ -3,7 +3,7 @@ namespace App\Routes;
 use \Flight;
 use \App\Exceptions\AppException;
 
-class RoleQueue
+class RoleQuery
 {
     public function do() {
 
@@ -44,7 +44,7 @@ class RoleQueue
                 ->where($qb1->expr()->eq('role.hub_id', $hub_id))
                 ->orderBy('role.id', 'DESC')
                 ->setFirstResult($offset)
-                ->setMaxResults(APP_SELECT_LIMIT);
+                ->setMaxResults(APP_QUERY_LIMIT);
         }
 
         $roles_ids = $qb1->getQuery()->getResult();
