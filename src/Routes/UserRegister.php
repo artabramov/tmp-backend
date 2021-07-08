@@ -34,17 +34,6 @@ class UserRegister
         $auth->user_name = $user_name;
         Flight::get('em')->persist($auth);
         Flight::get('em')->flush();
-        
-        /*
-        // -- Auth meta --
-        $auth_meta = new Usermeta();
-        $auth_meta->user_id = $auth->id;
-        $auth_meta->meta_key = 'user_ip';
-        $auth_meta->meta_value = Flight::request()->ip;
-        $auth_meta->user = $auth;
-        Flight::get('em')->persist($auth_meta);
-        Flight::get('em')->flush();
-        */
 
         // -- Hub --
         $hub = new Hub();
@@ -69,6 +58,7 @@ class UserRegister
         $qb1->select('count(role.id)')->from('App\Entities\Role', 'role')->where($qb1->expr()->eq('role.user_id', $auth->id));
         $qb1_result = $qb1->getQuery()->getResult();
 
+        // -- Auth meta --
         $auth_meta = new Usermeta();
         $auth_meta->user_id = $auth->id;
         $auth_meta->meta_key = 'roles_count';

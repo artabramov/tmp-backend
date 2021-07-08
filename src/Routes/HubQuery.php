@@ -45,7 +45,7 @@ class HubQuery
         // -- End --
         Flight::json([
             'success' => 'true',
-            'hubs_count' => $hubs_count[0][1],
+            //'hubs_count' => $hubs_count[0][1],
             'hubs'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

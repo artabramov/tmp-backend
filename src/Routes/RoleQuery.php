@@ -37,7 +37,7 @@ class RoleQuery
                 ->where($qb1->expr()->eq('role.user_id', $user_id))
                 ->orderBy('role.id', 'DESC')
                 ->setFirstResult($offset)
-                ->setMaxResults(APP_SELECT_LIMIT);
+                ->setMaxResults(APP_QUERY_LIMIT);
 
         } elseif(!empty($hub_id)) {
             $qb1->select('role.id')->from('App\Entities\Role', 'role')

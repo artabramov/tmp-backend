@@ -220,7 +220,19 @@ Flight::route( 'DELETE /role', function() {
 
 // -- Role query --
 Flight::route( 'GET /roles', function() {
-    $route = new \App\Routes\RoleQueue();
+    $route = new \App\Routes\RoleQuery();
+    $route->do();
+});
+
+// -- Post insert --
+Flight::route( 'POST /post', function() {
+    $route = new \App\Routes\PostInsert();
+    $route->do();
+});
+
+// -- Post query --
+Flight::route( 'GET /posts', function() {
+    $route = new \App\Routes\PostQuery();
     $route->do();
 });
 

@@ -1,10 +1,9 @@
 <?php
 namespace App\Routes;
 use \Flight;
-use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Tag, \App\Entities\Postmeta;
 use \App\Exceptions\AppException;
 
-class PostInsert
+class PostQuery
 {
     public function do() {
 
@@ -13,9 +12,8 @@ class PostInsert
         $hub_id = (int) Flight::request()->query['hub_id'];
         $post_status = (string) Flight::request()->query['post_status'];
         $post_title = (string) Flight::request()->query['post_title'];
-        $post_tags = explode(',', mb_strtolower((string) Flight::request()->query['post_tags'], 'UTF-8'));
-        $post_tags = array_map(fn($value) => trim($value) , $post_tags);
-        $post_tags = array_unique($post_tags);
+        $post_tag = (string) Flight::request()->query['post_tag'];
+        $offset = (int) Flight::request()->query['offset'];
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
@@ -23,12 +21,9 @@ class PostInsert
         } elseif(empty($hub_id)) {
             throw new AppException('Initial error: hub_id is empty.');
 
-        } elseif(empty($post_status)) {
-            throw new AppException('Initial error: post_status is empty.');
-
-        } elseif(empty($post_title)) {
-            throw new AppException('Initial error: post_title is empty.');
-        }        
+        } elseif(empty($post_status) and empty($post_title) and empty($post_tag)) {
+            throw new AppException('Initial error: post_status or post_title or post_tag is empty.');
+        } 
 
         // -- Auth --
         $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -60,39 +55,36 @@ class PostInsert
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Post --
-        $post = new Post();
-        $post->user_id = $auth->id;
-        $post->hub_id = $hub->id;
-        $post->post_status = $post_status;
-        $post->post_title = $post_title;
-        //$post->post_meta = $user;
-        //$post->post_tags = $hub;
-        Flight::get('em')->persist($post);
-        Flight::get('em')->flush();
+        // -- Posts --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        if(!empty($post_status)) {
+            $qb1->select('post.id')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.post_status', $post_status))
+                ->orderBy('post.id', 'DESC')
+                ->setFirstResult($offset)
+                ->setMaxResults(APP_QUERY_LIMIT);
 
-        // -- Post meta --
-        $post_meta = new Postmeta();
-        $post_meta->post_id = $post->id;
-        $post_meta->meta_key = 'comments_count';
-        $post_meta->meta_value = '0';
-        $post_meta->post = $post;
-        Flight::get('em')->persist($post_meta);
-        Flight::get('em')->flush();
+        } elseif(!empty($post_title)) {
 
-        // -- Post tags --
-        foreach($post_tags as $post_tag) {
-            $tag = new Tag();
-            $tag->post_id = $post->id;
-            $tag->tag_value = $post_tag;
-            $tag->post = $post;
-            Flight::get('em')->persist($tag);
-            Flight::get('em')->flush();
+
+        } elseif(!empty($post_tag)) {
+
         }
 
+        $tmp = $qb1->getDQL();
+        $posts_ids = $qb1->getQuery()->getResult();
+        $posts = array_map(fn($n) => Flight::get('em')->find('App\Entities\Post', $n['id']), $posts_ids);
+
         // -- End --
-        Flight::json([ 
+        Flight::json([
             'success' => 'true',
+            'posts_count' => 0,
+            'posts'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'post_status' => $n->post_status,
+                'post_title' => $n->post_name
+            ], $hubs)
         ]);
     }
 }

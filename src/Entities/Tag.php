@@ -89,10 +89,10 @@ class Tag
         } elseif(!is_numeric($this->post_id)) {
             throw new AppException('Tag error: post_id is not numeric.');
 
-        } elseif(empty($this->meta_value)) {
+        } elseif(empty($this->tag_value)) {
             throw new AppException('Tag error: tag_value is empty.');
 
-        } elseif(mb_strlen($this->meta_value) > 255) {
+        } elseif(mb_strlen($this->tag_value) > 255) {
             throw new AppException('Tag error: tag_value is too long.');
         }
     }

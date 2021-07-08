@@ -65,17 +65,6 @@ CREATE TABLE IF NOT EXISTS users_roles (
     CONSTRAINT user_role_uid UNIQUE(user_id, hub_id)
 );
 
--- users quotas
-
-CREATE TABLE IF NOT EXISTS users_quotas (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
-    expire_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    quota_size  INT NOT NULL
-);
-
 -- posts
 
 CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
@@ -142,7 +131,6 @@ CREATE TABLE IF NOT EXISTS comments_uploads (
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users_quotas;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
@@ -161,7 +149,6 @@ DROP TYPE IF EXISTS post_status;
 
 TRUNCATE TABLE users_meta;
 TRUNCATE TABLE users_roles;
-TRUNCATE TABLE users_quotas;
 TRUNCATE TABLE hubs_meta;
 TRUNCATE TABLE posts_meta;
 TRUNCATE TABLE posts_tags;
@@ -203,7 +190,9 @@ SELECT * FROM comments_uploads;
 
 -- ===
 
-
+Почему во всех таблицах есть id?
+Почему в таблице posts есть только заголовки?
+Почему posts_meta и posts_tags разделены на две таблицы?
 
 
 

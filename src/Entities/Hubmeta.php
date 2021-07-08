@@ -101,8 +101,8 @@ class Hubmeta
         } elseif(mb_strlen($this->meta_key) > 20) {
             throw new AppException('Meta error: meta_key is too long.');
 
-        } elseif(empty($this->meta_value)) {
-            throw new AppException('Meta error: meta_value is empty.');
+        //} elseif(empty($this->meta_value)) {
+        //    throw new AppException('Meta error: meta_value is empty.');
 
         } elseif(mb_strlen($this->meta_value) > 255) {
             throw new AppException('Meta error: meta_value is too long.');
