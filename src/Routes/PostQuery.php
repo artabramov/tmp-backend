@@ -1,6 +1,7 @@
 <?php
 namespace App\Routes;
 use \Flight;
+use \Doctrine\DBAL\ParameterType;
 use \App\Exceptions\AppException;
 
 class PostQuery
@@ -10,9 +11,9 @@ class PostQuery
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) Flight::request()->query['hub_id'];
-        $post_status = (string) Flight::request()->query['post_status'];
-        $post_title = (string) Flight::request()->query['post_title'];
-        $post_tag = (string) Flight::request()->query['post_tag'];
+        $post_status = (string) Flight::request()->query['post_status']; // or
+        $post_title = (string) Flight::request()->query['post_title']; // or
+        $post_tag = (string) Flight::request()->query['post_tag']; // or
         $offset = (int) Flight::request()->query['offset'];
 
         if(empty($user_token)) {
@@ -58,20 +59,39 @@ class PostQuery
         // -- Posts --
         $qb1 = Flight::get('em')->createQueryBuilder();
         if(!empty($post_status)) {
+
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.post_status', $post_status))
+                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
+                ->andWhere($qb1->expr()->eq('post.post_status', Flight::get('em')->getConnection()->quote($post_status, ParameterType::STRING)))
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
                 ->setMaxResults(APP_QUERY_LIMIT);
 
         } elseif(!empty($post_title)) {
 
+            $qb1->select('post.id')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
+                ->andWhere($qb1->expr()->like('post.post_title', Flight::get('em')->getConnection()->quote('%' . $post_title . '%', ParameterType::STRING)))
+                ->orderBy('post.id', 'DESC')
+                ->setFirstResult($offset)
+                ->setMaxResults(APP_QUERY_LIMIT);
 
         } elseif(!empty($post_tag)) {
 
+            $qb2 = Flight::get('em')->createQueryBuilder();
+            $qb2->select('tag.post_id')
+                ->from('App\Entities\Tag', 'tag')
+                ->where($qb2->expr()->eq('tag.tag_value', Flight::get('em')->getConnection()->quote($post_tag, ParameterType::STRING)));
+    
+            $qb1->select('post.id')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
+                ->andWhere($qb1->expr()->in('post.id', $qb2->getDQL()))
+                ->orderBy('post.id', 'DESC')
+                ->setFirstResult($offset)
+                ->setMaxResults(APP_QUERY_LIMIT);
         }
 
-        $tmp = $qb1->getDQL();
+        $tmp = $qb1->getQuery()->getDQL();
         $posts_ids = $qb1->getQuery()->getResult();
         $posts = array_map(fn($n) => Flight::get('em')->find('App\Entities\Post', $n['id']), $posts_ids);
 
@@ -83,8 +103,8 @@ class PostQuery
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
                 'post_status' => $n->post_status,
-                'post_title' => $n->post_name
-            ], $hubs)
+                'post_title' => $n->post_title
+            ], $posts)
         ]);
     }
 }
