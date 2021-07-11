@@ -102,9 +102,9 @@ CREATE TABLE IF NOT EXISTS posts_meta (
     CONSTRAINT post_meta_uid UNIQUE(post_id, meta_key)
 );
 
--- comments
+-- posts comments
 
-CREATE TABLE IF NOT EXISTS comments (
+CREATE TABLE IF NOT EXISTS posts_comments (
     id           BIGSERIAL NOT NULL PRIMARY KEY,
     create_date  TIMESTAMP NOT NULL,
     update_date  TIMESTAMP NOT NULL,
@@ -113,19 +113,20 @@ CREATE TABLE IF NOT EXISTS comments (
     comment_text TEXT NOT NULL
 );
 
--- comments uploads
+-- uploads
 
-CREATE TABLE IF NOT EXISTS comments_uploads (
+CREATE TABLE IF NOT EXISTS uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
     user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    comment_id  BIGSERIAL REFERENCES comments(id) ON DELETE SET NULL,
+    comment_id  BIGSERIAL REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size INT NOT NULL
 );
+
 
 -- drop all
 
