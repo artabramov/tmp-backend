@@ -105,12 +105,12 @@ CREATE TABLE IF NOT EXISTS posts_meta (
 -- posts comments
 
 CREATE TABLE IF NOT EXISTS posts_comments (
-    id           BIGSERIAL NOT NULL PRIMARY KEY,
-    create_date  TIMESTAMP NOT NULL,
-    update_date  TIMESTAMP NOT NULL,
-    post_id      SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
-    user_id      SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    comment_text TEXT NOT NULL
+    id              BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date     TIMESTAMP NOT NULL,
+    update_date     TIMESTAMP NOT NULL,
+    post_id         SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    user_id         SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    comment_content TEXT NOT NULL
 );
 
 -- uploads
@@ -135,8 +135,8 @@ DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
+DROP TABLE IF EXISTS posts_comments;
 DROP TABLE IF EXISTS uploads;
-DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS hubs;
 DROP TABLE IF EXISTS users;
