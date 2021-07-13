@@ -73,6 +73,13 @@ class Post
      */
     private $post_tags;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Comment", mappedBy="post", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="post_id", referencedColumnName="id")
+     */
+    private $post_comments;
+
     public function __construct() {
         $this->error = '';
         $this->create_date = new \DateTime('now');

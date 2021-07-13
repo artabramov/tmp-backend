@@ -236,5 +236,11 @@ Flight::route( 'GET /posts', function() {
     $route->do();
 });
 
+// -- Comment insert --
+Flight::route( 'POST /comment', function() {
+    $route = new \App\Routes\CommentInsert();
+    $route->do();
+});
+
 // -- Go! --
 Flight::start();

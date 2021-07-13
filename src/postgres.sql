@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS posts_comments (
     id              BIGSERIAL NOT NULL PRIMARY KEY,
     create_date     TIMESTAMP NOT NULL,
     update_date     TIMESTAMP NOT NULL,
-    post_id         SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     user_id         SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    post_id         SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_content TEXT NOT NULL
 );
 
@@ -162,7 +162,7 @@ TRUNCATE TABLE users;
 -- select all
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_roles; SELECT * FROM users_quotas; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; 
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 
 -- ...
 

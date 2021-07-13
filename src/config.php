@@ -32,3 +32,8 @@ define('APP_TIMEZONE', 'Europe/Moscow');
 define('APP_REMIND_TIME', 30); // delay between reminds
 define('APP_PASS_TIME', 180); // pass expires time
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
+define('APP_COMMENT_LENGTH', 80);
+
+define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');
+define('APP_UPLOAD_MIMES', array('image/png', 'image/gif', 'image/jpeg'));
+define('APP_UPLOAD_MAXSIZE', '10M');
