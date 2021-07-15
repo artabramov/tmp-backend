@@ -15,6 +15,7 @@ class PostInsert
         $post_title = (string) Flight::request()->query['post_title'];
         $post_tags = explode(',', mb_strtolower((string) Flight::request()->query['post_tags'], 'UTF-8'));
         $post_tags = array_map(fn($value) => trim($value) , $post_tags);
+        $post_tags = array_filter($post_tags, fn($value) => !empty($value));
         $post_tags = array_unique($post_tags);
 
         if(empty($user_token)) {
@@ -81,13 +82,15 @@ class PostInsert
         Flight::get('em')->flush();
 
         // -- Post tags --
-        foreach($post_tags as $post_tag) {
-            $tag = new Tag();
-            $tag->post_id = $post->id;
-            $tag->tag_value = $post_tag;
-            $tag->post = $post;
-            Flight::get('em')->persist($tag);
-            Flight::get('em')->flush();
+        if(!empty($post_tags)) {
+            foreach($post_tags as $post_tag) {
+                $tag = new Tag();
+                $tag->post_id = $post->id;
+                $tag->tag_value = $post_tag;
+                $tag->post = $post;
+                Flight::get('em')->persist($tag);
+                Flight::get('em')->flush();
+            }
         }
 
         // -- End --

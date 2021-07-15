@@ -10,8 +10,6 @@ use \App\Exceptions\AppException;
  */
 class Comment
 {
-    protected $error;
-
     /**
      * @Id
      * @Column(type="integer")
@@ -60,10 +58,17 @@ class Comment
      */
     private $post;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Upload", mappedBy="comment", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="comment_id", referencedColumnName="id")
+     */
+    private $uploads;
+
     public function __construct() {
-        $this->error = '';
         $this->create_date = new \DateTime('now');
         $this->update_date = new \DateTime('1970-01-01 00:00:00');
+        $this->uploads = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set( $key, $value ) {

@@ -10,8 +10,6 @@ use \App\Exceptions\AppException;
  */
 class Tag
 {
-    protected $error;
-
     /**
      * @Id
      * @Column(type="integer")

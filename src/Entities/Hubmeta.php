@@ -10,8 +10,6 @@ use \App\Exceptions\AppException;
  */
 class Hubmeta
 {
-    protected $error;
-
     /**
      * @Id
      * @Column(type="integer")

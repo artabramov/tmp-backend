@@ -58,11 +58,38 @@ class UserRegister
         $qb1->select('count(role.id)')->from('App\Entities\Role', 'role')->where($qb1->expr()->eq('role.user_id', $auth->id));
         $qb1_result = $qb1->getQuery()->getResult();
 
-        // -- Auth meta --
+        // -- Auth meta (roles_count) --
         $auth_meta = new Usermeta();
         $auth_meta->user_id = $auth->id;
         $auth_meta->meta_key = 'roles_count';
         $auth_meta->meta_value = $qb1_result[0][1];
+        $auth_meta->user = $auth;
+        Flight::get('em')->persist($auth_meta);
+        Flight::get('em')->flush();
+
+        // -- Auth meta (uploads_size) --
+        $auth_meta = new Usermeta();
+        $auth_meta->user_id = $auth->id;
+        $auth_meta->meta_key = 'uploads_size';
+        $auth_meta->meta_value = 0;
+        $auth_meta->user = $auth;
+        Flight::get('em')->persist($auth_meta);
+        Flight::get('em')->flush();
+
+        // -- Auth meta (premium_limit) --
+        $auth_meta = new Usermeta();
+        $auth_meta->user_id = $auth->id;
+        $auth_meta->meta_key = 'premium_limit';
+        $auth_meta->meta_value = 0;
+        $auth_meta->user = $auth;
+        Flight::get('em')->persist($auth_meta);
+        Flight::get('em')->flush();
+
+        // -- Auth meta (premium_expire) --
+        $auth_meta = new Usermeta();
+        $auth_meta->user_id = $auth->id;
+        $auth_meta->meta_key = 'premium_expire';
+        $auth_meta->meta_value = '1970-01-01 00:00:00';
         $auth_meta->user = $auth;
         Flight::get('em')->persist($auth_meta);
         Flight::get('em')->flush();

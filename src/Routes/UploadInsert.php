@@ -1,26 +1,26 @@
 <?php
 namespace App\Routes;
 use \Flight;
-use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Comment;
+use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Comment, \App\Entities\Upload;
 use \App\Exceptions\AppException;
 
-class CommentInsert
+class UploadInsert
 {
     public function do() {
 
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
-        $post_id = (int) Flight::request()->query['post_id'];
-        $comment_content = (string) Flight::request()->query['comment_content'];
+        $comment_id = (int) Flight::request()->query['comment_id'];
+        $files = Flight::request()->files;
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
 
-        } elseif(empty($post_id)) {
-            throw new AppException('Initial error: post_id is empty.');
+        } elseif(empty($comment_id)) {
+            throw new AppException('Initial error: comment_id is empty.');
 
-        } elseif(empty($comment_content)) {
-            throw new AppException('Initial error: comment_content is empty.');
+        } elseif($files->count() == 0) {
+            throw new AppException('Initial error: files are empty.');
         }        
 
         // -- Auth --
@@ -33,8 +33,16 @@ class CommentInsert
             throw new AppException('Auth error: user_token is trash.');
         }
 
+
+        // -- Comment --
+        $comment = Flight::get('em')->find('App\Entities\Comment', $comment_id);
+
+        if(empty($comment)) {
+            throw new AppException('Comment error: comment_id not found.');
+        }
+
         // -- Post --
-        $post = Flight::get('em')->find('App\Entities\Post', $post_id);
+        $post = Flight::get('em')->find('App\Entities\Post', $comment->post_id);
 
         if(empty($post)) {
             throw new AppException('Post error: post_id not found.');
@@ -63,53 +71,38 @@ class CommentInsert
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Comment --
-        $comment = new Comment();
-        $comment->user_id = $auth->id;
-        $comment->post_id = $post->id;
-        $comment->comment_content = $comment_content;
-        $comment->post = $post;
-        Flight::get('em')->persist($comment);
-        Flight::get('em')->flush();
+        // -- Auth meta (uploads_size) --
+        $auth_meta = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
 
+        if((int) $auth_meta->meta_value >= APP_UPLOAD_LIMIT) {
+            throw new AppException('Limit error: uploads limit exceeded.');
+        }
 
-
-
-
-
-
-
-
-
-        /*
+        // == Upload ==
         $path = APP_UPLOAD_PATH . date('Y-m-d');
         if(!file_exists($path)) {
             mkdir($path, 0777, true);
         }
 
-        $keys = Flight::request()->files->keys();
-        $storage = new \Upload\Storage\FileSystem( $path );
-        $file = new \Upload\File( $keys[0], $storage );
+        $keys = $files->keys();
+        $storage = new \Upload\Storage\FileSystem($path);
+        $file = new \Upload\File($keys[0], $storage);
         
         // Optionally you can rename the file on upload
         $new_filename = $auth->id . '-' . uniqid();
         $file->setName( $new_filename );
         
-        // Validate file upload
-        // MimeType List => http://www.iana.org/assignments/media-types/media-types.xhtml
+        // Validate file upload: http://www.iana.org/assignments/media-types/media-types.xhtml
         $file->addValidations(array(
-
-            //You can also add multi mimetype validation
             new \Upload\Validation\Mimetype(APP_UPLOAD_MIMES),
-        
-            // Ensure file is no larger than 5M (use "B", "K", M", or "G")
             new \Upload\Validation\Size(APP_UPLOAD_MAXSIZE)
         ));
+        
         
         // Access data about the file that has been uploaded
         $data = array(
             'original_name' => Flight::request()->files[$keys[0]]['name'],
-            '_name'     => $file->getName(),
+            '_name'      => $file->getName(),
             'name'       => $file->getNameWithExtension(),
             'extension'  => $file->getExtension(),
             'mime'       => $file->getMimetype(),
@@ -118,30 +111,36 @@ class CommentInsert
             'dimensions' => $file->getDimensions()
         );
         
-        // Try to upload file
+        // -- Upload the file --
         try {
             $file->upload();
 
-            $upload = new \App\Entities\Upload;
-            Flight::insert( $upload, [
-                'user_id' => $user_id,
-                'comment_id' => $comment_id,
-                'upload_name' => $data['original_name'],
-                'upload_mime' => $data['mime'],
-                'upload_size' => $data['size'],
-                'upload_file' => $path . '/' . $data['name'],
-            ]);
+        } catch (\Exception $e) {
+            throw new AppException('Upload error: file upload error.');
+        }
 
-            if( !Flight::empty( 'error' )) {
-                unlink( $path . '/' . $data['name'] );
-            }
+        // -- Etc --
+        try {
+
+            // -- Upload --
+            $upload = new Upload();
+            $upload->comment_id = $comment->id;
+            $upload->upload_name = $data['original_name'];
+            $upload->upload_file = $path . '/' . $data['name'];
+            $upload->upload_mime = $data['mime'];
+            $upload->upload_size = $data['size'];
+            $upload->comment = $comment;
+            Flight::get('em')->persist($upload);
+            Flight::get('em')->flush();
+
+            // -- Uploads size --
+            $auth_meta->meta_value = ((int) $auth_meta->meta_value ) + $upload->upload_size;
+            Flight::get('em')->persist($auth_meta);
+            Flight::get('em')->flush();
 
         } catch (\Exception $e) {
-            //Flight::set( 'e', $e );
-            $errors = $file->getErrors();
-            Flight::set( 'error', strtolower($errors[0]) );
+            unlink($path . '/' . $data['name']);
         }
-        */
 
 
 

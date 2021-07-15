@@ -119,126 +119,132 @@ Flight::before('json', function( &$params, &$output ) {
 });
 
 // -- Default --
-Flight::route( 'GET /', function() {
+Flight::route('GET /', function() {
 });
 
 // -- User register --
-Flight::route( 'POST /user', function() {
+Flight::route('POST /user', function() {
     $route = new \App\Routes\UserRegister();
     $route->do();
 });
 
 // -- User remind --
-Flight::route( 'GET /pass', function() {
+Flight::route('GET /pass', function() {
     $route = new \App\Routes\UserRemind();
     $route->do();
 });
 
 // -- User signin --
-Flight::route( 'POST /pass', function() {
+Flight::route('POST /pass', function() {
     $route = new \App\Routes\UserSignin();
     $route->do();
 });
 
 // -- User signout --
-Flight::route( 'PUT /token', function() {
+Flight::route('PUT /token', function() {
     $route = new \App\Routes\UserSignout();
     $route->do();
 });
 
 // -- User auth --
-Flight::route( 'POST /token', function() {
+Flight::route('POST /token', function() {
     $route = new \App\Routes\UserAuth();
     $route->do();
 });
 
 // -- User select - 
-Flight::route( 'GET /user/@user_id', function($user_id) {
+Flight::route('GET /user/@user_id', function($user_id) {
     $route = new \App\Routes\UserSelect();
     $route->do($user_id);
 });
 
 // -- User update --
-Flight::route( 'PUT /user', function() {
+Flight::route('PUT /user', function() {
     $route = new \App\Routes\UserUpdate();
     $route->do();
 });
 
 // -- User query --
-Flight::route( 'GET /users', function() {
+Flight::route('GET /users', function() {
     $route = new \App\Routes\UserQuery();
     $route->do();
 });
 
 // -- Hub insert --
-Flight::route( 'POST /hub', function() {
+Flight::route('POST /hub', function() {
     $route = new \App\Routes\HubInsert();
     $route->do();
 });
 
 // -- Hub select - 
-Flight::route( 'GET /hub/@hub_id', function($hub_id) {
+Flight::route('GET /hub/@hub_id', function($hub_id) {
     $route = new \App\Routes\HubSelect();
     $route->do($hub_id);
 });
 
 // -- Hub update --
-Flight::route( 'PUT /hub/@hub_id', function($hub_id) {
+Flight::route('PUT /hub/@hub_id', function($hub_id) {
     $route = new \App\Routes\HubUpdate();
     $route->do($hub_id);
 });
 
 // -- Hub delete --
-Flight::route( 'DELETE /hub/@hub_id', function($hub_id) {
+Flight::route('DELETE /hub/@hub_id', function($hub_id) {
     $route = new \App\Routes\HubDelete();
     $route->do($hub_id);
 });
 
 // -- Hub query --
-Flight::route( 'GET /hubs', function() {
+Flight::route('GET /hubs', function() {
     $route = new \App\Routes\HubQuery();
     $route->do();
 });
 
 // -- Role insert --
-Flight::route( 'POST /role', function() {
+Flight::route('POST /role', function() {
     $route = new \App\Routes\RoleInsert();
     $route->do();
 });
 
 // -- Role update --
-Flight::route( 'PUT /role', function() {
+Flight::route('PUT /role', function() {
     $route = new \App\Routes\RoleUpdate();
     $route->do();
 });
 
 // -- Role delete --
-Flight::route( 'DELETE /role', function() {
+Flight::route('DELETE /role', function() {
     $route = new \App\Routes\RoleDelete();
     $route->do();
 });
 
 // -- Role query --
-Flight::route( 'GET /roles', function() {
+Flight::route('GET /roles', function() {
     $route = new \App\Routes\RoleQuery();
     $route->do();
 });
 
 // -- Post insert --
-Flight::route( 'POST /post', function() {
+Flight::route('POST /post', function() {
     $route = new \App\Routes\PostInsert();
     $route->do();
 });
 
 // -- Post query --
-Flight::route( 'GET /posts', function() {
+Flight::route('GET /posts', function() {
     $route = new \App\Routes\PostQuery();
     $route->do();
 });
 
 // -- Comment insert --
-Flight::route( 'POST /comment', function() {
+Flight::route('POST /comment', function() {
     $route = new \App\Routes\CommentInsert();
+    $route->do();
+});
+
+// -- Upload insert --
+Flight::route('POST /upload', function() {
+    $route = new \App\Routes\UploadInsert();
     $route->do();
 });
 

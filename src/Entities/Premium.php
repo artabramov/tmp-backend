@@ -5,10 +5,9 @@ use \App\Exceptions\AppException;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="users_roles")
- * @Cache("NONSTRICT_READ_WRITE")
+ * @Table(name="users_premiums")
  */
-class Role
+class Premium
 {
     /**
      * @Id
@@ -31,28 +30,27 @@ class Role
     protected $update_date;
 
     /**
+     * @Column(type="datetime")
+     * @var DateTime
+     */
+    protected $expire_date;
+
+    /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
-    private $hub_id;
-
-    /** 
-     * @Column(type="string", columnDefinition="ENUM('admin', 'editor', 'reader)") 
-     * @var string
-     */
-    private $role_status;
+    private $premium_limit;
 
     public function __construct() {
         $this->create_date = new \DateTime('now');
         $this->update_date = new \DateTime('1970-01-01 00:00:00');
+        $this->expire_date = new \DateTime('1970-01-01 00:00:00');
     }
 
     public function __set( $key, $value ) {
@@ -82,22 +80,16 @@ class Role
     public function validate() {
 
         if(empty($this->user_id)) {
-            throw new AppException('Role error: user_id is empty.');
+            throw new AppException('Premium error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            throw new AppException('Role error: user_id is not numeric.');
+            throw new AppException('Premium error: user_id is not numeric.');
 
-        } elseif(empty($this->hub_id)) {
-            throw new AppException('Role error: hub_id is empty.');
+        } elseif(empty($this->premium_limit)) {
+            throw new AppException('Premium error: premium_limit is empty.');
 
-        } elseif(!is_numeric($this->hub_id)) {
-            throw new AppException('Role error: hub_id is not numeric.');
-
-        } elseif(empty($this->role_status)) {
-            throw new AppException('Role error: role_status is empty.');
-
-        } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
-            throw new AppException('Role error: role_status is incorrect.');
+        } elseif(!is_numeric($this->premium_limit)) {
+            throw new AppException('Premium error: premium_limit is not numeric.');
         }
     }
 }

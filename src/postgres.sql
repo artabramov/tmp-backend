@@ -26,6 +26,17 @@ CREATE TABLE IF NOT EXISTS users_meta (
     CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
 );
 
+-- premiums
+--
+--CREATE TABLE IF NOT EXISTS users_premiums (
+--    id            BIGSERIAL NOT NULL PRIMARY KEY,
+--    create_date   TIMESTAMP NOT NULL,
+--    update_date   TIMESTAMP NOT NULL,
+--    expire_date   TIMESTAMP NOT NULL,
+--    user_id       BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+--    premium_limit INT NOT NULL
+--);
+
 -- hubs
 
 CREATE TYPE hub_status AS ENUM ('custom', 'trash');
@@ -108,8 +119,8 @@ CREATE TABLE IF NOT EXISTS posts_comments (
     id              BIGSERIAL NOT NULL PRIMARY KEY,
     create_date     TIMESTAMP NOT NULL,
     update_date     TIMESTAMP NOT NULL,
-    user_id         SERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    post_id         SERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    user_id         BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    post_id         BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_content TEXT NOT NULL
 );
 
@@ -119,7 +130,7 @@ CREATE TABLE IF NOT EXISTS uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    --user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGSERIAL REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
@@ -135,8 +146,8 @@ DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
-DROP TABLE IF EXISTS posts_comments;
 DROP TABLE IF EXISTS uploads;
+DROP TABLE IF EXISTS posts_comments;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS hubs;
 DROP TABLE IF EXISTS users;

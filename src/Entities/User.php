@@ -10,8 +10,6 @@ use \App\Exceptions\AppException;
  */
 class User
 {
-    protected $error;
-
     /**
      * @Id
      * @Column(type="integer")
@@ -79,7 +77,6 @@ class User
     private $user_meta;
 
     public function __construct() {
-        $this->error = '';
         $this->create_date = new \DateTime('now');
         $this->update_date = new \DateTime('1970-01-01 00:00:00');
         $this->remind_date = new \DateTime('1970-01-01 00:00:00');

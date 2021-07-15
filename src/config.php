@@ -36,4 +36,5 @@ define('APP_COMMENT_LENGTH', 80);
 
 define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('APP_UPLOAD_MIMES', array('image/png', 'image/gif', 'image/jpeg'));
-define('APP_UPLOAD_MAXSIZE', '10M');
+define('APP_UPLOAD_MAXSIZE', '10M'); // max size of one file
+define('APP_UPLOAD_LIMIT', '1000000'); // default size limit of all files
