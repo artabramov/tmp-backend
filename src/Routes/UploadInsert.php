@@ -71,11 +71,13 @@ class UploadInsert
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Auth meta (uploads_size) --
-        $auth_meta = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
+        // -- Auth meta --
+        $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
+        $premium_limit = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_limit']);
+        $premium_expire = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_expire']);
 
-        if((int) $auth_meta->meta_value >= APP_UPLOAD_LIMIT) {
-            throw new AppException('Limit error: uploads limit exceeded.');
+        if((int) $uploads_size->meta_value >= APP_UPLOAD_LIMIT and (new \DateTime('now') >= new \DateTime($premium_expire->meta_value) or (int) $uploads_size->meta_value >= (int) $premium_limit->meta_value)) {
+            throw new AppException('Upload error: uploads limit exceeded.');
         }
 
         // == Upload ==
@@ -134,15 +136,13 @@ class UploadInsert
             Flight::get('em')->flush();
 
             // -- Uploads size --
-            $auth_meta->meta_value = ((int) $auth_meta->meta_value ) + $upload->upload_size;
-            Flight::get('em')->persist($auth_meta);
+            $uploads_size->meta_value = ((int) $uploads_size->meta_value) + $upload->upload_size;
+            Flight::get('em')->persist($uploads_size);
             Flight::get('em')->flush();
 
         } catch (\Exception $e) {
             unlink($path . '/' . $data['name']);
         }
-
-
 
         // -- End --
         Flight::json([ 
