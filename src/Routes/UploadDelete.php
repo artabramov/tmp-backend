@@ -7,11 +7,12 @@ use \App\Exceptions\AppException;
 
 class UploadDelete
 {
-    public function do() {
+    public function do($upload_id) {
 
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
-        $upload_id = (int) Flight::request()->query['upload_id'];
+        //$upload_id = (int) Flight::request()->query['upload_id'];
+        $upload_id = (int) $upload_id;
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
@@ -75,7 +76,7 @@ class UploadDelete
         Flight::get('em')->remove($upload);
         Flight::get('em')->flush();
 
-        // -- Recount total uploads size --
+        // -- Recount uploads size --
         $qb2 = Flight::get('em')->createQueryBuilder();
         $qb2->select('comment.id')
             ->from('App\Entities\Comment', 'comment')
@@ -90,7 +91,7 @@ class UploadDelete
         $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
         $uploads_size->meta_value = (int) $qb1_result[0][1];;
         Flight::get('em')->persist($uploads_size);
-        Flight::get('em')->flush();  
+        Flight::get('em')->flush();
 
         // -- End --
         Flight::json([ 

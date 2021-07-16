@@ -255,9 +255,9 @@ Flight::route('POST /upload', function() {
 });
 
 // -- Upload delete --
-Flight::route('DELETE /upload', function() {
+Flight::route('DELETE /upload/@upload_id', function($upload_id) {
     $route = new \App\Routes\UploadDelete();
-    $route->do();
+    $route->do($upload_id);
 });
 
 // -- Go! --

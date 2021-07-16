@@ -92,7 +92,7 @@ class CommentDelete
         Flight::get('em')->remove($comment);
         Flight::get('em')->flush();
 
-        // -- Recount total uploads size --
+        // -- Recount total user uploads size --
         $qb2 = Flight::get('em')->createQueryBuilder();
         $qb2->select('comment.id')
             ->from('App\Entities\Comment', 'comment')
