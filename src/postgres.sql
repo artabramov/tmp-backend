@@ -26,16 +26,16 @@ CREATE TABLE IF NOT EXISTS users_meta (
     CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
 );
 
--- premiums
---
---CREATE TABLE IF NOT EXISTS users_premiums (
---    id            BIGSERIAL NOT NULL PRIMARY KEY,
---    create_date   TIMESTAMP NOT NULL,
---    update_date   TIMESTAMP NOT NULL,
---    expire_date   TIMESTAMP NOT NULL,
---    user_id       BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
---    premium_limit INT NOT NULL
---);
+-- users depots
+
+CREATE TABLE IF NOT EXISTS users_depots (
+    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    create_date TIMESTAMP NOT NULL,
+    update_date TIMESTAMP NOT NULL,
+    expire_date TIMESTAMP NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    depot_size  INT NOT NULL
+);
 
 -- hubs
 
@@ -130,7 +130,6 @@ CREATE TABLE IF NOT EXISTS uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    --user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGSERIAL REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
@@ -142,6 +141,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
+DROP TABLE IF EXISTS users_depots;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
