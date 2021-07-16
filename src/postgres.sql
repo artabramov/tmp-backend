@@ -138,7 +138,6 @@ CREATE TABLE IF NOT EXISTS uploads (
     upload_size INT NOT NULL
 );
 
-
 -- drop all
 
 DROP TABLE IF EXISTS users_meta;
