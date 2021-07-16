@@ -34,7 +34,8 @@ define('APP_PASS_TIME', 180); // pass expires time
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
 define('APP_COMMENT_LENGTH', 80);
 
-define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');
-define('APP_UPLOAD_MIMES', array('image/png', 'image/gif', 'image/jpeg'));
 define('APP_UPLOAD_MAXSIZE', '10M'); // max size of one file
-define('APP_UPLOAD_LIMIT', '1000000'); // default size limit of all files
+define('APP_UPLOAD_MAXNUMBER', 4); // number of maximum size of uploads per one time
+define('APP_UPLOADS_PATH', __DIR__ . '/../public/uploads/');
+define('APP_UPLOADS_MIMES', ['image/png', 'image/gif', 'image/jpeg']); // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
+define('APP_UPLOADS_LIMIT', '3000000'); // default size limit of all files

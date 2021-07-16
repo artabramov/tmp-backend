@@ -2,6 +2,7 @@
 namespace App\Routes;
 use \Flight;
 use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Comment, \App\Entities\Upload;
+use \Doctrine\DBAL\ParameterType;
 use \App\Exceptions\AppException;
 
 class UploadInsert
@@ -47,8 +48,8 @@ class UploadInsert
         if(empty($post)) {
             throw new AppException('Post error: post_id not found.');
 
-        } elseif($post->post_status == 'trash') {
-            throw new AppException('Post error: post_id is trash.');
+        } elseif($post->post_status != 'doing') {
+            throw new AppException('Post error: post_status is not doing.');
         }
 
         // -- Hub --
@@ -71,7 +72,7 @@ class UploadInsert
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Auth meta --
+        // -- Auth meta (check limits) --
         $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
         $premium_limit = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_limit']);
         $premium_expire = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_expire']);
@@ -88,18 +89,13 @@ class UploadInsert
 
         $keys = $files->keys();
         $storage = new \Upload\Storage\FileSystem($path);
+
         $file = new \Upload\File($keys[0], $storage);
-        
-        // Optionally you can rename the file on upload
-        $new_filename = $auth->id . '-' . uniqid();
-        $file->setName( $new_filename );
-        
-        // Validate file upload: http://www.iana.org/assignments/media-types/media-types.xhtml
-        $file->addValidations(array(
+        $file->setName($auth->id . '-' . uniqid());
+        $file->addValidations([
             new \Upload\Validation\Mimetype(APP_UPLOAD_MIMES),
             new \Upload\Validation\Size(APP_UPLOAD_MAXSIZE)
-        ));
-        
+        ]);
         
         // Access data about the file that has been uploaded
         $data = array(
@@ -124,7 +120,7 @@ class UploadInsert
         // -- Etc --
         try {
 
-            // -- Upload --
+            // -- Upload insert --
             $upload = new Upload();
             $upload->comment_id = $comment->id;
             $upload->upload_name = $data['original_name'];
@@ -135,10 +131,21 @@ class UploadInsert
             Flight::get('em')->persist($upload);
             Flight::get('em')->flush();
 
-            // -- Uploads size --
-            $uploads_size->meta_value = ((int) $uploads_size->meta_value) + $upload->upload_size;
+            // -- Recount total uploads size --
+            $qb2 = Flight::get('em')->createQueryBuilder();
+            $qb2->select('comment.id')
+                ->from('App\Entities\Comment', 'comment')
+                ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($auth->id, ParameterType::INTEGER)));
+    
+            $qb1 = Flight::get('em')->createQueryBuilder();
+            $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')
+                ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
+
+            $qb1_result = $qb1->getQuery()->getResult();
+
+            $uploads_size->meta_value = (int) $qb1_result[0][1];;
             Flight::get('em')->persist($uploads_size);
-            Flight::get('em')->flush();
+            Flight::get('em')->flush();            
 
         } catch (\Exception $e) {
             unlink($path . '/' . $data['name']);

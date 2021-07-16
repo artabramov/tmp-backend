@@ -242,9 +242,21 @@ Flight::route('POST /comment', function() {
     $route->do();
 });
 
+// -- Comment delete --
+Flight::route('DELETE /comment/@comment_id', function($comment_id) {
+    $route = new \App\Routes\CommentDelete();
+    $route->do($comment_id);
+});
+
 // -- Upload insert --
 Flight::route('POST /upload', function() {
     $route = new \App\Routes\UploadInsert();
+    $route->do();
+});
+
+// -- Upload delete --
+Flight::route('DELETE /upload', function() {
+    $route = new \App\Routes\UploadDelete();
     $route->do();
 });
 
