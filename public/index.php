@@ -230,6 +230,12 @@ Flight::route('POST /post', function() {
     $route->do();
 });
 
+// -- Post update --
+Flight::route('PUT /post/@post_id', function($post_id) {
+    $route = new \App\Routes\PostUpdate();
+    $route->do($post_id);
+});
+
 // -- Post query --
 Flight::route('GET /posts', function() {
     $route = new \App\Routes\PostQuery();
@@ -240,6 +246,12 @@ Flight::route('GET /posts', function() {
 Flight::route('POST /comment', function() {
     $route = new \App\Routes\CommentInsert();
     $route->do();
+});
+
+// -- Comment update --
+Flight::route('PUT /comment/@comment_id', function($comment_id) {
+    $route = new \App\Routes\CommentUpdate();
+    $route->do($comment_id);
 });
 
 // -- Comment delete --
