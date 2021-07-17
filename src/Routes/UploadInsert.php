@@ -72,19 +72,17 @@ class UploadInsert
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Uploads limits --
-        $premium_limit = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_limit']);
-        $premium_expire = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'premium_expire']);
-
-        $uploads_limit = new \DateTime($premium_expire->meta_value) < new \DateTime('now') ? APP_UPLOAD_LIMIT : (int) $premium_limit->meta_value;
+        // -- Depot --
+        $auth_depot = Flight::get('em')->getRepository('\App\Entities\Depot')->findOneBy(['user_id' => $auth->id], ['id' => 'DESC'], 1, 0);
+        $depot_size = $auth_depot->expire_date < new \DateTime('now') ? APP_DEPOT_SIZE : (int) $auth_depot->depot_size;
         $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
 
-        if((int) $uploads_size->meta_value >= $uploads_limit) {
-            throw new AppException('Upload error: uploads size limit exceeded.');
+        if((int) $uploads_size->meta_value >= $depot_size) {
+            throw new AppException('Upload error: depot size limit exceeded.');
         }
 
         // -- Make dir --
-        $path = APP_UPLOADS_PATH . date('Y-m-d');
+        $path = APP_UPLOAD_PATH . $auth->id . '/' . date('Y-m-d');
         if(!file_exists($path)) {
             try {
                 mkdir($path, 0777, true);
@@ -98,7 +96,7 @@ class UploadInsert
         if($files->count() == 0) {
             throw new AppException('Upload error: uploads are empty.');
 
-        } elseif($files->count() > APP_UPLOAD_MAXNUMBER) {
+        } elseif($files->count() > APP_UPLOAD_NUMBER) {
             throw new AppException('Upload error: uploads number limit exceeded.');
 
         } else {
@@ -107,7 +105,7 @@ class UploadInsert
             foreach($files->keys() as $key) {
 
                 $file = new \Upload\File($key, new \Upload\Storage\FileSystem($path));
-                $file->addValidations([new \Upload\Validation\Mimetype(APP_UPLOADS_MIMES), new \Upload\Validation\Size(APP_UPLOAD_MAXSIZE)]);
+                $file->addValidations([new \Upload\Validation\Mimetype(APP_UPLOAD_MIMES), new \Upload\Validation\Size(APP_UPLOAD_FILESIZE)]);
                 $file->setName(uniqid());
 
                 $tmp = [
@@ -124,6 +122,7 @@ class UploadInsert
                 }
 
                 $upload = new Upload();
+                $upload->user_id = $auth->id;
                 $upload->comment_id = $comment->id;
                 $upload->upload_name = $tmp['original_name'];
                 $upload->upload_file = $tmp['name'];
@@ -135,6 +134,7 @@ class UploadInsert
             }
 
             // -- Recount uploads size --
+            /*
             $qb2 = Flight::get('em')->createQueryBuilder();
             $qb2->select('comment.id')
                 ->from('App\Entities\Comment', 'comment')
@@ -149,6 +149,18 @@ class UploadInsert
             $uploads_size->meta_value = (int) $qb1_result[0][1];;
             Flight::get('em')->persist($uploads_size);
             Flight::get('em')->flush();
+            */
+
+            // -- Recount uploads size --
+            $qb1 = Flight::get('em')->createQueryBuilder();
+            $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')->where($qb1->expr()->eq('upload.user_id', $auth->id));
+            $qb1_result = $qb1->getQuery()->getResult();
+
+            $uploads_size->meta_value = (int) $qb1_result[0][1];;
+            Flight::get('em')->persist($uploads_size);
+            Flight::get('em')->flush();
+
+
         }
 
 

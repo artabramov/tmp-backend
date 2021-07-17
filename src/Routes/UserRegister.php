@@ -1,7 +1,7 @@
 <?php
 namespace App\Routes;
 use \Flight, \DateTime;
-use \App\Entities\User, \App\Entities\Usermeta, \App\Entities\Hub, \App\Entities\Hubmeta, \App\Entities\Role;
+use \App\Entities\User, \App\Entities\Usermeta, \App\Entities\Hub, \App\Entities\Hubmeta, \App\Entities\Role, \App\Entities\Depot;
 use \App\Exceptions\AppException;
 
 class UserRegister
@@ -76,22 +76,12 @@ class UserRegister
         Flight::get('em')->persist($auth_meta);
         Flight::get('em')->flush();
 
-        // -- Auth meta (premium_limit) --
-        $auth_meta = new Usermeta();
-        $auth_meta->user_id = $auth->id;
-        $auth_meta->meta_key = 'premium_limit';
-        $auth_meta->meta_value = 0;
-        $auth_meta->user = $auth;
-        Flight::get('em')->persist($auth_meta);
-        Flight::get('em')->flush();
-
-        // -- Auth meta (premium_expire) --
-        $auth_meta = new Usermeta();
-        $auth_meta->user_id = $auth->id;
-        $auth_meta->meta_key = 'premium_expire';
-        $auth_meta->meta_value = '1970-01-01 00:00:00';
-        $auth_meta->user = $auth;
-        Flight::get('em')->persist($auth_meta);
+        // -- Premium depot --
+        $auth_depot = new Depot();
+        $auth_depot->user_id = $auth->id;
+        $auth_depot->expire_date = new \DateTime('2022-01-01 00:00:00');
+        $auth_depot->depot_size = 1000000;
+        Flight::get('em')->persist($auth_depot);
         Flight::get('em')->flush();
 
         // -- Count roles (hub meta) --
@@ -106,6 +96,16 @@ class UserRegister
         $hub_meta->hub = $hub;
         Flight::get('em')->persist($hub_meta);
         Flight::get('em')->flush();
+
+        // -- Make uploads dir --
+        if(!file_exists(APP_UPLOAD_PATH . $auth->id)) {
+            try {
+                mkdir(APP_UPLOAD_PATH . $auth->id, 0777, true);
+
+            } catch (\Exception $e) {
+                throw new AppException('Upload error: make dir error.');
+            }
+        }
 
         // -- Email --
         Flight::get('phpmailer')->addAddress($auth->user_email, $auth->user_name);

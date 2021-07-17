@@ -5,9 +5,9 @@ use \App\Exceptions\AppException;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="users_premiums")
+ * @Table(name="users_depots")
  */
-class Premium
+class Depot
 {
     /**
      * @Id
@@ -45,7 +45,7 @@ class Premium
      * @Column(type="integer")
      * @var int
      */
-    private $premium_limit;
+    private $depot_size;
 
     public function __construct() {
         $this->create_date = new \DateTime('now');
@@ -80,16 +80,16 @@ class Premium
     public function validate() {
 
         if(empty($this->user_id)) {
-            throw new AppException('Premium error: user_id is empty.');
+            throw new AppException('Depot error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            throw new AppException('Premium error: user_id is not numeric.');
+            throw new AppException('Depot error: user_id is not numeric.');
 
-        } elseif(empty($this->premium_limit)) {
-            throw new AppException('Premium error: premium_limit is empty.');
+        } elseif(empty($this->depot_size)) {
+            throw new AppException('Depot error: depot_size is empty.');
 
-        } elseif(!is_numeric($this->premium_limit)) {
-            throw new AppException('Premium error: premium_limit is not numeric.');
+        } elseif(!is_numeric($this->depot_size)) {
+            throw new AppException('Depot error: depot_size is not numeric.');
         }
     }
 }

@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS uploads (
     id          BIGSERIAL NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
+    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGSERIAL REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
@@ -172,7 +173,7 @@ TRUNCATE TABLE users;
 -- select all
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_depots; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 
 -- ...
 
