@@ -33,9 +33,7 @@ define('APP_REMIND_TIME', 30); // delay between reminds
 define('APP_PASS_TIME', 180); // pass expires time
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
 define('APP_COMMENT_LENGTH', 80);
-
 define('APP_DEPOT_SIZE', '1000000'); // default depot size
-
 define('APP_UPLOAD_FILESIZE', '10M'); // max size of one file
 define('APP_UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
 define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');

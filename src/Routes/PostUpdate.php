@@ -88,6 +88,35 @@ class PostUpdate
         }
         */
 
+
+
+
+        // -- Remove old tags --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('tag.id')->from('App\Entities\Tag', 'tag')->where($qb1->expr()->eq('tag.post_id', $post->id));
+        $tags_ids = $qb1->getQuery()->getResult();
+        $tags = array_map(fn($n) => Flight::get('em')->find('App\Entities\Tag', $n['id']), $tags_ids);
+
+        foreach($tags as $tag) {
+            Flight::get('em')->remove($tag);
+            Flight::get('em')->flush();
+        }
+
+        // -- Insert new tags --
+        if(!empty($post_tags)) {
+            foreach($post_tags as $post_tag) {
+                $tag = new Tag();
+                $tag->post_id = $post->id;
+                $tag->tag_value = $post_tag;
+                $tag->post = $post;
+                Flight::get('em')->persist($tag);
+                Flight::get('em')->flush();
+            }
+        }
+
+
+
+
         // -- End --
         Flight::json([ 
             'success' => 'true',
