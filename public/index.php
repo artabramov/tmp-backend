@@ -236,6 +236,12 @@ Flight::route('PUT /post/@post_id', function($post_id) {
     $route->do($post_id);
 });
 
+// -- Post delete --
+Flight::route('DELETE /post/@post_id', function($post_id) {
+    $route = new \App\Routes\PostDelete();
+    $route->do($post_id);
+});
+
 // -- Post query --
 Flight::route('GET /posts', function() {
     $route = new \App\Routes\PostQuery();

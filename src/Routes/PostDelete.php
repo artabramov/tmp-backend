@@ -1,35 +1,23 @@
 <?php
 namespace App\Routes;
 use \Flight;
-use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Tag, \App\Entities\Postmeta;
+use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Tag, \App\Entities\Postmeta, \App\Entities\Upload;
+use \Doctrine\DBAL\ParameterType;
 use \App\Exceptions\AppException;
 
-class PostUpdate
+class PostDelete
 {
     public function do($post_id) {
 
         // -- Initial --
         $user_token = (string) Flight::request()->query['user_token'];
         $post_id = (int) $post_id;
-        $post_status = (string) Flight::request()->query['post_status'];
-        $post_title = (string) Flight::request()->query['post_title'];
-
-        $post_tags = explode(',', mb_strtolower((string) Flight::request()->query['post_tags'], 'UTF-8'));
-        $post_tags = array_map(fn($value) => trim($value) , $post_tags);
-        $post_tags = array_filter($post_tags, fn($value) => !empty($value));
-        $post_tags = array_unique($post_tags);
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
 
         } elseif(empty($post_id)) {
             throw new AppException('Initial error: post_id is empty.');
-
-        } elseif(empty($post_status)) {
-            throw new AppException('Initial error: post_status is empty.');
-
-        } elseif(empty($post_title)) {
-            throw new AppException('Initial error: post_title is empty.');
         }        
 
         // -- Auth --
@@ -73,32 +61,42 @@ class PostUpdate
             throw new AppException('Auth role error: role_status must be editor or admin.');
         }
 
-        // -- Post --
-        $post->post_status = $post_status
-        $post->post_title = $post_title;
-        Flight::get('em')->persist($post);
+        // -- Delete uploads --
+        $qb2 = Flight::get('em')->createQueryBuilder();
+        $qb2->select('comment.id')
+            ->from('App\Entities\Comment', 'comment')
+            ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($auth->id, ParameterType::INTEGER)));
+
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('upload.id')->from('App\Entities\Upload', 'upload')
+            ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
+
+        $uploads_ids = $qb1->getQuery()->getResult();
+        $uploads = array_map(fn($n) => Flight::get('em')->find('App\Entities\Upload', $n['id']), $uploads_ids);
+
+        foreach($uploads as $upload) {
+
+            if(file_exists($upload->upload_file)) {
+                unlink($upload->upload_file);
+            }
+
+            Flight::get('em')->remove($upload);
+            Flight::get('em')->flush();
+        }
+
+        // -- Recount uploads size --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')->where($qb1->expr()->eq('upload.user_id', $auth->id));
+        $qb1_result = $qb1->getQuery()->getResult();
+
+        $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
+        $uploads_size->meta_value = (int) $qb1_result[0][1];;
+        Flight::get('em')->persist($uploads_size);
         Flight::get('em')->flush();
 
-        // -- Remove old tags --
-        $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('tag.id')->from('App\Entities\Tag', 'tag')->where($qb1->expr()->eq('tag.post_id', $post->id));
-        $tags_ids = $qb1->getQuery()->getResult();
-        $tags = array_map(fn($n) => Flight::get('em')->find('App\Entities\Tag', $n['id']), $tags_ids);
-
-        foreach($tags as $tag) {
-            Flight::get('em')->remove($tag);
-            Flight::get('em')->flush();
-        }
-
-        // -- Insert new tags --
-        foreach($post_tags as $post_tag) {
-            $tag = new Tag();
-            $tag->post_id = $post->id;
-            $tag->tag_value = $post_tag;
-            $tag->post = $post;
-            Flight::get('em')->persist($tag);
-            Flight::get('em')->flush();
-        }
+        // -- Post delete --
+        Flight::get('em')->remove($post);
+        Flight::get('em')->flush();
 
         // -- End --
         Flight::json([ 
