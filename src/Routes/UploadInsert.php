@@ -1,15 +1,28 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Comment, \App\Entities\Upload;
-use \Doctrine\DBAL\ParameterType;
-use \App\Exceptions\AppException;
+use \Flight, 
+    \DateTime, 
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\User, 
+    \App\Entities\Usermeta, 
+    \App\Entities\Role, 
+    \App\Entities\Vol, 
+    \App\Entities\Hub, 
+    \App\Entities\Hubmeta, 
+    \App\Entities\Post, 
+    \App\Entities\Postmeta, 
+    \App\Entities\Tag, 
+    \App\Entities\Comment, 
+    \App\Entities\Upload;
 
 class UploadInsert
 {
     public function do() {
 
-        // -- Initial --
+        // -- Vars --
+
         $user_token = (string) Flight::request()->query['user_token'];
         $comment_id = (int) Flight::request()->query['comment_id'];
         $files = Flight::request()->files;
@@ -24,18 +37,20 @@ class UploadInsert
             throw new AppException('Initial error: files are empty.');
         }        
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // -- User --
 
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user_token not found.');
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User error: user_token is trash.');
         }
 
 
         // -- Comment --
+
         $comment = Flight::get('em')->find('App\Entities\Comment', $comment_id);
 
         if(empty($comment)) {
@@ -43,6 +58,7 @@ class UploadInsert
         }
 
         // -- Post --
+
         $post = Flight::get('em')->find('App\Entities\Post', $comment->post_id);
 
         if(empty($post)) {
@@ -53,6 +69,7 @@ class UploadInsert
         }
 
         // -- Hub --
+
         $hub = Flight::get('em')->find('App\Entities\Hub', $post->hub_id);
 
         if(empty($hub)) {
@@ -62,27 +79,39 @@ class UploadInsert
             throw new AppException('Hub error: hub_id is trash.');
         }
 
-        // -- Auth role --
-        $auth_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $auth->id]);
+        // -- User role --
 
-        if(empty($auth_role)) {
-            throw new AppException('Auth role error: user_role not found.');
+        $user_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
 
-        } elseif(!in_array($auth_role->role_status, ['editor', 'admin'])) {
-            throw new AppException('Auth role error: role_status must be editor or admin.');
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
+
+        } elseif(!in_array($user_role->role_status, ['editor', 'admin'])) {
+            throw new AppException('User role error: role_status must be editor or admin.');
         }
 
-        // -- Depot --
-        $auth_depot = Flight::get('em')->getRepository('\App\Entities\Depot')->findOneBy(['user_id' => $auth->id], ['id' => 'DESC'], 1, 0);
-        $depot_size = $auth_depot->expire_date < new \DateTime('now') ? APP_DEPOT_SIZE : (int) $auth_depot->depot_size;
-        $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
+        // -- User vol / uploads size --
 
-        if((int) $uploads_size->meta_value >= $depot_size) {
-            throw new AppException('Upload error: depot size limit exceeded.');
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('vol.id')
+            ->from('App\Entities\Vol', 'vol')
+            ->where($qb1->expr()->eq('vol.user_id', $user->id))
+            ->andWhere('vol.expire_date > :now')
+            ->setParameter('now', new DateTime('now'))
+            ->orderBy('vol.vol_size', 'DESC')
+            ->setMaxResults(1);
+
+        $qb1_result = $qb1->getQuery()->getResult();
+        $user_vol = Flight::get('em')->find('App\Entities\Vol', $qb1_result[0]['id']);
+        $user_meta = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $user->id, 'meta_key' => 'uploads_size']);
+
+        if((int) $user_meta->meta_value >= $user_vol->vol_size) {
+            throw new AppException('Upload error: vol size limit exceeded.');
         }
 
         // -- Make dir --
-        $path = APP_UPLOAD_PATH . $auth->id . '/' . date('Y-m-d');
+
+        $path = APP_UPLOAD_PATH . $user->id . '/' . date('Y-m-d');
         if(!file_exists($path)) {
             try {
                 mkdir($path, 0777, true);
@@ -93,6 +122,7 @@ class UploadInsert
         }
 
         // -- Upload files --
+
         if($files->count() == 0) {
             throw new AppException('Upload error: uploads are empty.');
 
@@ -101,7 +131,6 @@ class UploadInsert
 
         } else {
 
-            // -- Upload --
             foreach($files->keys() as $key) {
 
                 $file = new \Upload\File($key, new \Upload\Storage\FileSystem($path));
@@ -117,12 +146,13 @@ class UploadInsert
 
                 try {
                     $file->upload();
+
                 } catch (\Exception $e) {
                     throw new AppException('Upload error: file upload error.');
                 }
 
                 $upload = new Upload();
-                $upload->user_id = $auth->id;
+                $upload->user_id = $user->id;
                 $upload->comment_id = $comment->id;
                 $upload->upload_name = $tmp['original_name'];
                 $upload->upload_file = $tmp['name'];
@@ -133,21 +163,12 @@ class UploadInsert
                 Flight::get('em')->flush();
             }
 
-            /*
-            $qb1 = Flight::get('em')->createQueryBuilder();
-            $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')->where($qb1->expr()->eq('upload.user_id', $auth->id));
-            $qb1_result = $qb1->getQuery()->getResult();
-
-            $uploads_size->meta_value = (int) $qb1_result[0][1];;
-            Flight::get('em')->persist($uploads_size);
-            Flight::get('em')->flush();
-            */
-
             // -- Recount uploads size --
+
             $qb2 = Flight::get('em')->createQueryBuilder();
             $qb2->select('comment.id')
                 ->from('App\Entities\Comment', 'comment')
-                ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($auth->id, ParameterType::INTEGER)));
+                ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($user->id, ParameterType::INTEGER)));
     
             $qb1 = Flight::get('em')->createQueryBuilder();
             $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')
@@ -155,14 +176,13 @@ class UploadInsert
 
             $qb1_result = $qb1->getQuery()->getResult();
 
-            $uploads_size->meta_value = (int) $qb1_result[0][1];;
-            Flight::get('em')->persist($uploads_size);
+            $user_meta->meta_value = (int) $qb1_result[0][1];;
+            Flight::get('em')->persist($user_meta);
             Flight::get('em')->flush();
-
-
         }
 
         // -- End --
+
         Flight::json([ 
             'success' => 'true',
         ]);
