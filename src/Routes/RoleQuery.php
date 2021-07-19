@@ -1,56 +1,85 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Exceptions\AppException;
+use \Flight, 
+    \DateTime, 
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\User, 
+    \App\Entities\Usermeta, 
+    \App\Entities\Role, 
+    \App\Entities\Vol, 
+    \App\Entities\Hub, 
+    \App\Entities\Hubmeta, 
+    \App\Entities\Post, 
+    \App\Entities\Postmeta, 
+    \App\Entities\Tag, 
+    \App\Entities\Comment, 
+    \App\Entities\Upload;
 
 class RoleQuery
 {
     public function do() {
 
-        // -- Initial --
+        // -- Vars --
+
         $user_token = (string) Flight::request()->query['user_token'];
-        $user_id = (int) Flight::request()->query['user_id'];
         $hub_id = (int) Flight::request()->query['hub_id'];
         $offset = (int) Flight::request()->query['offset'];
 
         if(empty($user_token)) {
             throw new AppException('Initial error: user_token is empty.');
 
-        } elseif(empty($user_id) and empty($hub_id)) {
-            throw new AppException('Initial error: user_id or hub_id is empty.');
+        } elseif(empty($hub_id)) {
+            throw new AppException('Initial error: hub_id is empty.');
         } 
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // -- User --
 
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user_token not found.');
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User error: user_token is trash.');
+        }
+
+        // -- Hub --
+
+        $hub = Flight::get('em')->find('App\Entities\Hub', $hub_id);
+
+        if(empty($hub)) {
+            throw new AppException('Hub error: hub_id not found.');
+
+        } elseif($hub->hub_status == 'trash') {
+            throw new AppException('Hub error: hub_id is trash.');
+        }
+
+        // -- User role --
+
+        $user_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('User role error: role_status must be admin.');
         }
 
         // -- Roles --
+
         $qb1 = Flight::get('em')->createQueryBuilder();
-        if(!empty($user_id)) {
-            $qb1->select('role.id')->from('App\Entities\Role', 'role')
-                ->where($qb1->expr()->eq('role.user_id', $user_id))
-                ->orderBy('role.id', 'DESC')
-                ->setFirstResult($offset)
-                ->setMaxResults(APP_QUERY_LIMIT);
+        $qb1->select('role.id')->from('App\Entities\Role', 'role')
+            ->where($qb1->expr()->eq('role.hub_id', $hub_id))
+            ->orderBy('role.id', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults(APP_QUERY_LIMIT);
 
-        } elseif(!empty($hub_id)) {
-            $qb1->select('role.id')->from('App\Entities\Role', 'role')
-                ->where($qb1->expr()->eq('role.hub_id', $hub_id))
-                ->orderBy('role.id', 'DESC')
-                ->setFirstResult($offset)
-                ->setMaxResults(APP_QUERY_LIMIT);
-        }
-
-        $roles_ids = $qb1->getQuery()->getResult();
-        $roles = array_map(fn($n) => Flight::get('em')->find('App\Entities\Role', $n['id']), $roles_ids);
+        $roles = array_map(fn($n) => Flight::get('em')->find('App\Entities\Role', $n['id']), $qb1->getQuery()->getResult());
 
         // -- End --
+        
         Flight::json([
             'success' => 'true',
             'roles'=> array_map(fn($n) => [

@@ -30,16 +30,17 @@ CREATE TABLE IF NOT EXISTS users_meta (
     CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
 );
 
--- users depots
+-- users vols
 
-CREATE SEQUENCE users_depots_id_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE users_vols_id_seq START WITH 1 INCREMENT BY 1;
 
-CREATE TABLE IF NOT EXISTS users_depots (
-    id          BIGINT DEFAULT NEXTVAL('users_depots_id_seq'::regclass) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS users_vols (
+    id          BIGINT DEFAULT NEXTVAL('users_vols_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
+    expire_date TIMESTAMP NOT NULL,
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    depot_size  INT NOT NULL
+    vol_size    INT NOT NULL
 );
 
 -- hubs
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users_depots;
+DROP TABLE IF EXISTS users_vols;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
@@ -177,7 +178,7 @@ DROP TYPE IF EXISTS post_status;
 DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_meta_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_depots_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_vols_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS hubs_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS hubs_meta_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_id_seq CASCADE;
@@ -189,7 +190,7 @@ DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 -- select all
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_depots; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 
 -- ...
 

@@ -1,14 +1,28 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Entities\User;
-use \App\Exceptions\AppException;
+use \Flight, 
+    \DateTime, 
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\User, 
+    \App\Entities\Usermeta, 
+    \App\Entities\Role, 
+    \App\Entities\Vol, 
+    \App\Entities\Hub, 
+    \App\Entities\Hubmeta,
+    \App\Entities\Post, 
+    \App\Entities\Postmeta,
+    \App\Entities\Tag, 
+    \App\Entities\Comment,
+    \App\Entities\Upload;
 
 class UserUpdate
 {
     public function do() {
 
-        // -- Initial --
+        // -- Vars --
+
         $user_token = (string) Flight::request()->query['user_token'];
         $user_name = (string) Flight::request()->query['user_name'];
 
@@ -19,22 +33,26 @@ class UserUpdate
             throw new AppException('Initial error: user_name is empty.');
         } 
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // -- User --
 
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user_token not found.');
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User error: user_token is trash.');
         }
 
         // -- Update user --
-        $auth->user_name = !empty($user_name) ? $user_name : $auth->user_name;
-        Flight::get('em')->persist($auth);
+
+        $user->update_date = new DateTime('now');
+        $user->user_name = $user_name;
+        Flight::get('em')->persist($user);
         Flight::get('em')->flush();
 
         // -- End --
+
         Flight::json(['success' => 'true']);
     }
 }

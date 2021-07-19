@@ -1,13 +1,28 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Exceptions\AppException;
+use \Flight, 
+    \DateTime, 
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\User, 
+    \App\Entities\Usermeta, 
+    \App\Entities\Role, 
+    \App\Entities\Vol, 
+    \App\Entities\Hub, 
+    \App\Entities\Hubmeta,
+    \App\Entities\Post, 
+    \App\Entities\Postmeta,
+    \App\Entities\Tag, 
+    \App\Entities\Comment,
+    \App\Entities\Upload;
 
 class UserQuery
 {
     public function do() {
 
-        // -- Initial --
+        // -- Vars --
+        
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) Flight::request()->query['hub_id'];
         $offset = (int) Flight::request()->query['offset'];
@@ -19,31 +34,35 @@ class UserQuery
             throw new AppException('Initial error: hub_id is empty.');
         } 
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // -- User --
 
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user_token not found.');
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User error: user_token is trash.');
         }
 
         // -- Hub --
+
         $hub = Flight::get('em')->find('App\Entities\Hub', $hub_id);
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
         }
 
-        // -- Auth role --
-        $auth_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $auth->id]);
+        // -- User role --
 
-        if(empty($auth_role)) {
-            throw new AppException('Auth role error: user_role not found.');
+        $user_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
         }
 
         // -- Users --
+
         $qb1 = Flight::get('em')->createQueryBuilder();
         $qb1->select('role.user_id')
             ->from('App\Entities\Role', 'role')
@@ -57,8 +76,7 @@ class UserQuery
             ->setFirstResult($offset)
             ->setMaxResults(APP_QUERY_LIMIT);
 
-        $users_ids = $qb2->getQuery()->getResult();
-        $users = array_map(fn($n) => Flight::get('em')->find('App\Entities\User', $n['id']), $users_ids);
+        $users = array_map(fn($n) => Flight::get('em')->find('App\Entities\User', $n['id']), $qb2->getQuery()->getResult());
 
         // -- End --
         Flight::json([

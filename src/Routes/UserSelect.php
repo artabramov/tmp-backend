@@ -1,14 +1,28 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Entities\User;
-use \App\Exceptions\AppException;
+use \Flight, 
+    \DateTime, 
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\User, 
+    \App\Entities\Usermeta, 
+    \App\Entities\Role, 
+    \App\Entities\Vol, 
+    \App\Entities\Hub, 
+    \App\Entities\Hubmeta,
+    \App\Entities\Post, 
+    \App\Entities\Postmeta,
+    \App\Entities\Tag, 
+    \App\Entities\Comment,
+    \App\Entities\Upload;
 
 class UserSelect
 {
     public function do($user_id) {
     
-        // -- Initial --
+        // -- Vars --
+
         $user_token = (string) Flight::request()->query['user_token'];
         $user_id = (int) $user_id;
 
@@ -16,20 +30,22 @@ class UserSelect
             throw new AppException('Initial error: user_token is empty.');
         }
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // -- User --
 
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
-
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
-        }
-
-        // -- User ---
-        $user = Flight::get('em')->find('\App\Entities\User', $user_id);
+        $user = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
+            throw new AppException('User error: user_token not found.');
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User error: user_token is trash.');
+        }
+
+        // -- Member ---
+
+        $member = Flight::get('em')->find('\App\Entities\User', $user_id);
+
+        if(empty($member)) {
             throw new AppException('User error: user_id not found.');
         }
 
@@ -37,10 +53,10 @@ class UserSelect
         Flight::json([ 
             'success' => 'true',
             'user' => [
-                'id' => $user->id, 
-                'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
-                'user_status' => $user->user_status,
-                'user_name' => $user->user_name
+                'id' => $member->id, 
+                'create_date' => $member->create_date->format('Y-m-d H:i:s'), 
+                'user_status' => $member->user_status,
+                'user_name' => $member->user_name
             ]
         ]);
 
