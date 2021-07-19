@@ -1,9 +1,11 @@
 -- users
 
+CREATE SEQUENCE users_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 
+
 CREATE TABLE IF NOT EXISTS users (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('users_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
     remind_date TIMESTAMP NOT NULL,
@@ -16,11 +18,13 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- users meta
 
+CREATE SEQUENCE users_meta_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS users_meta (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('users_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
@@ -28,35 +32,39 @@ CREATE TABLE IF NOT EXISTS users_meta (
 
 -- users depots
 
+CREATE SEQUENCE users_depots_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS users_depots (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('users_depots_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    expire_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     depot_size  INT NOT NULL
 );
 
 -- hubs
 
+CREATE SEQUENCE hubs_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 
 CREATE TABLE IF NOT EXISTS hubs (
-    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('hubs_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    hub_status hub_status NOT NULL,
-    hub_name   VARCHAR(128) NOT NULL
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    hub_status  hub_status NOT NULL,
+    hub_name    VARCHAR(128) NOT NULL
 );
 
 -- hubs meta
 
+CREATE SEQUENCE hubs_meta_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS hubs_meta (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('hubs_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT hub_meta_uid UNIQUE(hub_id, meta_key)
@@ -64,50 +72,56 @@ CREATE TABLE IF NOT EXISTS hubs_meta (
 
 -- users roles
 
+CREATE SEQUENCE users_roles_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE role_status AS ENUM ('admin', 'editor', 'reader');
 
 CREATE TABLE IF NOT EXISTS users_roles (
-    id         BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('users_roles_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
     CONSTRAINT user_role_uid UNIQUE(user_id, hub_id)
 );
 
 -- posts
 
+CREATE SEQUENCE posts_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
 
 CREATE TABLE IF NOT EXISTS posts (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('posts_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    hub_id      BIGSERIAL REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,
     post_title  VARCHAR(255) NOT NULL
 );
 
 -- post tags
 
+CREATE SEQUENCE posts_tags_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS posts_tags (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('posts_tags_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
     CONSTRAINT post_tag_uid UNIQUE(post_id, tag_value)
 );
 
 -- posts meta
 
+CREATE SEQUENCE posts_meta_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS posts_meta (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('posts_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    post_id     BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT post_meta_uid UNIQUE(post_id, meta_key)
@@ -115,23 +129,26 @@ CREATE TABLE IF NOT EXISTS posts_meta (
 
 -- posts comments
 
+CREATE SEQUENCE posts_comments_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS posts_comments (
-    id              BIGSERIAL NOT NULL PRIMARY KEY,
+    id              BIGINT DEFAULT NEXTVAL('posts_comments_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date     TIMESTAMP NOT NULL,
     update_date     TIMESTAMP NOT NULL,
-    user_id         BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    post_id         BIGSERIAL REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    user_id         BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    post_id         BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_content TEXT NOT NULL
 );
 
 -- uploads
 
+CREATE SEQUENCE uploads_id_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS uploads (
-    id          BIGSERIAL NOT NULL PRIMARY KEY,
+    id          BIGINT DEFAULT NEXTVAL('uploads_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP NOT NULL,
     update_date TIMESTAMP NOT NULL,
-    user_id     BIGSERIAL REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    comment_id  BIGSERIAL REFERENCES posts_comments(id) ON DELETE SET NULL,
+    comment_id  BIGINT REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
@@ -157,18 +174,17 @@ DROP TYPE IF EXISTS hub_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
 
--- truncate all
-
-TRUNCATE TABLE users_meta;
-TRUNCATE TABLE users_roles;
-TRUNCATE TABLE hubs_meta;
-TRUNCATE TABLE posts_meta;
-TRUNCATE TABLE posts_tags;
-TRUNCATE TABLE uploads;
-TRUNCATE TABLE comments;
-TRUNCATE TABLE posts;
-TRUNCATE TABLE hubs;
-TRUNCATE TABLE users;
+DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_depots_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS hubs_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS hubs_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_comments_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 
 -- select all
 

@@ -71,8 +71,7 @@ class PostDelete
         $qb1->select('upload.id')->from('App\Entities\Upload', 'upload')
             ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
 
-        $uploads_ids = $qb1->getQuery()->getResult();
-        $uploads = array_map(fn($n) => Flight::get('em')->find('App\Entities\Upload', $n['id']), $uploads_ids);
+        $uploads = array_map(fn($n) => Flight::get('em')->find('App\Entities\Upload', $n['id']), $qb1->getQuery()->getResult());
 
         foreach($uploads as $upload) {
 
@@ -93,6 +92,36 @@ class PostDelete
         $uploads_size->meta_value = (int) $qb1_result[0][1];;
         Flight::get('em')->persist($uploads_size);
         Flight::get('em')->flush();
+
+        // -- Delete comments --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('comment.id')->from('App\Entities\Comment', 'comment')->where($qb1->expr()->eq('comment.post_id', $post->id));
+        $comments = array_map(fn($n) => Flight::get('em')->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
+
+        foreach($comments as $comment) {
+            Flight::get('em')->remove($comment);
+            Flight::get('em')->flush();
+        }
+
+        // -- Delete tags --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('tag.id')->from('App\Entities\Tag', 'tag')->where($qb1->expr()->eq('tag.post_id', $post->id));
+        $tags = array_map(fn($n) => Flight::get('em')->find('App\Entities\Tag', $n['id']), $qb1->getQuery()->getResult());
+
+        foreach($tags as $tag) {
+            Flight::get('em')->remove($tag);
+            Flight::get('em')->flush();
+        }
+
+        // -- Delete post meta --
+        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1->select('postmeta.id')->from('App\Entities\Postmeta', 'postmeta')->where($qb1->expr()->eq('postmeta.post_id', $post->id));
+        $metas = array_map(fn($n) => Flight::get('em')->find('App\Entities\Postmeta', $n['id']), $qb1->getQuery()->getResult());
+
+        foreach($metas as $meta) {
+            Flight::get('em')->remove($meta);
+            Flight::get('em')->flush();
+        }
 
         // -- Post delete --
         Flight::get('em')->remove($post);

@@ -77,8 +77,15 @@ class UploadDelete
         Flight::get('em')->flush();
 
         // -- Recount uploads size --
+        $qb2 = Flight::get('em')->createQueryBuilder();
+        $qb2->select('comment.id')
+            ->from('App\Entities\Comment', 'comment')
+            ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($auth->id, ParameterType::INTEGER)));
+
         $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')->where($qb1->expr()->eq('upload.user_id', $auth->id));
+        $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')
+            ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
+
         $qb1_result = $qb1->getQuery()->getResult();
 
         $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);

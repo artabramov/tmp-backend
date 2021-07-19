@@ -30,12 +30,6 @@ class Depot
     protected $update_date;
 
     /**
-     * @Column(type="datetime")
-     * @var DateTime
-     */
-    protected $expire_date;
-
-    /**
      * @Column(type="integer")
      * @var int
      */
@@ -50,7 +44,6 @@ class Depot
     public function __construct() {
         $this->create_date = new \DateTime('now');
         $this->update_date = new \DateTime('1970-01-01 00:00:00');
-        $this->expire_date = new \DateTime('1970-01-01 00:00:00');
     }
 
     public function __set( $key, $value ) {
