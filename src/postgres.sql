@@ -171,6 +171,8 @@ CREATE TABLE IF NOT EXISTS uploads (
     upload_size INT NOT NULL
 );
 
+-- TODO: view users_pals --
+
 -- role insert --
 
 CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
@@ -271,7 +273,6 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
     DECLARE
         comments_count integer;
         _id integer;
-        alerts_count integer;
     BEGIN
         -- post meta
         SELECT COUNT(id) INTO comments_count FROM posts_comments WHERE post_id = NEW.post_id;
