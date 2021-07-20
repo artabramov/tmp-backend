@@ -222,7 +222,7 @@ CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
         IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
             UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
         ELSE
-            INSERT INTO hubs_meta (user_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
         END IF;
         --
         RETURN NEW;
@@ -269,7 +269,10 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
         -- users meta
         SELECT id INTO tmp FROM users WHERE id IN (SELECT user_id FROM users_roles WHERE hub_id IN ());
 
-        SELECT hub_id FROM posts WHERE id IN (SELECT post_id FROM comments WHERE id = NEW.id)
+        SELECT user_id INTO tmp FROM users_roles WHERE hub_id IN 
+            (SELECT hub_id FROM posts WHERE id IN 
+                (SELECT post_id FROM comments WHERE id = NEW.id))
+        
         
         RETURN NEW;
     END;
@@ -277,30 +280,18 @@ $comment_insert$ LANGUAGE plpgsql;
 
 CREATE TRIGGER comment_insert AFTER INSERT ON posts_comments FOR EACH ROW EXECUTE PROCEDURE comment_insert();
 
---
+-- data --
 
-DROP TRIGGER IF EXISTS role_insert ON users_roles;
-DROP TRIGGER IF EXISTS role_delete ON users_roles;
-DROP TRIGGER IF EXISTS post_insert ON posts;
-DROP TRIGGER IF EXISTS post_delete ON posts;
-DROP FUNCTION IF EXISTS role_insert;
-DROP FUNCTION IF EXISTS role_delete;
-DROP FUNCTION IF EXISTS post_insert;
-DROP FUNCTION IF EXISTS post_delete;
+INSERT INTO users (user_status, user_token, user_email, user_hash, user_name) VALUES ('approved', '11111111111111111111111111111111111111111111111111111111111111111111111111111111', '14november@mail.ru', '', 'art abramov');
+INSERT INTO users (user_status, user_token, user_email, user_hash, user_name) VALUES ('approved', '22222222222222222222222222222222222222222222222222222222222222222222222222222222', 'notdepot@gmail.com', '', 'not depot');
+INSERT INTO hubs (user_id, hub_status, hub_name) VALUES (1, 'custom', 'first hub');
+INSERT INTO hubs (user_id, hub_status, hub_name) VALUES (2, 'custom', 'second hub');
+INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (1, 1, 'admin');
+INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (2, 2, 'admin');
+INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (1, 1, 'todo', 'first post');
+INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (2, 2, 'todo', 'second post');
 
-DELETE FROM hubs_meta WHERE hub_id = 1 AND meta_key = 'roles_count';
-DELETE FROM users_meta WHERE user_id = 1 AND meta_key = 'roles_count';
-DELETE FROM users_roles;
-
-SELECT '--------------------------------------------------------------------------------------------';
-DELETE FROM users_roles;
-SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
-INSERT INTO users_roles (create_date, update_date, user_id, hub_id, role_status) VALUES ('1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'admin');
-SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
-DELETE FROM users_roles;
-SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
-
--- drop all
+-- drop all --
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
@@ -331,7 +322,15 @@ DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_comments_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 
-DROP PROCEDURE IF EXISTS user_roles_update;
+DROP TRIGGER IF EXISTS role_insert ON users_roles;
+DROP TRIGGER IF EXISTS role_delete ON users_roles;
+DROP TRIGGER IF EXISTS post_insert ON posts;
+DROP TRIGGER IF EXISTS post_delete ON posts;
+
+DROP FUNCTION IF EXISTS role_insert;
+DROP FUNCTION IF EXISTS role_delete;
+DROP FUNCTION IF EXISTS post_insert;
+DROP FUNCTION IF EXISTS post_delete;
 
 -- select all
 
