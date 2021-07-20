@@ -91,13 +91,14 @@ class UploadInsert
         }
 
         // -- User vol / uploads size --
-
+        
+        $time = new DateTime('now');
         $qb1 = Flight::get('em')->createQueryBuilder();
         $qb1->select('vol.id')
             ->from('App\Entities\Vol', 'vol')
             ->where($qb1->expr()->eq('vol.user_id', $user->id))
-            ->andWhere('vol.expire_date > :now')
-            ->setParameter('now', new DateTime('now'))
+            ->andWhere($qb1->expr()->gt('vol.expire_date', ':now'))
+            ->setParameter('now', $time->format('Y-m-d H:i:s'))
             ->orderBy('vol.vol_size', 'DESC')
             ->setMaxResults(1);
 
