@@ -7,8 +7,8 @@ CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 CREATE TABLE IF NOT EXISTS users (
     id          BIGINT DEFAULT NEXTVAL('users_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
-    remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
@@ -23,7 +23,7 @@ CREATE SEQUENCE users_meta_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS users_meta (
     id          BIGINT DEFAULT NEXTVAL('users_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
@@ -37,8 +37,8 @@ CREATE SEQUENCE users_vols_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS users_vols (
     id          BIGINT DEFAULT NEXTVAL('users_vols_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
-    expire_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    expire_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     vol_size    INT NOT NULL
 );
@@ -51,7 +51,7 @@ CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 CREATE TABLE IF NOT EXISTS hubs (
     id          BIGINT DEFAULT NEXTVAL('hubs_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_status  hub_status NOT NULL,
     hub_name    VARCHAR(128) NOT NULL
@@ -64,7 +64,7 @@ CREATE SEQUENCE hubs_meta_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS hubs_meta (
     id          BIGINT DEFAULT NEXTVAL('hubs_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
@@ -79,7 +79,7 @@ CREATE TYPE role_status AS ENUM ('admin', 'editor', 'reader');
 CREATE TABLE IF NOT EXISTS users_roles (
     id          BIGINT DEFAULT NEXTVAL('users_roles_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
@@ -94,11 +94,25 @@ CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
 CREATE TABLE IF NOT EXISTS posts (
     id          BIGINT DEFAULT NEXTVAL('posts_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,
     post_title  VARCHAR(255) NOT NULL
+);
+
+-- users alerts --
+
+CREATE SEQUENCE users_alerts_id_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE IF NOT EXISTS users_alerts (
+    id           BIGINT DEFAULT NEXTVAL('users_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
+    create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    post_id      BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    alerts_count INT NOT NULL,
+    CONSTRAINT user_alert_uid UNIQUE(user_id, post_id)
 );
 
 -- post tags --
@@ -108,7 +122,7 @@ CREATE SEQUENCE posts_tags_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS posts_tags (
     id          BIGINT DEFAULT NEXTVAL('posts_tags_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
     CONSTRAINT post_tag_uid UNIQUE(post_id, tag_value)
@@ -121,7 +135,7 @@ CREATE SEQUENCE posts_meta_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS posts_meta (
     id          BIGINT DEFAULT NEXTVAL('posts_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
@@ -135,7 +149,7 @@ CREATE SEQUENCE posts_comments_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS posts_comments (
     id              BIGINT DEFAULT NEXTVAL('posts_comments_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id         BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     post_id         BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_content TEXT NOT NULL
@@ -148,7 +162,7 @@ CREATE SEQUENCE uploads_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TABLE IF NOT EXISTS uploads (
     id          BIGINT DEFAULT NEXTVAL('uploads_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGINT REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
@@ -256,23 +270,30 @@ CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE 
 CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
     DECLARE
         comments_count integer;
-        comments_increment integer;
-        tmp integer[];
+        _id integer;
+        alerts_count integer;
     BEGIN
         -- post meta
-        SELECT COUNT(id) INTO comments_count FROM comments WHERE post_id = NEW.post_id;
+        SELECT COUNT(id) INTO comments_count FROM posts_comments WHERE post_id = NEW.post_id;
         IF EXISTS (SELECT id FROM posts_meta WHERE post_id = NEW.post_id AND meta_key = 'comments_count') THEN
             UPDATE posts_meta SET meta_value = comments_count WHERE post_id = NEW.post_id AND meta_key = 'comments_count';
         ELSE
             INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'comments_count', comments_count);
         END IF;
         -- users meta
-        SELECT id INTO tmp FROM users WHERE id IN (SELECT user_id FROM users_roles WHERE hub_id IN ());
+        FOR _id IN 
+            SELECT users_roles.user_id  FROM users_roles WHERE users_roles.hub_id IN (
+                SELECT posts.hub_id FROM posts WHERE posts.id IN (
+                    SELECT posts_comments.post_id FROM posts_comments WHERE posts_comments.id = NEW.id))
+        LOOP
 
-        SELECT user_id INTO tmp FROM users_roles WHERE hub_id IN 
-            (SELECT hub_id FROM posts WHERE id IN 
-                (SELECT post_id FROM comments WHERE id = NEW.id))
-        
+            IF EXISTS (SELECT id FROM users_alerts WHERE user_id = _id AND post_id = NEW.post_id) THEN
+                UPDATE users_alerts SET alerts_count = users_alerts.alerts_count + 1 WHERE user_id = _id AND post_id = NEW.post_id;
+            ELSE
+                INSERT INTO users_alerts (user_id, post_id, alerts_count) VALUES (_id, NEW.post_id, 1);
+            END IF;
+
+        END LOOP;
         
         RETURN NEW;
     END;
@@ -290,12 +311,14 @@ INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (1, 1, 'admin');
 INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (2, 2, 'admin');
 INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (1, 1, 'todo', 'first post');
 INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (2, 2, 'todo', 'second post');
+INSERT INTO posts_comments (user_id, post_id, comment_content) VALUES (1, 1, 'first comment');
 
 -- drop all --
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS users_vols;
+DROP TABLE IF EXISTS users_alerts;
 DROP TABLE IF EXISTS hubs_meta;
 DROP TABLE IF EXISTS posts_meta;
 DROP TABLE IF EXISTS posts_tags;
@@ -314,6 +337,7 @@ DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_meta_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_vols_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_alerts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS hubs_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS hubs_meta_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_id_seq CASCADE;
@@ -326,16 +350,18 @@ DROP TRIGGER IF EXISTS role_insert ON users_roles;
 DROP TRIGGER IF EXISTS role_delete ON users_roles;
 DROP TRIGGER IF EXISTS post_insert ON posts;
 DROP TRIGGER IF EXISTS post_delete ON posts;
+DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
 DROP FUNCTION IF EXISTS post_insert;
 DROP FUNCTION IF EXISTS post_delete;
+DROP FUNCTION IF EXISTS comment_insert;
 
 -- select all
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 
 -- ...
 
