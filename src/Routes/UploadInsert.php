@@ -166,6 +166,7 @@ class UploadInsert
 
             // -- Recount uploads size --
 
+            /*
             $qb2 = Flight::get('em')->createQueryBuilder();
             $qb2->select('comment.id')
                 ->from('App\Entities\Comment', 'comment')
@@ -174,7 +175,12 @@ class UploadInsert
             $qb1 = Flight::get('em')->createQueryBuilder();
             $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')
                 ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
+            */
 
+            $qb1 = Flight::get('em')->createQueryBuilder();
+            $qb1->select('sum(upload.upload_size)')
+                ->from('App\Entities\Upload', 'upload')
+                ->where($qb1->expr()->eq('upload.user_id', $user->id));
             $qb1_result = $qb1->getQuery()->getResult();
 
             $user_meta->meta_value = (int) $qb1_result[0][1];;

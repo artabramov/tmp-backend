@@ -35,6 +35,13 @@ class Upload
      * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
+    private $user_id;
+
+    /**
+     * @Column(type="integer")
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @var int
+     */
     private $comment_id;
 
     /** 
@@ -99,7 +106,13 @@ class Upload
      */
     public function validate() {
 
-        if(empty($this->comment_id)) {
+        if(empty($this->user_id)) {
+            throw new AppException('Upload error: user_id is empty.');
+
+        } elseif(!is_numeric($this->user_id)) {
+            throw new AppException('Upload error: user_id is not numeric.');
+
+        } elseif(empty($this->comment_id)) {
             throw new AppException('Upload error: comment_id is empty.');
 
         } elseif(!is_numeric($this->comment_id)) {

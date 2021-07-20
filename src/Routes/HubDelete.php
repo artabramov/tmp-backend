@@ -58,7 +58,7 @@ class HubDelete
             throw new AppException('Hub error: permission denied.');
         }
 
-        // -- Select posts, comments and uploads --
+        // -- Select posts, tags, comments and uploads --
 
         $qb3 = Flight::get('em')->createQueryBuilder();
         $qb3->select('post.id')

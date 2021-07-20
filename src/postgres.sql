@@ -1,4 +1,4 @@
--- users
+-- users --
 
 CREATE SEQUENCE users_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
@@ -6,9 +6,9 @@ CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 
 CREATE TABLE IF NOT EXISTS users (
     id          BIGINT DEFAULT NEXTVAL('users_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
-    remind_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
@@ -16,145 +16,289 @@ CREATE TABLE IF NOT EXISTS users (
     user_name   VARCHAR(128) NOT NULL
 );
 
--- users meta
+-- users meta --
 
 CREATE SEQUENCE users_meta_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS users_meta (
     id          BIGINT DEFAULT NEXTVAL('users_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT user_meta_uid UNIQUE(user_id, meta_key)
 );
 
--- users vols
+-- users vols --
 
 CREATE SEQUENCE users_vols_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS users_vols (
     id          BIGINT DEFAULT NEXTVAL('users_vols_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
-    expire_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    expire_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     vol_size    INT NOT NULL
 );
 
--- hubs
+-- hubs --
 
 CREATE SEQUENCE hubs_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 
 CREATE TABLE IF NOT EXISTS hubs (
     id          BIGINT DEFAULT NEXTVAL('hubs_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_status  hub_status NOT NULL,
     hub_name    VARCHAR(128) NOT NULL
 );
 
--- hubs meta
+-- hubs meta --
 
 CREATE SEQUENCE hubs_meta_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS hubs_meta (
     id          BIGINT DEFAULT NEXTVAL('hubs_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT hub_meta_uid UNIQUE(hub_id, meta_key)
 );
 
--- users roles
+-- users roles --
 
 CREATE SEQUENCE users_roles_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE role_status AS ENUM ('admin', 'editor', 'reader');
 
 CREATE TABLE IF NOT EXISTS users_roles (
     id          BIGINT DEFAULT NEXTVAL('users_roles_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     role_status role_status NOT NULL,
     CONSTRAINT user_role_uid UNIQUE(user_id, hub_id)
 );
 
--- posts
+-- posts --
 
 CREATE SEQUENCE posts_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
 
 CREATE TABLE IF NOT EXISTS posts (
     id          BIGINT DEFAULT NEXTVAL('posts_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     hub_id      BIGINT REFERENCES hubs(id) ON DELETE CASCADE NOT NULL,
     post_status post_status NOT NULL,
     post_title  VARCHAR(255) NOT NULL
 );
 
--- post tags
+-- post tags --
 
 CREATE SEQUENCE posts_tags_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS posts_tags (
     id          BIGINT DEFAULT NEXTVAL('posts_tags_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
     CONSTRAINT post_tag_uid UNIQUE(post_id, tag_value)
 );
 
--- posts meta
+-- posts meta --
 
 CREATE SEQUENCE posts_meta_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS posts_meta (
     id          BIGINT DEFAULT NEXTVAL('posts_meta_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     meta_key    VARCHAR(20)  NOT NULL,
     meta_value  VARCHAR(255) NOT NULL,
     CONSTRAINT post_meta_uid UNIQUE(post_id, meta_key)
 );
 
--- posts comments
+-- posts comments --
 
 CREATE SEQUENCE posts_comments_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS posts_comments (
     id              BIGINT DEFAULT NEXTVAL('posts_comments_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date     TIMESTAMP NOT NULL,
-    update_date     TIMESTAMP NOT NULL,
+    create_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
     user_id         BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     post_id         BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_content TEXT NOT NULL
 );
 
--- uploads
+-- uploads --
 
 CREATE SEQUENCE uploads_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS uploads (
     id          BIGINT DEFAULT NEXTVAL('uploads_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP NOT NULL,
-    update_date TIMESTAMP NOT NULL,
+    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT '0001-01-01 00:00:00',
+    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGINT REFERENCES posts_comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_file VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size INT NOT NULL
 );
+
+-- role insert --
+
+CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
+    DECLARE
+        roles_count integer;
+    BEGIN
+        -- users meta
+        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'roles_count') THEN
+            UPDATE users_meta SET meta_value = roles_count WHERE user_id = NEW.user_id AND meta_key = 'roles_count';
+        ELSE
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'roles_count', roles_count);
+        END IF;
+        -- hubs meta
+        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE hub_id = NEW.hub_id;
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'roles_count') THEN
+            UPDATE hubs_meta SET meta_value = roles_count WHERE hub_id = NEW.hub_id AND meta_key = 'roles_count';
+        ELSE
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'roles_count', roles_count);
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$role_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER role_insert AFTER INSERT ON users_roles FOR EACH ROW EXECUTE PROCEDURE role_insert();
+
+-- role delete --
+
+CREATE FUNCTION role_delete() RETURNS trigger AS $role_delete$
+    DECLARE
+        roles_count integer;
+    BEGIN
+        -- users meta
+        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = NEW.user_id;
+        IF roles_count = 0 THEN
+            DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'roles_count';
+        ELSE
+            UPDATE users_meta SET meta_value = roles_count WHERE user_id = OLD.user_id AND meta_key = 'roles_count';
+        END IF;
+        -- hubs meta
+        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE hub_id = NEW.hub_id;
+        IF roles_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
+        ELSE
+            UPDATE hubs_meta SET meta_value = roles_count WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$role_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER role_delete AFTER DELETE ON users_roles FOR EACH ROW EXECUTE PROCEDURE role_delete();
+
+-- post insert --
+
+CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
+    DECLARE
+        posts_count integer;
+    BEGIN
+        -- hubs meta
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
+        ELSE
+            INSERT INTO hubs_meta (user_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$post_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE post_insert();
+
+-- post delete --
+
+CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
+    DECLARE
+        posts_count integer;
+    BEGIN
+        -- hubs meta
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
+        IF posts_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+        ELSE
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$post_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
+
+-- comment insert --
+
+CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
+    DECLARE
+        comments_count integer;
+        comments_increment integer;
+        tmp integer[];
+    BEGIN
+        -- post meta
+        SELECT COUNT(id) INTO comments_count FROM comments WHERE post_id = NEW.post_id;
+        IF EXISTS (SELECT id FROM posts_meta WHERE post_id = NEW.post_id AND meta_key = 'comments_count') THEN
+            UPDATE posts_meta SET meta_value = comments_count WHERE post_id = NEW.post_id AND meta_key = 'comments_count';
+        ELSE
+            INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'comments_count', comments_count);
+        END IF;
+        -- users meta
+        SELECT id INTO tmp FROM users WHERE id IN (SELECT user_id FROM users_roles WHERE hub_id IN ());
+
+        SELECT hub_id FROM posts WHERE id IN (SELECT post_id FROM comments WHERE id = NEW.id)
+        
+        RETURN NEW;
+    END;
+$comment_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER comment_insert AFTER INSERT ON posts_comments FOR EACH ROW EXECUTE PROCEDURE comment_insert();
+
+--
+
+DROP TRIGGER IF EXISTS role_insert ON users_roles;
+DROP TRIGGER IF EXISTS role_delete ON users_roles;
+DROP TRIGGER IF EXISTS post_insert ON posts;
+DROP TRIGGER IF EXISTS post_delete ON posts;
+DROP FUNCTION IF EXISTS role_insert;
+DROP FUNCTION IF EXISTS role_delete;
+DROP FUNCTION IF EXISTS post_insert;
+DROP FUNCTION IF EXISTS post_delete;
+
+DELETE FROM hubs_meta WHERE hub_id = 1 AND meta_key = 'roles_count';
+DELETE FROM users_meta WHERE user_id = 1 AND meta_key = 'roles_count';
+DELETE FROM users_roles;
+
+SELECT '--------------------------------------------------------------------------------------------';
+DELETE FROM users_roles;
+SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
+INSERT INTO users_roles (create_date, update_date, user_id, hub_id, role_status) VALUES ('1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'admin');
+SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
+DELETE FROM users_roles;
+SELECT * FROM hubs_meta; SELECT * FROM users_meta; SELECT * FROM users_roles;
 
 -- drop all
 
@@ -187,6 +331,8 @@ DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_comments_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 
+DROP PROCEDURE IF EXISTS user_roles_update;
+
 -- select all
 
 \pset format wrapped
@@ -194,124 +340,6 @@ SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT 
 
 -- ...
 
-INSERT INTO users (user_status, user_token, user_email, user_hash, user_name) VALUES ('pending', '01234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply@noreply.no', '0123456789012345678901234567890123456789', 'noname');
-INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (1, 'key1', 'value1');
-INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (1, 'key2', 'value2');
-INSERT INTO hubs (user_id, hub_status, hub_name) VALUES (1, 'custom', 'hubname');
-INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (1, 'hkey1', 'hvalue1');
-INSERT INTO users_roles (user_id, hub_id, role_status) VALUES (1, 1, 'admin');
-INSERT INTO posts (user_id, hub_id, post_status, post_title) VALUES (1, 1, 'todo', 'Lorem ipsum');
-INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (1, 'pkey1', 'pvalue1');
-INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (1, 'pkey2', 'pvalue2');
-INSERT INTO comments (post_id, user_id, comment_text) VALUES (1, 1, 'Dolores sit amet');
-INSERT INTO comments_uploads (comment_id, user_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, 1, 'Upload name', './path/file.ext', 'image/png', 100);
-
-SELECT * FROM users; 
-SELECT * FROM users_meta; 
-SELECT * FROM hubs; 
-SELECT * FROM hubs_meta; 
-SELECT * FROM users_roles; 
-SELECT * FROM posts; 
-SELECT * FROM posts_meta; 
-SELECT * FROM comments; 
-SELECT * FROM comments_uploads; 
-
-
--- ===
-
-Почему во всех таблицах есть id?
-Почему в таблице posts есть только заголовки?
-Почему posts_meta и posts_tags разделены на две таблицы?
-
-
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS amounts (
-    id           BIGINT(20)    UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date  DATETIME      NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id      BIGINT(20)    UNSIGNED NOT NULL DEFAULT 0,
-    parent_type  ENUM('post', 'comment') NOT NULL,
-    parent_id    BIGINT(20)    UNSIGNED NOT NULL,
-    amount_key   VARCHAR(20)   NOT NULL,
-    amount_value DECIMAL(22,2) NOT NULL DEFAULT 0,
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (parent_type),
-            KEY (parent_id),
-            KEY (amount_key),
-            KEY (amount_value)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-SET sql_mode = '';
-CREATE TABLE IF NOT EXISTS timers (
-    id          BIGINT(20)   UNSIGNED NOT NULL AUTO_INCREMENT,
-    create_date DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    update_date DATETIME     NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP,
-    user_id     BIGINT(20)   UNSIGNED NOT NULL DEFAULT 0,
-    parent_type ENUM('post', 'comment') NOT NULL,
-    parent_id   BIGINT(20)   UNSIGNED NOT NULL,
-    timer_key   VARCHAR(20)  NOT NULL,
-    timer_value VARCHAR(255) NOT NULL DEFAULT '0000-00-00 00:00:00',
-
-    PRIMARY KEY (id),
-            KEY (create_date),
-            KEY (update_date),
-    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE NO ACTION,
-            KEY (parent_type),
-            KEY (parent_id),
-            KEY (timer_key),
-            KEY (timer_value)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
-
-
-
-
-
-DELIMITER |
-CREATE TRIGGER role_insert
-AFTER INSERT
-ON user_roles 
-FOR EACH ROW 
-BEGIN
-    SET @roles_count := (SELECT COUNT(id) FROM user_roles WHERE hub_id = NEW.hub_id AND user_role <> 'invited');
-    UPDATE hubs SET roles_count=@roles_count WHERE id = NEW.hub_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER role_update
-AFTER INSERT
-ON user_roles 
-FOR EACH ROW 
-BEGIN
-    SET @roles_count := (SELECT COUNT(id) FROM user_roles WHERE hub_id = NEW.hub_id AND user_role <> 'invited');
-    UPDATE hubs SET roles_count=@roles_count WHERE id = NEW.hub_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER role_delete
-AFTER DELETE
-ON user_roles 
-FOR EACH ROW 
-BEGIN
-    SET @roles_count := (SELECT COUNT(id) FROM user_roles WHERE hub_id = OLD.hub_id AND user_role <> 'invited');
-    UPDATE hubs SET roles_count=@roles_count WHERE id = OLD.hub_id;
-END;
-| 
-DELIMITER ;
 
 
 DELIMITER |
