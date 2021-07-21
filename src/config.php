@@ -27,8 +27,7 @@ define('PHPMAILER_PASS', 'GxTE4nU8YInsWJRM');
 define('PHPMAILER_FROM', 'noreply@echidna.io');
 define('PHPMAILER_NAME', 'Echidna');
 
-define('APP_TIMEZONE', 'Europe/Moscow');
-
+// App
 define('VOL_DEFAULT_SIZE', '1000000'); // default depot size
 define('VOL_DEFAULT_EXPIRE', 'P20Y'); // + 20 years
 
