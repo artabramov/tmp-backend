@@ -2,9 +2,6 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/config.php';
 
-// -- Default timezone --
-date_default_timezone_set(APP_TIMEZONE);
-
 // -- Monolog --
 Flight::set('monolog', new \Monolog\Logger('app'));
 Flight::get('monolog')->pushHandler(new \Monolog\Handler\StreamHandler(MONOLOG_PATH . date('Y-m-d') . '.log'));
@@ -71,6 +68,9 @@ $cacheConfig->setCacheFactory($factory);
 $config->setSecondLevelCacheConfiguration($cacheConfig);
 $config->setSecondLevelCacheEnabled(true);
 
+// --
+//Flight::set('cache', $cache);
+
 // Postgres config
 $conn = array(
     'driver' => POSTGRES_DRIVER,
@@ -113,6 +113,12 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
+
+    /*
+    $date = new \DateTime('now');
+    $params[0]['datetime']['date'] = $date->format('Y-m-d H:i:s');
+    $params[0]['datetime']['timezone'] = 'Europe/Moscow';
+    */
 
     $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
     $stmt->execute();

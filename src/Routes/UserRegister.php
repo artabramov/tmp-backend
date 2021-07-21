@@ -43,6 +43,36 @@ class UserRegister
         Flight::get('em')->persist($user);
         Flight::get('em')->flush();
 
+
+
+        $cache = Flight::get('em')->getCache();
+        $cache->evictEntity('\App\Entities\User', $user->id);
+
+
+        /*
+        $cache->containsEntity('Entity\State', 1)      // Check if the cache exists
+        $cache->evictEntity('Entity\State', 1);        // Remove an entity from cache
+        $cache->evictEntityRegion('Entity\State');     // Remove all entities from cache
+        
+        $cache->containsCollection('Entity\State', 'cities', 1);   // Check if the cache exists
+        $cache->evictCollection('Entity\State', 'cities', 1);      // Remove an entity collection from cache
+        $cache->evictCollectionRegion('Entity\State', 'cities');   // Remove all collections from cache
+        */
+
+
+        /*
+        $user_meta = new Usermeta();
+        $user_meta->user_id = $user->id;
+        $user_meta->meta_key = 'user_meta';
+        $user_meta->meta_value = 'user meta';
+        $user_meta->user = $user;
+        Flight::get('em')->persist($user_meta);
+        Flight::get('em')->flush();
+        */
+
+
+        /*
+
         // -- Hub --
 
         $hub = new Hub();
@@ -72,9 +102,6 @@ class UserRegister
         $user_vol->vol_size = VOL_DEFAULT_SIZE;
         Flight::get('em')->persist($user_vol);
         Flight::get('em')->flush();
-
-        /*
-
 
         // -- Post --
 
