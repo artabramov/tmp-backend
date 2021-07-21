@@ -113,9 +113,11 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    $date = new \DateTime('now', new \DateTimeZone('Europe/Moscow'));
-    $params[0]['time']['datetime'] = $date->format('Y-m-d H:i:s');
-    $params[0]['time']['timezone'] = 'Europe/Moscow';
+    //SELECT current_setting('TIMEZONE');
+
+    $date = new \DateTime('now');
+    $params[0]['datetime']['date'] = $date->format('Y-m-d H:i:s');
+    $params[0]['datetime']['timezone'] = 'Europe/Moscow';
 });
 
 // -- Default --

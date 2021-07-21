@@ -465,192 +465,23 @@ DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
 DROP FUNCTION IF EXISTS upload_delete;
 
+-- erase --
+
+DELETE FROM users_meta;
+DELETE FROM users_roles;
+DELETE FROM users_vols;
+DELETE FROM users_alerts;
+DELETE FROM hubs_meta;
+DELETE FROM posts_meta;
+DELETE FROM posts_tags;
+DELETE FROM uploads;
+DELETE FROM posts_comments;
+DELETE FROM posts;
+DELETE FROM hubs;
+DELETE FROM users;
+
 -- select all
 
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 SELECT * FROM vw_users_pals;
-
--- ...
-
-
-
-DELIMITER |
-CREATE TRIGGER post_insert
-AFTER INSERT
-ON posts
-FOR EACH ROW 
-BEGIN
-    SET @posts_count := (SELECT COUNT(id) FROM posts WHERE hub_id = NEW.hub_id);
-    UPDATE hubs SET posts_count=@posts_count WHERE id = NEW.hub_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER post_update
-AFTER INSERT
-ON posts
-FOR EACH ROW 
-BEGIN
-    SET @posts_count := (SELECT COUNT(id) FROM posts WHERE hub_id = NEW.hub_id);
-    UPDATE hubs SET posts_count=@posts_count WHERE id = NEW.hub_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER post_delete
-AFTER DELETE
-ON posts 
-FOR EACH ROW 
-BEGIN
-    SET @posts_count := (SELECT COUNT(id) FROM posts WHERE hub_id = OLD.hub_id);
-    UPDATE hubs SET posts_count=@posts_count WHERE id = OLD.hub_id;
-END;
-| 
-DELIMITER ;
-
-DELIMITER |
-CREATE TRIGGER upload_insert
-AFTER INSERT
-ON comment_uploads 
-FOR EACH ROW 
-BEGIN
-    SET @uploads_count := (SELECT COUNT(id) FROM comment_uploads WHERE user_id = NEW.user_id);
-    SET @uploads_sum := (SELECT SUM(upload_size) FROM comment_uploads WHERE user_id = NEW.user_id);
-    UPDATE users SET uploads_count=@uploads_count WHERE id=NEW.user_id;
-    UPDATE users SET uploads_sum=@uploads_sum WHERE id=NEW.user_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER upload_delete
-AFTER DELETE
-ON comment_uploads 
-FOR EACH ROW 
-BEGIN
-    SET @uploads_count := (SELECT COUNT(id) FROM comment_uploads WHERE user_id = OLD.user_id);
-    SET @uploads_sum := (SELECT SUM(upload_size) FROM comment_uploads WHERE user_id = OLD.user_id);
-    UPDATE users SET uploads_count=@uploads_count WHERE id=OLD.user_id;
-    UPDATE users SET uploads_sum=@uploads_sum WHERE id=OLD.user_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER comment_insert
-AFTER INSERT
-ON post_comments 
-FOR EACH ROW 
-BEGIN
-    SET @comments_count := (SELECT COUNT(id) FROM post_comments WHERE post_id = NEW.post_id);
-    UPDATE posts SET comments_count=@comments_count WHERE id = NEW.post_id;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER comment_delete
-AFTER DELETE
-ON post_comments 
-FOR EACH ROW 
-BEGIN
-    SET @comments_count := (SELECT COUNT(id) FROM post_comments WHERE post_id = OLD.post_id);
-    UPDATE posts SET comments_count=@comments_count WHERE id = OLD.post_id;
-END;
-| 
-DELIMITER ;
-
-
-DROP TABLE IF EXISTS meta;
-DROP TABLE IF EXISTS comment_uploads;
-DROP TABLE IF EXISTS post_comments;
-DROP TABLE IF EXISTS posts;
-DROP TABLE IF EXISTS user_roles;
-DROP TABLE IF EXISTS hubs;
-DROP TABLE IF EXISTS users;
-
-DELETE FROM meta;
-DELETE FROM comment_uploads;
-DELETE FROM post_comments;
-DELETE FROM posts;
-DELETE FROM user_roles;
-DELETE FROM hubs;
-DELETE FROM users;
-
-
-SELECT * FROM users; SELECT * FROM hubs; SELECT * FROM user_roles; SELECT * FROM posts; SELECT * FROM post_comments; SELECT * FROM comment_uploads; SELECT * FROM meta; 
-
-
-INSERT INTO users (user_status, user_token, user_email, user_name) VALUES ('pending', 'token1token1token1token1token1token1token1token1token1token1token1token1token1to', '14november@mail.ru', 'art abramov');
-INSERT INTO users (user_status, user_token, user_email, user_name) VALUES ('pending', 'token2token2token2token2token2token2token2token2token2token2token2token2token2to', '15november@mail.ru', 'no name');
-INSERT INTO hubs (user_id, hub_status, hub_name) VALUES (1, 'custom', 'private hub');
-INSERT INTO user_roles (user_id, hub_id, user_role) VALUES (1, 1, 'admin');
-INSERT INTO user_roles (user_id, hub_id, user_role) VALUES (2, 1, 'admin');
-INSERT INTO posts (user_id, hub_id, post_status, post_excerpt) VALUES (1, 1, 'todo', 'lorem ipsum');
-INSERT INTO posts (user_id, hub_id, post_status, post_excerpt) VALUES (1, 1, 'todo', 'lorem ipsum');
-INSERT INTO post_comments (user_id, post_id, comment_text) VALUES (1, 1, 'lorem ipsum');
-INSERT INTO post_comments (user_id, post_id, comment_text) VALUES (1, 1, 'lorem ipsum');
-INSERT INTO post_comments (user_id, post_id, comment_text) VALUES (1, 2, 'lorem ipsum');
-INSERT INTO comment_uploads (user_id, comment_id, upload_name, upload_mime, upload_size, upload_file) VALUES (1, 1, 'upload_name', 'upload_mime', 100, 'upload_file');
-INSERT INTO comment_uploads (user_id, comment_id, upload_name, upload_mime, upload_size, upload_file) VALUES (1, 1, 'upload_name', 'upload_mime', 100, 'upload_file2');
-INSERT INTO meta (user_id, parent_type, parent_id, meta_key, meta_value) VALUES (1, 'users', 1, 'user_tag', 'user 1');
-INSERT INTO meta (user_id, parent_type, parent_id, meta_key, meta_value) VALUES (2, 'users', 2, 'user_tag', 'user 2');
-
-
-
-INSERT INTO users (user_status, user_token, user_email, user_name) VALUES ('pending', 'token1token1token1token1token1token1token1token1token1token1token1token1token1to', 'email1@email.e', 'name1');
-INSERT INTO users (user_status, user_token, user_email, user_name) VALUES ('pending', 'token2token2token2token2token2token2token2token2token2token2token2token2token2to', 'email2@email.e', 'name2');
-INSERT INTO meta (user_id, parent_type, parent_id, meta_key, meta_value) VALUES (1, 'users', 1, 'posts_count', '11');
-INSERT INTO meta (user_id, parent_type, parent_id, meta_key, meta_value) VALUES (1, 'users', 1, 'comments_count', '22');
-SELECT users.*, meta.meta_value AS posts_count FROM users LEFT JOIN meta ON meta.user_id=users.id WHERE users.id=1 AND meta.parent_type='users' AND meta.meta_key='posts_count';
-
-
-DELIMITER |
-CREATE TRIGGER role_insert
-AFTER INSERT
-ON user_roles 
-FOR EACH ROW 
-BEGIN
-    SET @roles_count := (SELECT COUNT(id) FROM roles WHERE hub_id = OLD.hub_id AND user_role NOT IN ('invited', 'banned'));
-    IF EXISTS (SELECT id FROM meta WHERE parent_type = 'hubs' AND parent_id = NEW.hub_id AND meta_key='roles_count') THEN
-        UPDATE meta SET meta_value=@roles_count WHERE parent_type = 'hubs' AND parent_id = NEW.hub_id AND meta_key='roles_count';
-    ELSE
-        INSERT INTO meta (parent_type, parent_id, meta_key, meta_value) VALUES ('hubs', NEW.hub_id, 'roles_count', @roles_count);
-    END IF;
-END;
-| 
-DELIMITER ;
-
-
-DELIMITER |
-CREATE TRIGGER role_delete
-AFTER DELETE
-ON roles 
-FOR EACH ROW 
-BEGIN
-    SET @roles_count := (SELECT COUNT(id) FROM roles WHERE hub_id = OLD.hub_id AND user_role NOT IN ('invited', 'banned'));
-    IF @roles_count = 0 THEN
-        DELETE FROM meta WHERE parent_type = 'hubs' AND parent_id = OLD.hub_id AND meta_key = 'roles_count';
-    ELSE
-        UPDATE meta SET meta_value=@roles_count WHERE parent_type = 'hubs' AND parent_id = OLD.hub_id AND meta_key='roles_count';
-    END IF;
-END;
-| 
-DELIMITER ;
-
-
-
-
-
-
-
-
-

@@ -26,13 +26,6 @@ class UserRegister
         $user_email = (string) Flight::request()->query['user_email'];
         $user_name = (string) Flight::request()->query['user_name'];
 
-        if(empty($user_email)) {
-            throw new AppException('Initial error: user_email is empty.');
-
-        } elseif(empty($user_name)) {
-            throw new AppException('Initial error: user_name is empty.');
-        }  
-
         // -- User --
 
         if(Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
@@ -48,16 +41,6 @@ class UserRegister
         $user->user_email = $user_email;
         $user->user_name = $user_name;
         Flight::get('em')->persist($user);
-        Flight::get('em')->flush();
-
-        // -- User vol --
-
-        $user_vol = new Vol();
-        $user_vol->user_id = $user->id;
-        $user_vol->expire_date = new DateTime('now');
-        $user_vol->expire_date->add(new DateInterval(APP_VOL_EXPIRE));
-        $user_vol->vol_size = APP_VOL_SIZE;
-        Flight::get('em')->persist($user_vol);
         Flight::get('em')->flush();
 
         // -- Hub --
@@ -79,6 +62,19 @@ class UserRegister
         $user_role->hub = $hub;
         Flight::get('em')->persist($user_role);
         Flight::get('em')->flush();
+
+        // -- User vol --
+
+        $user_vol = new Vol();
+        $user_vol->user_id = $user->id;
+        $user_vol->expire_date = new DateTime('now');
+        $user_vol->expire_date->add(new DateInterval(VOL_DEFAULT_EXPIRE));
+        $user_vol->vol_size = VOL_DEFAULT_SIZE;
+        Flight::get('em')->persist($user_vol);
+        Flight::get('em')->flush();
+
+        /*
+
 
         // -- Post --
 
@@ -208,6 +204,7 @@ class UserRegister
         Flight::get('phpmailer')->Subject = 'User register';
         Flight::get('phpmailer')->Body = 'One-time pass: <i>' . $user->user_pass . '</i>';
         Flight::get('phpmailer')->send();
+        */
 
         // -- End --
 

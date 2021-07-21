@@ -27,14 +27,16 @@ define('PHPMAILER_PASS', 'GxTE4nU8YInsWJRM');
 define('PHPMAILER_FROM', 'noreply@echidna.io');
 define('PHPMAILER_NAME', 'Echidna');
 
-// App
 define('APP_TIMEZONE', 'Europe/Moscow');
+
+define('VOL_DEFAULT_SIZE', '1000000'); // default depot size
+define('VOL_DEFAULT_EXPIRE', 'P20Y'); // + 20 years
+
+//
 define('APP_REMIND_TIME', 30); // delay between reminds
 define('APP_PASS_TIME', 180); // pass expires time
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
 define('APP_COMMENT_LENGTH', 80);
-define('APP_VOL_SIZE', '1000000'); // default depot size
-define('APP_VOL_EXPIRE', 'P20Y'); // + 20 years
 define('APP_UPLOAD_FILESIZE', '10M'); // max size of one file
 define('APP_UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
 define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');
