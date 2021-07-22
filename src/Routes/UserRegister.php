@@ -22,23 +22,28 @@ class UserRegister
     public function do() {
 
         $em = Flight::get('em');
-        $user_email = (string) Flight::request()->query['user_email'];
+        $user_email = mb_strtolower((string) Flight::request()->query['user_email']);
+        $user_phone = preg_replace('/[^0-9]/', '', (string) Flight::request()->query['user_phone']);
         $user_name = (string) Flight::request()->query['user_name'];
 
-        // -- User --
         if($em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
             throw new AppException('User error: user_email is occupied.');
+
+        } elseif(!empty($user_phone) and $em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
+            throw new AppException('User error: user_phone is occupied.');
         }
-        
+
+        // -- User --
         $user = new User();
         $user->create_date = Flight::get('date');
         $user->update_date = Flight::get('zero');
         $user->remind_date = Flight::get('date');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
+        $user->user_email = $user_email;
+        $user->user_phone = $user_phone;
         $user->user_pass = $user->create_pass();
         $user->user_hash = sha1($user->user_pass);
-        $user->user_email = $user_email;
         $user->user_name = $user_name;
         $em->persist($user);
         $em->flush();
@@ -116,13 +121,12 @@ class UserRegister
 
         // -- End --
         Flight::json([ 
-            'success' => 'true',
             'user' =>  [
                 'id' => $user->id, 
-                'create_date' => $user->create_date->format('Y-m-d H:i:s'), 
-                'update_date' => $user->update_date->format('Y-m-d H:i:s'), 
+                'create_date' => $user->create_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_email' => $user->user_email,
+                'user_phone' => $user->user_phone,
                 'user_name' => $user->user_name
             ]
         ]);

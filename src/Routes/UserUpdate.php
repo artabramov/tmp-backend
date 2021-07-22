@@ -23,7 +23,12 @@ class UserUpdate
 
         $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
+        $user_phone = preg_replace('/[^0-9]/', '', (string) Flight::request()->query['user_phone']);
         $user_name = (string) Flight::request()->query['user_name'];
+
+        if(!empty($user_phone) and $em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
+            throw new AppException('User error: user_phone is occupied.');
+        }
 
         // -- User --
         $user = $em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
@@ -32,11 +37,12 @@ class UserUpdate
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->user_phone = $user_phone;
         $user->user_name = $user_name;
         $em->persist($user);
         $em->flush();
 
         // -- End --
-        Flight::json(['success' => 'true']);
+        Flight::json();
     }
 }

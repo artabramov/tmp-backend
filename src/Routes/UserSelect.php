@@ -39,24 +39,41 @@ class UserSelect
             throw new AppException('Pal error: user_id not found.');
         }
 
-        // -- Pal meta --
-        $pal_meta = [];
-        foreach($pal->user_meta as $meta) {
-            $pal_meta[$meta->meta_key] = $meta->meta_value;
-        }
-
         // -- End --
-        Flight::json([ 
-            'success' => 'true',
-            'user' => [
-                'id' => $pal->id, 
-                'create_date' => $pal->create_date->format('Y-m-d H:i:s'), 
-                'update_date' => $pal->update_date->format('Y-m-d H:i:s'), 
-                'user_status' => $pal->user_status,
-                'user_name' => $pal->user_name,
-                'user_meta' => $pal_meta
-            ]
-        ]);
+        if($user->id == $pal->id) {
+
+            // -- User meta --
+            $user_meta = [];
+            foreach($user->user_meta as $meta) {
+                $user_meta[$meta->meta_key] = $meta->meta_value;
+            }
+
+            // -- User --
+            Flight::json([ 
+                'user' => [
+                    'id' => $user->id, 
+                    'create_date' => $user->create_date->format('Y-m-d H:i:s'),
+                    'user_status' => $user->user_status,
+                    'user_token' => $user->user_token,
+                    'user_email' => $user->user_email,
+                    'user_phone' => $user->user_phone,
+                    'user_name' => $user->user_name,
+                    'user_meta' => $user_meta
+                ]
+            ]);
+
+        } else {
+
+            // -- Pal --
+            Flight::json([ 
+                'user' => [
+                    'id' => $pal->id, 
+                    'create_date' => $pal->create_date->format('Y-m-d H:i:s'),
+                    'user_status' => $pal->user_status,
+                    'user_name' => $pal->user_name
+                ]
+            ]);
+        }
 
     }
 }

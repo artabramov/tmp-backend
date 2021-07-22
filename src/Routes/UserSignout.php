@@ -36,7 +36,6 @@ class UserSignout
         $em->flush();
 
         // -- End --
-        
-        Flight::json(['success' => 'true']);
+        Flight::json();
     }
 }

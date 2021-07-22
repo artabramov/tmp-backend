@@ -125,6 +125,8 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
+    $params[0]['success'] = 'true';
+    $params[0]['error'] = '';
     $params[0]['datetime']['date'] = Flight::get('date')->format('Y-m-d H:i:s');
     $params[0]['datetime']['timezone'] = Flight::get('timezone');
 });
@@ -154,12 +156,6 @@ Flight::route('POST /pass', function() {
 // -- User signout --
 Flight::route('PUT /token', function() {
     $route = new \App\Routes\UserSignout();
-    $route->do();
-});
-
-// -- User auth --
-Flight::route('POST /token', function() {
-    $route = new \App\Routes\UserAuth();
     $route->do();
 });
 
