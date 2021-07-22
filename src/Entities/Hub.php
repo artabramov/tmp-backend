@@ -57,8 +57,6 @@ class Hub
     private $hub_meta;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now');
-        $this->update_date = new \DateTime('1970-01-01 00:00:00');
         $this->user_roles = new \Doctrine\Common\Collections\ArrayCollection();
     }
 

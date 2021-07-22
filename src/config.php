@@ -30,13 +30,12 @@ define('PHPMAILER_NAME', 'Echidna');
 // App
 define('VOL_DEFAULT_SIZE', '1000000'); // default depot size
 define('VOL_DEFAULT_EXPIRE', 'P20Y'); // + 20 years
+define('USER_REMIND_TIME', 30); // delay between reminds
+define('USER_PASS_TIME', 180); // pass expires time
+define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 
-//
-define('APP_REMIND_TIME', 30); // delay between reminds
-define('APP_PASS_TIME', 180); // pass expires time
+//---
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
-define('APP_COMMENT_LENGTH', 80);
 define('APP_UPLOAD_FILESIZE', '10M'); // max size of one file
 define('APP_UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
-define('APP_UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('APP_UPLOAD_MIMES', ['image/png', 'image/gif', 'image/jpeg']); // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml

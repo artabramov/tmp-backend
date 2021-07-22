@@ -5,10 +5,9 @@ use \App\Exceptions\AppException;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="users_roles")
- * @Cache("NONSTRICT_READ_WRITE")
+ * @Table(name="users_alerts")
  */
-class Role
+class Alert
 {
     /**
      * @Id
@@ -32,23 +31,21 @@ class Role
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
-    private $hub_id;
+    private $post_id;
 
-    /** 
-     * @Column(type="string", columnDefinition="ENUM('admin', 'editor', 'reader)") 
-     * @var string
+    /**
+     * @Column(type="integer")
+     * @var int
      */
-    private $role_status;
+    private $alerts_count;
 
     public function __set( $key, $value ) {
         if( property_exists( $this, $key )) {
@@ -77,22 +74,22 @@ class Role
     public function validate() {
 
         if(empty($this->user_id)) {
-            throw new AppException('Role error: user_id is empty.');
+            throw new AppException('Alert error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {
-            throw new AppException('Role error: user_id is not numeric.');
+            throw new AppException('Alert error: user_id is not numeric.');
 
-        } elseif(empty($this->hub_id)) {
-            throw new AppException('Role error: hub_id is empty.');
+        } elseif(empty($this->post_id)) {
+            throw new AppException('Alert error: post_id is empty.');
 
-        } elseif(!is_numeric($this->hub_id)) {
-            throw new AppException('Role error: hub_id is not numeric.');
+        } elseif(!is_numeric($this->post_id)) {
+            throw new AppException('Alert error: post_id is not numeric.');
 
-        } elseif(empty($this->role_status)) {
-            throw new AppException('Role error: role_status is empty.');
+        } elseif(empty($this->alerts_count)) {
+            throw new AppException('Alert error: alerts_count is empty.');
 
-        } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
-            throw new AppException('Role error: role_status is incorrect.');
+        } elseif(!is_numeric($this->alerts_count)) {
+            throw new AppException('Alert error: alerts_count is not numeric.');
         }
     }
 }

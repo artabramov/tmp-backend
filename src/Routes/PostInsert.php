@@ -1,14 +1,27 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Entities\User, \App\Entities\Hub, \App\Entities\Role, \App\Entities\Post, \App\Entities\Tag, \App\Entities\Postmeta;
-use \App\Exceptions\AppException;
+use \Flight,
+    \DateTime,
+    \DateInterval,
+    \App\Exceptions\AppException,
+    \App\Entities\Alert,
+    \App\Entities\Comment,
+    \App\Entities\Hub,
+    \App\Entities\Hubmeta,
+    \App\Entities\Post,
+    \App\Entities\Postmeta,
+    \App\Entities\Role,
+    \App\Entities\Tag,
+    \App\Entities\Upload,
+    \App\Entities\User,
+    \App\Entities\Usermeta,
+    \App\Entities\Vol;
 
 class PostInsert
 {
     public function do() {
 
-        // -- Initial --
+        $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) Flight::request()->query['hub_id'];
         $post_status = (string) Flight::request()->query['post_status'];
@@ -19,31 +32,15 @@ class PostInsert
         $post_tags = array_filter($post_tags, fn($value) => !empty($value));
         $post_tags = array_unique($post_tags);
 
-        if(empty($user_token)) {
-            throw new AppException('Initial error: user_token is empty.');
+        // -- User --
+        $user = $em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
 
-        } elseif(empty($hub_id)) {
-            throw new AppException('Initial error: hub_id is empty.');
-
-        } elseif(empty($post_status)) {
-            throw new AppException('Initial error: post_status is empty.');
-
-        } elseif(empty($post_title)) {
-            throw new AppException('Initial error: post_title is empty.');
-        }        
-
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
-
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user not found or not approved.');
         }
 
         // -- Hub --
-        $hub = Flight::get('em')->find('App\Entities\Hub', $hub_id);
+        $hub = $em->find('App\Entities\Hub', $hub_id);
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
@@ -52,42 +49,44 @@ class PostInsert
             throw new AppException('Hub error: hub_id is trash.');
         }
 
-        // -- Auth role --
-        $auth_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $auth->id]);
+        // -- User role --
+        $user_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $user->id]);
 
-        if(empty($auth_role)) {
-            throw new AppException('Auth role error: user_role not found.');
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
 
-        } elseif(!in_array($auth_role->role_status, ['editor', 'admin'])) {
-            throw new AppException('Auth role error: role_status must be editor or admin.');
+        } elseif(!in_array($user_role->role_status, ['editor', 'admin'])) {
+            throw new AppException('User role error: role_status must be editor or admin.');
         }
 
         // -- Post --
         $post = new Post();
-        $post->user_id = $auth->id;
+        $post->create_date = Flight::get('date');
+        $post->update_date = Flight::get('zero');
+        $post->user_id = $user->id;
         $post->hub_id = $hub->id;
         $post->post_status = $post_status;
         $post->post_title = $post_title;
-        Flight::get('em')->persist($post);
-        Flight::get('em')->flush();
+        $em->persist($post);
+        $em->flush();
 
-        // -- Post meta --
-        $post_meta = new Postmeta();
-        $post_meta->post_id = $post->id;
-        $post_meta->meta_key = 'comments_count';
-        $post_meta->meta_value = '0';
-        $post_meta->post = $post;
-        Flight::get('em')->persist($post_meta);
-        Flight::get('em')->flush();
-
-        // -- Post tags --
+        // -- Tags --
         foreach($post_tags as $post_tag) {
             $tag = new Tag();
+            $tag->create_date = Flight::get('date');
+            $tag->update_date = Flight::get('zero');
             $tag->post_id = $post->id;
             $tag->tag_value = $post_tag;
             $tag->post = $post;
-            Flight::get('em')->persist($tag);
-            Flight::get('em')->flush();
+            $em->persist($tag);
+            $em->flush();
+        }
+
+        // -- Cache --
+        foreach($hub->hub_meta->getValues() as $meta) {
+            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
+                $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
+            }
         }
 
         // -- End --

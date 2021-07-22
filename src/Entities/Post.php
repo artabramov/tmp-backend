@@ -79,9 +79,6 @@ class Post
     private $post_comments;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now');
-        $this->update_date = new \DateTime('1970-01-01 00:00:00');
-        $this->remind_date = new \DateTime('1970-01-01 00:00:00');
         $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
     }
 

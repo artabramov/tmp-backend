@@ -66,8 +66,6 @@ class Comment
     private $uploads;
 
     public function __construct() {
-        $this->create_date = new \DateTime('now');
-        $this->update_date = new \DateTime('1970-01-01 00:00:00');
         $this->uploads = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
@@ -115,7 +113,7 @@ class Comment
         } elseif(mb_strlen($this->comment_content) < 2) {
             throw new AppException('Comment error: comment_content is too short.');
 
-        } elseif(mb_strlen($this->comment_content) > APP_COMMENT_LENGTH) {
+        } elseif(mb_strlen($this->comment_content) > 65535) {
             throw new AppException('Comment error: comment_content is too long.');
         }
     }

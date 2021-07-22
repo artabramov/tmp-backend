@@ -57,11 +57,6 @@ class Usermeta
      */
     private $user;
 
-    public function __construct() {
-        $this->create_date = new \DateTime('now');
-        $this->update_date = new \DateTime('1970-01-01 00:00:00');
-    }
-
     public function __set( $key, $value ) {
         if( property_exists( $this, $key )) {
             $this->$key = $value;

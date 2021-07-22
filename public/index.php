@@ -101,6 +101,18 @@ Flight::set('phpmailer', $phpmailer);
 // -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
+
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT to_timestamp(0)");
+    $stmt->execute();
+    Flight::set('zero', new DateTime($stmt->fetchOne()));
+
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
+    $stmt->execute();
+    Flight::set('date', new DateTime($stmt->fetchOne()));
+
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
+    $stmt->execute();
+    Flight::set('timezone', $stmt->fetchOne());
 });
 
 Flight::after('error', function( &$params, &$output ) {
@@ -113,20 +125,8 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-
-    /*
-    $date = new \DateTime('now');
-    $params[0]['datetime']['date'] = $date->format('Y-m-d H:i:s');
-    $params[0]['datetime']['timezone'] = 'Europe/Moscow';
-    */
-
-    $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
-    $stmt->execute();
-    $params[0]['datetime']['date'] = $stmt->fetchOne();
-
-    $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
-    $stmt->execute();
-    $params[0]['datetime']['timezone'] = $stmt->fetchOne();
+    $params[0]['datetime']['date'] = Flight::get('date')->format('Y-m-d H:i:s');
+    $params[0]['datetime']['timezone'] = Flight::get('timezone');
 });
 
 // -- Default --
