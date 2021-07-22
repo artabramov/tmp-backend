@@ -55,10 +55,10 @@ class HubSelect
         // -- End --
         Flight::json([
             'success' => 'true',
+            'error' => '',
             'hub'=> [
                 'id' => $hub->id,
                 'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
-                'update_date' => $hub->create_date->format('Y-m-d H:i:s'),
                 'hub_status' => $hub->hub_status,
                 'hub_name' => $hub->hub_name,
                 'hub_meta' => $hub_meta

@@ -51,6 +51,9 @@ class UserRemind
         $phpmailer->send();
 
         // -- End --
-        Flight::json();
+        Flight::json([
+            'success' => 'true',
+            'error' => ''
+        ]);
     }
 }

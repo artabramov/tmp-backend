@@ -82,7 +82,7 @@ class PostInsert
             $em->flush();
         }
 
-        // -- Cache --
+        // -- Hubmeta cache --
         foreach($hub->hub_meta->getValues() as $meta) {
             if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
@@ -92,6 +92,7 @@ class PostInsert
         // -- End --
         Flight::json([ 
             'success' => 'true',
+            'error' => ''
         ]);
     }
 }

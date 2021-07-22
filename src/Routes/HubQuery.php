@@ -1,51 +1,67 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \App\Exceptions\AppException;
+use \Flight,
+    \DateTime,
+    \DateInterval,
+    \App\Exceptions\AppException,
+    \App\Entities\Alert,
+    \App\Entities\Comment,
+    \App\Entities\Hub,
+    \App\Entities\Hubmeta,
+    \App\Entities\Post,
+    \App\Entities\Postmeta,
+    \App\Entities\Role,
+    \App\Entities\Tag,
+    \App\Entities\Upload,
+    \App\Entities\User,
+    \App\Entities\Usermeta,
+    \App\Entities\Vol;
 
 class HubQuery
 {
     public function do() {
 
-        // -- Initial --
+        $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
         $offset = (int) Flight::request()->query['offset'];
 
-        if(empty($user_token)) {
-            throw new AppException('Initial error: user_token is empty.');
-        } 
+        // -- User --
+        $user = $em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
 
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
-
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user not found or not approved.');
         }
 
         // -- Hubs --
-        $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('role.hub_id')
+        $qb2 = $em->createQueryBuilder();
+        $qb2->select('role.hub_id')
             ->from('App\Entities\Role', 'role')
-            ->where($qb1->expr()->eq('role.user_id', $auth->id));
+            ->where($qb2->expr()->eq('role.user_id', $user->id));
 
-        $qb2 = Flight::get('em')->createQueryBuilder();
-        $qb2->select(['hub.id'])
+        $qb1 = $em->createQueryBuilder();
+        $qb1->select(['hub.id'])
             ->from('App\Entities\Hub', 'hub')
-            ->where($qb2->expr()->in('hub.id', $qb1->getDQL()))
+            ->where($qb1->expr()->in('hub.id', $qb2->getDQL()))
             ->orderBy('hub.hub_name', 'ASC')
             ->setFirstResult($offset)
-            ->setMaxResults(APP_QUERY_LIMIT);
+            ->setMaxResults(HUB_QUERY_LIMIT);
 
-        $hubs_ids = $qb2->getQuery()->getResult();
-        $hubs = array_map(fn($n) => Flight::get('em')->find('App\Entities\Hub', $n['id']), $hubs_ids);
+        $hubs = array_map(fn($n) => Flight::get('em')->find('App\Entities\Hub', $n['id']), $qb1->getQuery()->getResult());
+
+        // -- User meta --
+        $roles_count = 0;
+        foreach($user->user_meta as $meta) {
+            if($meta->meta_key == 'roles_count') {
+                $roles_count = $meta->meta_value;
+                break;
+            }
+        }
 
         // -- End --
         Flight::json([
             'success' => 'true',
-            //'hubs_count' => $hubs_count[0][1],
+            'error' => '',
+            'roles_count' => $roles_count,
             'hubs'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

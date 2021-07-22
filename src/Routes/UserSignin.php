@@ -45,7 +45,9 @@ class UserSignin
         $em->flush();
 
         // -- End --
-        Flight::json([ 
+        Flight::json([
+            'success' => 'true',
+            'error' => '',
             'user' => [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),

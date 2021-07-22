@@ -99,8 +99,8 @@ class UserRegister
         $comment->post_id = $post->id;
         $comment->comment_content = 'First comment';
         $comment->post = $post;
-        Flight::get('em')->persist($comment);
-        Flight::get('em')->flush();
+        $em->persist($comment);
+        $em->flush();
 
         // -- Dir --
         if(!file_exists(UPLOAD_PATH . $user->id)) {
@@ -120,7 +120,9 @@ class UserRegister
         $phpmailer->send();
 
         // -- End --
-        Flight::json([ 
+        Flight::json([
+            'success' => 'true',
+            'error' => '',
             'user' =>  [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),

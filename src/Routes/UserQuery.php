@@ -48,23 +48,25 @@ class UserQuery
         }
 
         // -- Users --
-        $qb1 = $em->createQueryBuilder();
-        $qb1->select('role.user_id')
-            ->from('App\Entities\Role', 'role')
-            ->where($qb1->expr()->eq('role.hub_id', $hub->id));
-
         $qb2 = $em->createQueryBuilder();
-        $qb2->select(['user.id'])
+        $qb2->select('role.user_id')
+            ->from('App\Entities\Role', 'role')
+            ->where($qb2->expr()->eq('role.hub_id', $hub->id));
+
+        $qb1 = $em->createQueryBuilder();
+        $qb1->select(['user.id'])
             ->from('App\Entities\User', 'user')
-            ->where($qb2->expr()->in('user.id', $qb1->getDQL()))
+            ->where($qb1->expr()->in('user.id', $qb2->getDQL()))
             ->orderBy('user.user_name', 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults(USER_QUERY_LIMIT);
 
-        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['id']), $qb2->getQuery()->getResult());
+        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['id']), $qb1->getQuery()->getResult());
 
         // -- End --
         Flight::json([
+            'success' => 'true',
+            'error' => '',
             'users'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
