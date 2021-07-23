@@ -52,8 +52,7 @@ class UserRemind
 
         // -- End --
         Flight::json([
-            'success' => 'true',
-            'error' => ''
+            'success' => 'true'
         ]);
     }
 }

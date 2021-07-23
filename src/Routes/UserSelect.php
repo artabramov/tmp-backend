@@ -51,7 +51,6 @@ class UserSelect
             // -- User --
             Flight::json([
                 'success' => 'true',
-                'error' => '',
                 'user' => [
                     'id' => $user->id, 
                     'create_date' => $user->create_date->format('Y-m-d H:i:s'),
@@ -69,7 +68,6 @@ class UserSelect
             // -- Pal --
             Flight::json([
                 'success' => 'true',
-                'error' => '',
                 'user' => [
                     'id' => $pal->id, 
                     'create_date' => $pal->create_date->format('Y-m-d H:i:s'),

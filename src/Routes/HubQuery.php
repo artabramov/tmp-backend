@@ -60,7 +60,6 @@ class HubQuery
         // -- End --
         Flight::json([
             'success' => 'true',
-            'error' => '',
             'roles_count' => $roles_count,
             'hubs'=> array_map(fn($n) => [
                 'id' => $n->id,

@@ -35,6 +35,7 @@ define('USER_PASS_TIME', 180); // pass expires time
 define('USER_QUERY_LIMIT', 10);
 define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('HUB_QUERY_LIMIT', 10);
+define('ROLE_QUERY_LIMIT', 10);
 
 //---
 define('APP_QUERY_LIMIT', 3); // number of elements on one page

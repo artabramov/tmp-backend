@@ -52,8 +52,7 @@ class HubUpdate
 
         // -- End --
         Flight::json([
-            'success' => 'true',
-            'error' => ''
+            'success' => 'true'
         ]);
     }
 }

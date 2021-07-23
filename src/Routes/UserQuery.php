@@ -23,7 +23,6 @@ class UserQuery
 
         $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
-        $hub_id = (int) Flight::request()->query['hub_id'];
         $offset = (int) Flight::request()->query['offset'];
 
         // -- User --
@@ -33,40 +32,19 @@ class UserQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Hub --
-        $hub = $em->find('App\Entities\Hub', $hub_id);
-
-        if(empty($hub)) {
-            throw new AppException('Hub error: hub_id not found.');
-        }
-
-        // -- User role --
-        $user_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('User role error: user_role not found.');
-        }
-
         // -- Users --
-        $qb2 = $em->createQueryBuilder();
-        $qb2->select('role.user_id')
-            ->from('App\Entities\Role', 'role')
-            ->where($qb2->expr()->eq('role.hub_id', $hub->id));
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('pal_id', 'pal_id');
 
-        $qb1 = $em->createQueryBuilder();
-        $qb1->select(['user.id'])
-            ->from('App\Entities\User', 'user')
-            ->where($qb1->expr()->in('user.id', $qb2->getDQL()))
-            ->orderBy('user.user_name', 'ASC')
-            ->setFirstResult($offset)
-            ->setMaxResults(USER_QUERY_LIMIT);
-
-        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['id']), $qb1->getQuery()->getResult());
+        $query = $em->createNativeQuery("SELECT pal_id FROM vw_users_pals WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('offset', $offset)
+            ->setParameter('limit', USER_QUERY_LIMIT);
+        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['pal_id']), $query->getResult());
 
         // -- End --
         Flight::json([
             'success' => 'true',
-            'error' => '',
             'users'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

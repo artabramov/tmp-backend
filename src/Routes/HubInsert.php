@@ -56,7 +56,7 @@ class HubInsert
 
         // -- Usermeta cache --
         foreach($user->user_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
+            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }
         }
@@ -64,7 +64,6 @@ class HubInsert
         // -- End --
         Flight::json([
             'success' => 'true',
-            'error' => '',
             'hub' => [
                 'id' => $hub->id, 
                 'create_date' => $hub->create_date->format('Y-m-d H:i:s'), 
