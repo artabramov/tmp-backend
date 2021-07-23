@@ -32,7 +32,6 @@ class UserQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Users --
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('pal_id', 'pal_id');
 

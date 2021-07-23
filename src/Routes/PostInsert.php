@@ -44,9 +44,6 @@ class PostInsert
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
-
-        } elseif($hub->hub_status == 'trash') {
-            throw new AppException('Hub error: hub_id is trash.');
         }
 
         // -- User role --
@@ -84,7 +81,7 @@ class PostInsert
 
         // -- Hubmeta cache --
         foreach($hub->hub_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
+            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id) and $meta->meta_key == 'posts_count') {
                 $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
             }
         }
