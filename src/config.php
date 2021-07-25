@@ -34,11 +34,12 @@ define('USER_REMIND_TIME', 30); // delay between reminds
 define('USER_PASS_TIME', 180); // pass expires time
 define('USER_QUERY_LIMIT', 10);
 define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
+define('UPLOAD_FILESIZE', '10M'); // max size of one file
+define('UPLOAD_MIMES', ['image/png', 'image/gif', 'image/jpeg']); // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
+//define('UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
 define('HUB_QUERY_LIMIT', 10);
 define('ROLE_QUERY_LIMIT', 10);
 
 //---
 define('APP_QUERY_LIMIT', 3); // number of elements on one page
-define('APP_UPLOAD_FILESIZE', '10M'); // max size of one file
-define('APP_UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
-define('APP_UPLOAD_MIMES', ['image/png', 'image/gif', 'image/jpeg']); // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
+
