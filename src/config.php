@@ -36,10 +36,9 @@ define('USER_QUERY_LIMIT', 10);
 define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('UPLOAD_FILESIZE', '10M'); // max size of one file
 define('UPLOAD_MIMES', ['image/png', 'image/gif', 'image/jpeg']); // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
-//define('UPLOAD_NUMBER', 4); // number of maximum size of uploads per one time
 define('HUB_QUERY_LIMIT', 10);
 define('ROLE_QUERY_LIMIT', 10);
+define('POST_QUERY_LIMIT', 10);
+define('COMMENT_QUERY_LIMIT', 10);
 
-//---
-define('APP_QUERY_LIMIT', 3); // number of elements on one page
 

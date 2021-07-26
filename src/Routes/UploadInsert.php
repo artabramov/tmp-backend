@@ -69,13 +69,12 @@ class UploadInsert
         }
 
         // -- User vol --
-        $time = new DateTime('now');
         $qb1 = $em->createQueryBuilder();
         $qb1->select('vol.id')
             ->from('App\Entities\Vol', 'vol')
             ->where($qb1->expr()->eq('vol.user_id', $user->id))
             ->andWhere($qb1->expr()->gt('vol.expire_date', ':now'))
-            ->setParameter('now', $time->format('Y-m-d H:i:s'))
+            ->setParameter('now', 'NOW()')
             ->orderBy('vol.vol_size', 'DESC')
             ->setMaxResults(1);
 
@@ -120,13 +119,12 @@ class UploadInsert
 
             try {
                 $file->upload();
+                $em->persist($upload);
+                $em->flush();
 
             } catch (\Exception $e) {
                 throw new AppException('Upload error: file upload error.');
             }
-
-            $em->persist($upload);
-            $em->flush();
 
             // -- Usermeta cache --
             foreach($user->user_meta->getValues() as $meta) {

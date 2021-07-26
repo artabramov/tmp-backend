@@ -12,6 +12,7 @@ class Alert
     /**
      * @Id
      * @Column(type="integer")
+     * @Cache("NONSTRICT_READ_WRITE")
      * @GeneratedValue
      * @var int
      */
@@ -31,21 +32,31 @@ class Alert
 
     /**
      * @Column(type="integer")
+     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
+     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $post_id;
 
     /**
      * @Column(type="integer")
+     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $alerts_count;
+
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_alerts", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
+     */
+    private $user;
 
     public function __set( $key, $value ) {
         if( property_exists( $this, $key )) {

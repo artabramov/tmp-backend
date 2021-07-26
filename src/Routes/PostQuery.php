@@ -1,53 +1,51 @@
 <?php
 namespace App\Routes;
-use \Flight;
-use \Doctrine\DBAL\ParameterType;
-use \App\Exceptions\AppException;
+use \Flight,
+    \DateTime,
+    \DateInterval,
+    \Doctrine\DBAL\ParameterType,
+    \App\Exceptions\AppException,
+    \App\Entities\Alert,
+    \App\Entities\Comment,
+    \App\Entities\Hub,
+    \App\Entities\Hubmeta,
+    \App\Entities\Post,
+    \App\Entities\Postmeta,
+    \App\Entities\Role,
+    \App\Entities\Tag,
+    \App\Entities\Upload,
+    \App\Entities\User,
+    \App\Entities\Usermeta,
+    \App\Entities\Vol;
 
 class PostQuery
 {
     public function do() {
 
-        // -- Initial --
+        $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) Flight::request()->query['hub_id'];
-        $post_status = (string) Flight::request()->query['post_status']; // or
-        $post_title = (string) Flight::request()->query['post_title']; // or
-        $post_tag = (string) Flight::request()->query['post_tag']; // or
+        $post_status = (string) Flight::request()->query['post_status'];
+        $post_title = (string) Flight::request()->query['post_title'];
+        $post_tag = (string) Flight::request()->query['post_tag'];
         $offset = (int) Flight::request()->query['offset'];
 
-        if(empty($user_token)) {
-            throw new AppException('Initial error: user_token is empty.');
+        // -- User --
+        $user = $em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
 
-        } elseif(empty($hub_id)) {
-            throw new AppException('Initial error: hub_id is empty.');
-
-        } elseif(empty($post_status) and empty($post_title) and empty($post_tag)) {
-            throw new AppException('Initial error: post_status or post_title or post_tag is empty.');
-        } 
-
-        // -- Auth --
-        $auth = Flight::get('em')->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($auth)) {
-            throw new AppException('Auth error: user_token not found.');
-
-        } elseif($auth->user_status == 'trash') {
-            throw new AppException('Auth error: user_token is trash.');
+        if(empty($user)) {
+            throw new AppException('User error: user not found or not approved.');
         }
 
         // -- Hub --
-        $hub = Flight::get('em')->find('App\Entities\Hub', $hub_id);
+        $hub = $em->find('App\Entities\Hub', $hub_id);
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
-
-        } elseif($hub->hub_status == 'trash') {
-            throw new AppException('Hub error: hub_id is trash.');
         }
 
-        // -- Auth role --
-        $auth_role = Flight::get('em')->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $auth->id]);
+        // -- User role --
+        $auth_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
 
         if(empty($auth_role)) {
             throw new AppException('Auth role error: user_role not found.');
@@ -57,43 +55,45 @@ class PostQuery
         }
 
         // -- Posts --
-        $qb1 = Flight::get('em')->createQueryBuilder();
+        $qb1 = $em->createQueryBuilder();
         if(!empty($post_status)) {
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
-                ->andWhere($qb1->expr()->eq('post.post_status', Flight::get('em')->getConnection()->quote($post_status, ParameterType::STRING)))
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
+                ->andWhere($qb1->expr()->eq('post.post_status', $em->getConnection()->quote($post_status, ParameterType::STRING)))
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
-                ->setMaxResults(APP_QUERY_LIMIT);
+                ->setMaxResults(POST_QUERY_LIMIT);
 
         } elseif(!empty($post_title)) {
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
-                ->andWhere($qb1->expr()->like('post.post_title', Flight::get('em')->getConnection()->quote('%' . $post_title . '%', ParameterType::STRING)))
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
+                ->andWhere($qb1->expr()->like('post.post_title', '%' . $post_title . '%'))
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
-                ->setMaxResults(APP_QUERY_LIMIT);
+                ->setMaxResults(POST_QUERY_LIMIT);
 
         } elseif(!empty($post_tag)) {
 
             $qb2 = Flight::get('em')->createQueryBuilder();
             $qb2->select('tag.post_id')
                 ->from('App\Entities\Tag', 'tag')
-                ->where($qb2->expr()->eq('tag.tag_value', Flight::get('em')->getConnection()->quote($post_tag, ParameterType::STRING)));
+                ->where($qb2->expr()->eq('tag.tag_value', $post_tag));
     
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.hub_id', Flight::get('em')->getConnection()->quote($hub_id, ParameterType::INTEGER)))
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
                 ->andWhere($qb1->expr()->in('post.id', $qb2->getDQL()))
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
-                ->setMaxResults(APP_QUERY_LIMIT);
+                ->setMaxResults(POST_QUERY_LIMIT);
+
+        } else {
+            throw new AppException('Post error: posts not found.');
         }
 
-        $tmp = $qb1->getQuery()->getDQL();
-        $posts_ids = $qb1->getQuery()->getResult();
-        $posts = array_map(fn($n) => Flight::get('em')->find('App\Entities\Post', $n['id']), $posts_ids);
+        //$dql = $qb1->getDQL();
+        $posts = array_map(fn($n) => $em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
 
         // -- End --
         Flight::json([

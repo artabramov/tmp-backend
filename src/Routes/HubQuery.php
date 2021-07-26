@@ -46,7 +46,7 @@ class HubQuery
             ->setFirstResult($offset)
             ->setMaxResults(HUB_QUERY_LIMIT);
 
-        $hubs = array_map(fn($n) => Flight::get('em')->find('App\Entities\Hub', $n['id']), $qb1->getQuery()->getResult());
+        $hubs = array_map(fn($n) => $em->find('App\Entities\Hub', $n['id']), $qb1->getQuery()->getResult());
 
         // -- User meta --
         $roles_count = 0;

@@ -82,6 +82,13 @@ class User
      */
     private $user_meta;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="user", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
+     */
+    private $user_alerts;
+
     public function __construct() {
         $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
     }

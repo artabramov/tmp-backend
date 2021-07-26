@@ -385,6 +385,22 @@ CREATE OR REPLACE VIEW vw_users_pals AS
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
 
+-- view: users vols --
+
+CREATE OR REPLACE VIEW vw_users_vols AS
+    SELECT users.id AS user_id, users_vols.create_date AS create_date, users_vols.expire_date AS expire_date, users_vols.vol_size AS vol_size FROM users
+    JOIN users_vols ON users.id = users_vols.user_id
+    WHERE users_vols.expire_date >= NOW()
+    ORDER BY users_vols.vol_size DESC
+    LIMIT 1;
+
+CREATE OR REPLACE VIEW vw_users_vols AS
+    SELECT users.id AS user_id, users_vols.id AS vol_id FROM users
+    JOIN users_vols ON users.id = users_vols.user_id
+    WHERE users_vols.expire_date >= NOW()
+    ORDER BY users_vols.vol_size DESC
+    LIMIT 1;
+    
 -- data --
 
 INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (1, 'approved', '11111111111111111111111111111111111111111111111111111111111111111111111111111111', '14november@mail.ru', '', 'art abramov');
