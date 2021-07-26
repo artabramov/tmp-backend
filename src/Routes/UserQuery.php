@@ -1,9 +1,6 @@
 <?php
 namespace App\Routes;
 use \Flight,
-    \DateTime,
-    \DateInterval,
-    \App\Exceptions\AppException,
     \App\Entities\Alert,
     \App\Entities\Comment,
     \App\Entities\Hub,
@@ -15,7 +12,8 @@ use \Flight,
     \App\Entities\Upload,
     \App\Entities\User,
     \App\Entities\Usermeta,
-    \App\Entities\Vol;
+    \App\Entities\Vol,
+    \App\Exceptions\AppException;
 
 class UserQuery
 {
@@ -35,11 +33,11 @@ class UserQuery
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('pal_id', 'pal_id');
 
-        $query = $em->createNativeQuery("SELECT pal_id FROM vw_users_pals WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
+        $query = $em->createNativeQuery("SELECT pal_id FROM vw_users_relations WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
             ->setParameter('user_id', $user->id)
             ->setParameter('offset', $offset)
             ->setParameter('limit', USER_QUERY_LIMIT);
-        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['pal_id']), $query->getResult());
+        $users = array_map(fn($n) => $em->find('App\Entities\User', $n['to_id']), $query->getResult());
 
         // -- End --
         Flight::json([

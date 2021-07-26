@@ -1,9 +1,6 @@
 <?php
 namespace App\Routes;
 use \Flight,
-    \DateTime,
-    \DateInterval,
-    \App\Exceptions\AppException,
     \App\Entities\Alert,
     \App\Entities\Comment,
     \App\Entities\Hub,
@@ -15,7 +12,8 @@ use \Flight,
     \App\Entities\Upload,
     \App\Entities\User,
     \App\Entities\Usermeta,
-    \App\Entities\Vol;
+    \App\Entities\Vol,
+    \App\Exceptions\AppException;
 
 class UserRegister
 {
@@ -74,7 +72,7 @@ class UserRegister
         $user_vol = new Vol();
         $user_vol->create_date = Flight::get('date');
         $user_vol->update_date = Flight::get('zero');
-        $user_vol->expire_date = clone Flight::get('date')->add(new DateInterval(VOL_DEFAULT_EXPIRE));
+        $user_vol->expire_date = clone Flight::get('date')->add(new \DateInterval(VOL_DEFAULT_EXPIRE));
         $user_vol->user_id = $user->id;
         $user_vol->vol_size = VOL_DEFAULT_SIZE;
         $em->persist($user_vol);

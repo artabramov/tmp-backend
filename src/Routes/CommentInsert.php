@@ -1,9 +1,6 @@
 <?php
 namespace App\Routes;
 use \Flight,
-    \DateTime,
-    \DateInterval,
-    \App\Exceptions\AppException,
     \App\Entities\Alert,
     \App\Entities\Comment,
     \App\Entities\Hub,
@@ -15,7 +12,8 @@ use \Flight,
     \App\Entities\Upload,
     \App\Entities\User,
     \App\Entities\Usermeta,
-    \App\Entities\Vol;
+    \App\Entities\Vol,
+    \App\Exceptions\AppException;
 
 class CommentInsert
 {
@@ -74,6 +72,8 @@ class CommentInsert
                 $em->getCache()->evictEntity('\App\Entities\Postmeta', $meta->id);
             }
         }
+
+        // TODO: update alerts_sum to all users from this hub
 
         // -- End --
         Flight::json([ 

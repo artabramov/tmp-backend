@@ -1,9 +1,6 @@
 <?php
 namespace App\Routes;
 use \Flight,
-    \DateTime,
-    \DateInterval,
-    \App\Exceptions\AppException,
     \App\Entities\Alert,
     \App\Entities\Comment,
     \App\Entities\Hub,
@@ -15,7 +12,8 @@ use \Flight,
     \App\Entities\Upload,
     \App\Entities\User,
     \App\Entities\Usermeta,
-    \App\Entities\Vol;
+    \App\Entities\Vol,
+    \App\Exceptions\AppException;
 
 class UserSelect
 {
@@ -54,17 +52,27 @@ class UserSelect
             })->first();
             $roles_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
+            // -- Alerts sum --
+            $tmp = $user->user_meta->filter(function($element) {
+                return $element->meta_key == 'alerts_sum';
+            })->first();
+            $alerts_sum = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
+
             // -- User vol (view) --
             $stmt = $em->getConnection()->prepare("SELECT vol_id FROM vw_users_vols WHERE user_id = :user_id LIMIT 1");
             $stmt->bindValue('user_id', $user->id);
             $stmt->execute();
             $user_vol = $em->find('App\Entities\Vol', $stmt->fetchOne());
 
+            /*
             // -- Alerts count --
             $alerts_count = 0;
-            foreach($user->user_alerts as $alert) {
-                $alerts_count += $alert->alerts_count;
+            if(!empty($user->user_alerts)) {
+                foreach($user->user_alerts as $alert) {
+                    $alerts_count += $alert->alerts_count;
+                }
             }
+            */
 
             // -- User --
             Flight::json([
@@ -81,7 +89,7 @@ class UserSelect
                     'user_meta' => [
                         'roles_count' => $roles_count,
                         'uploads_sum' => $uploads_sum,
-                        'alerts_count' => $alerts_count
+                        'alerts_sum' => $alerts_sum
                     ],
 
                     'user_vol' => [

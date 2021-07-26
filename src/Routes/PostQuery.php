@@ -1,10 +1,6 @@
 <?php
 namespace App\Routes;
 use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\ParameterType,
-    \App\Exceptions\AppException,
     \App\Entities\Alert,
     \App\Entities\Comment,
     \App\Entities\Hub,
@@ -16,7 +12,8 @@ use \Flight,
     \App\Entities\Upload,
     \App\Entities\User,
     \App\Entities\Usermeta,
-    \App\Entities\Vol;
+    \App\Entities\Vol,
+    \App\Exceptions\AppException;
 
 class PostQuery
 {
@@ -60,7 +57,7 @@ class PostQuery
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
                 ->where($qb1->expr()->eq('post.hub_id', $hub->id))
-                ->andWhere($qb1->expr()->eq('post.post_status', $em->getConnection()->quote($post_status, ParameterType::STRING)))
+                ->andWhere($qb1->expr()->eq('post.post_status', $em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)))
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
                 ->setMaxResults(POST_QUERY_LIMIT);

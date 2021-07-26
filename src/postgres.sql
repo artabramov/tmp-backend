@@ -376,23 +376,72 @@ $upload_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
 
--- view: users pals --
+-- alert insert --
 
-CREATE OR REPLACE VIEW vw_users_pals AS
-    SELECT DISTINCT users_roles.user_id AS user_id, users.id AS pal_id FROM users_roles
+CREATE FUNCTION alert_insert() RETURNS trigger AS $alert_insert$
+    DECLARE
+        alerts_sum INTEGER;
+    BEGIN
+        -- users meta
+        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum') THEN
+            UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
+        ELSE
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', alerts_sum);
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$alert_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER alert_insert AFTER INSERT ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_insert();
+
+-- alert delete --
+
+CREATE FUNCTION alert_delete() RETURNS trigger AS $alert_delete$
+    DECLARE
+        alerts_sum INTEGER;
+    BEGIN
+        -- users meta
+        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = OLD.user_id;
+        IF alerts_sum IS NULL THEN
+            DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+        ELSE
+            UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+        END IF;
+        --
+        RETURN OLD;
+    END;
+$alert_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER alert_delete AFTER DELETE ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_delete();
+
+-- alert update --
+
+CREATE FUNCTION alert_update() RETURNS trigger AS $alert_update$
+    DECLARE
+        alerts_sum INTEGER;
+    BEGIN
+        -- users meta
+        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = OLD.user_id;
+        UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+        --
+        RETURN OLD;
+    END;
+$alert_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER alert_update AFTER UPDATE ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_update();
+
+-- view: users relations --
+
+CREATE OR REPLACE VIEW vw_users_relations AS
+    SELECT DISTINCT users_roles.user_id AS user_id, users.id AS to_id FROM users_roles
     JOIN hubs ON hubs.id = users_roles.hub_id
     JOIN users ON users.id IN (SELECT users_roles.user_id FROM users_roles WHERE users_roles.hub_id = hubs.id)
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
 
 -- view: users vols --
-
-CREATE OR REPLACE VIEW vw_users_vols AS
-    SELECT users.id AS user_id, users_vols.create_date AS create_date, users_vols.expire_date AS expire_date, users_vols.vol_size AS vol_size FROM users
-    JOIN users_vols ON users.id = users_vols.user_id
-    WHERE users_vols.expire_date >= NOW()
-    ORDER BY users_vols.vol_size DESC
-    LIMIT 1;
 
 CREATE OR REPLACE VIEW vw_users_vols AS
     SELECT users.id AS user_id, users_vols.id AS vol_id FROM users
@@ -431,7 +480,7 @@ INSERT INTO uploads (id, user_id, comment_id, upload_name, upload_file, upload_m
 
 -- drop all --
 
-DROP VIEW IF EXISTS vw_users_pals;
+DROP VIEW IF EXISTS vw_users_relations;
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
@@ -472,6 +521,9 @@ DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
 DROP TRIGGER IF EXISTS upload_delete ON uploads;
+DROP TRIGGER IF EXISTS alert_insert ON users_alerts;
+DROP TRIGGER IF EXISTS alert_delete ON users_alerts;
+DROP TRIGGER IF EXISTS alert_update ON users_alerts;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
@@ -481,6 +533,9 @@ DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
 DROP FUNCTION IF EXISTS upload_delete;
+DROP FUNCTION IF EXISTS alert_insert;
+DROP FUNCTION IF EXISTS alert_delete;
+DROP FUNCTION IF EXISTS alert_update;
 
 -- erase --
 
@@ -501,4 +556,4 @@ DELETE FROM users;
 
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
-SELECT * FROM vw_users_pals;
+SELECT * FROM vw_users_relations; SELECT * FROM vw_users_vols;
