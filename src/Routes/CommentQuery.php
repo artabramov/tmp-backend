@@ -73,12 +73,6 @@ class CommentQuery
         // -- Delete alerts --
         // TODO...
 
-        foreach($comments as $comment) {
-            foreach($comment->comment_uploads as $upload) {
-                $a = 1;
-            }
-        }
-
         // -- End --
         Flight::json([
             'success' => 'true',

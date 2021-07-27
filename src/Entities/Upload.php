@@ -71,7 +71,7 @@ class Upload
      * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_uploads", fetch="EXTRA_LAZY")
      * @JoinColumn(name="comment_id", referencedColumnName="id")
      */
-    private $comment;
+    private $post_comment;
 
     public function __set( $key, $value ) {
         if( property_exists( $this, $key )) {

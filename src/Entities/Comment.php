@@ -51,7 +51,7 @@ class Comment
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Upload", mappedBy="comment", fetch="EXTRA_LAZY")
+     * @OneToMany(targetEntity="\App\Entities\Upload", mappedBy="post_comment", fetch="EXTRA_LAZY")
      * @JoinColumn(name="comment_id", referencedColumnName="id")
      */
     private $comment_uploads;
