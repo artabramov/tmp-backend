@@ -271,6 +271,12 @@ Flight::route('DELETE /comment/@comment_id', function($comment_id) {
     $route->do($comment_id);
 });
 
+// -- Comment custom --
+Flight::route('GET /comments', function() {
+    $route = new \App\Routes\CommentQuery();
+    $route->do();
+});
+
 // -- Upload insert --
 Flight::route('POST /upload', function() {
     $route = new \App\Routes\UploadInsert();

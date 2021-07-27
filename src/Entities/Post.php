@@ -33,14 +33,12 @@ class Post
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $hub_id;
@@ -71,15 +69,9 @@ class Post
      */
     private $post_tags;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Comment", mappedBy="post", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post_comments;
-
     public function __construct() {
-        $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->post_meta = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->post_tags = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set( $key, $value ) {

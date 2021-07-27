@@ -49,36 +49,36 @@ class RoleInsert
             throw new AppException('User role error: role_status must be admin.');
         }
 
-        // -- Pal --
-        $pal = $em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
+        // -- Member --
+        $member = $em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
-        if(empty($pal)) {
+        if(empty($member)) {
             throw new AppException('User error: user_id not found.');
 
-        } elseif($pal->user_status == 'trash') {
+        } elseif($member->user_status == 'trash') {
             throw new AppException('User error: user_id is trash.');
         }
 
-        // -- Pal role --
-        $pal_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $pal->id]);
+        // -- Member role --
+        $member_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $member->id]);
 
-        if(!empty($pal_role)) {
+        if(!empty($member_role)) {
             throw new AppException('User role error: role_status is occupied.');
         }
 
-        $pal_role = new Role();
-        $pal_role->create_date = Flight::get('date');
-        $pal_role->update_date = Flight::get('zero');
-        $pal_role->user_id = $pal->id;
-        $pal_role->hub_id = $hub->id;
-        $pal_role->role_status = $role_status;
-        $pal_role->user = $pal;
-        $pal_role->hub = $hub;
-        $em->persist($pal_role);
+        $member_role = new Role();
+        $member_role->create_date = Flight::get('date');
+        $member_role->update_date = Flight::get('zero');
+        $member_role->user_id = $member->id;
+        $member_role->hub_id = $hub->id;
+        $member_role->role_status = $role_status;
+        $member_role->user = $member;
+        $member_role->hub = $hub;
+        $em->persist($member_role);
         $em->flush();
 
         // -- Usermeta cache --
-        foreach($pal->user_meta->getValues() as $meta) {
+        foreach($member->user_meta->getValues() as $meta) {
             if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }
@@ -93,7 +93,14 @@ class RoleInsert
 
         // -- End --
         Flight::json([
-            'success' => 'true'
+            'success' => 'true',
+            'user_role' => [
+                'id' => $member_role->id, 
+                'create_date' => $member_role->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $member_role->user_id,
+                'hub_id' => $member_role->hub_id,
+                'role_status' => $member_role->role_status
+            ]
         ]);
     }
 }

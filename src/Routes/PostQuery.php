@@ -42,17 +42,18 @@ class PostQuery
         }
 
         // -- User role --
-        $auth_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
+        $user_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $user->id]);
 
-        if(empty($auth_role)) {
-            throw new AppException('Auth role error: user_role not found.');
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
 
-        } elseif(!in_array($auth_role->role_status, ['editor', 'admin'])) {
-            throw new AppException('Auth role error: role_status must be editor or admin.');
+        } elseif(!in_array($user_role->role_status, ['editor', 'admin'])) {
+            throw new AppException('User role error: role_status must be editor or admin.');
         }
 
         // -- Posts --
         $qb1 = $em->createQueryBuilder();
+        $qc1 = $em->createQueryBuilder();
         if(!empty($post_status)) {
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
@@ -62,6 +63,10 @@ class PostQuery
                 ->setFirstResult($offset)
                 ->setMaxResults(POST_QUERY_LIMIT);
 
+            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
+                ->andWhere($qb1->expr()->eq('post.post_status', $em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)));
+
         } elseif(!empty($post_title)) {
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
@@ -70,6 +75,10 @@ class PostQuery
                 ->orderBy('post.id', 'DESC')
                 ->setFirstResult($offset)
                 ->setMaxResults(POST_QUERY_LIMIT);
+
+            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
+                ->andWhere($qb1->expr()->like('post.post_title', '%' . $post_title . '%'));
 
         } elseif(!empty($post_tag)) {
 
@@ -85,17 +94,23 @@ class PostQuery
                 ->setFirstResult($offset)
                 ->setMaxResults(POST_QUERY_LIMIT);
 
+            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
+                ->where($qb1->expr()->eq('post.hub_id', $hub->id))
+                ->andWhere($qb1->expr()->in('post.id', $qb2->getDQL()));
+
         } else {
             throw new AppException('Post error: posts not found.');
         }
 
         //$dql = $qb1->getDQL();
         $posts = array_map(fn($n) => $em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+        $posts_count = $qc1->getQuery()->getResult();
 
         // -- End --
         Flight::json([
             'success' => 'true',
-            'posts_count' => 0,
+            'posts_count' => $posts_count[0][1],
+            'posts_limit' => POST_QUERY_LIMIT,
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

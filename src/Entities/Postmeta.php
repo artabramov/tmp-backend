@@ -32,7 +32,6 @@ class Postmeta
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $post_id;

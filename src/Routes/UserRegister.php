@@ -21,8 +21,9 @@ class UserRegister
 
         $em = Flight::get('em');
         $user_email = mb_strtolower((string) Flight::request()->query['user_email']);
-        $user_phone = preg_replace('/[^0-9]/', '', (string) Flight::request()->query['user_phone']);
         $user_name = (string) Flight::request()->query['user_name'];
+        $user_phone = preg_replace('/[^0-9]/', '', (string) Flight::request()->query['user_phone']);
+        $user_phone = empty($user_phone) ? null : $user_phone;
 
         if($em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
             throw new AppException('User error: user_email is occupied.');
@@ -104,7 +105,6 @@ class UserRegister
         if(!file_exists(UPLOAD_PATH . $user->id)) {
             try {
                 mkdir(UPLOAD_PATH . $user->id, 0777, true);
-
             } catch (\Exception $e) {
                 throw new AppException('Upload error: make dir error.');
             }
@@ -125,7 +125,7 @@ class UserRegister
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_email' => $user->user_email,
-                'user_phone' => $user->user_phone,
+                'user_phone' => !emty($user->user_phone) ? $user->user_phone : '',
                 'user_name' => $user->user_name
             ]
         ]);

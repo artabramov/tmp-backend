@@ -31,11 +31,11 @@ class RoleDelete
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Pal --
+        // -- Member --
 
-        $pal = $em->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
+        $member = $em->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
 
-        if(empty($pal)) {
+        if(empty($member)) {
             throw new AppException('User error: user_id not found.');
         }
 
@@ -45,7 +45,7 @@ class RoleDelete
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
 
-        } elseif($hub->user_id == $pal->id) {
+        } elseif($hub->user_id == $member->id) {
             throw new AppException('Hub error: permission denied.');
         }
 
@@ -59,19 +59,19 @@ class RoleDelete
             throw new AppException('User role error: role_status must be admin.');
         }
 
-        // -- Pal role --
-        $pal_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $pal->id]);
+        // -- Member role --
+        $member_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub->id, 'user_id' => $member->id]);
 
-        if(empty($pal_role)) {
+        if(empty($member_role)) {
             throw new AppException('User role error: user_role not found.');
         }
 
-        // -- Pal role delete --
-        $em->remove($pal_role);
+        // -- Member role delete --
+        $em->remove($member_role);
         $em->flush();
 
         // -- Usermeta cache --
-        foreach($pal->user_meta->getValues() as $meta) {
+        foreach($member->user_meta->getValues() as $meta) {
             if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }

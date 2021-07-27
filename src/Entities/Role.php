@@ -32,14 +32,12 @@ class Role
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $hub_id;

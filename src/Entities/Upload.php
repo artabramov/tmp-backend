@@ -32,14 +32,12 @@ class Upload
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $comment_id;
@@ -70,10 +68,10 @@ class Upload
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="uploads", fetch="EXTRA_LAZY")
+     * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_uploads", fetch="EXTRA_LAZY")
      * @JoinColumn(name="comment_id", referencedColumnName="id")
      */
-    private $post_comment;
+    private $comment;
 
     public function __set( $key, $value ) {
         if( property_exists( $this, $key )) {

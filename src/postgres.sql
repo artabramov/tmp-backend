@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS uploads (
 CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
     DECLARE
         roles_count integer;
+        relations_count integer;
     BEGIN
         -- users meta
         SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = NEW.user_id;
@@ -192,6 +193,13 @@ CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
         ELSE
             INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'roles_count', roles_count);
         END IF;
+        -- relations count (user meta)
+        SELECT COUNT(to_id) INTO relations_count FROM vw_users_relations WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'relations_count') THEN
+            UPDATE users_meta SET meta_value = relations_count WHERE user_id = NEW.user_id AND meta_key = 'relations_count';
+        ELSE
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'relations_count', relations_count);
+        END IF;
         --
         RETURN NEW;
     END;
@@ -204,6 +212,7 @@ CREATE TRIGGER role_insert AFTER INSERT ON users_roles FOR EACH ROW EXECUTE PROC
 CREATE FUNCTION role_delete() RETURNS trigger AS $role_delete$
     DECLARE
         roles_count integer;
+        relations_count integer;
     BEGIN
         -- users meta
         SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = OLD.user_id;
@@ -219,6 +228,13 @@ CREATE FUNCTION role_delete() RETURNS trigger AS $role_delete$
         ELSE
             UPDATE hubs_meta SET meta_value = roles_count WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
         END IF;
+        -- relations count (user meta)
+        SELECT COUNT(to_id) INTO relations_count FROM vw_users_relations WHERE user_id = OLD.user_id;
+        IF relations_count = 0 THEN
+            DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'relations_count';
+        ELSE
+            UPDATE users_meta SET meta_value = relations_count WHERE user_id = OLD.user_id AND meta_key = 'relations_count';
+        END IF;
         --
         RETURN OLD;
     END;
@@ -227,44 +243,44 @@ $role_delete$ LANGUAGE plpgsql;
 CREATE TRIGGER role_delete AFTER DELETE ON users_roles FOR EACH ROW EXECUTE PROCEDURE role_delete();
 
 -- post insert --
-
-CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
-    DECLARE
-        posts_count integer;
-    BEGIN
-        -- hubs meta
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
-        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
-        ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
-        END IF;
-        --
-        RETURN NEW;
-    END;
-$post_insert$ LANGUAGE plpgsql;
-
-CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE post_insert();
+--
+--CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
+--    DECLARE
+--        posts_count integer;
+--    BEGIN
+--        -- hubs meta
+--        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
+--        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
+--            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
+--        ELSE
+--            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
+--        END IF;
+--        --
+--        RETURN NEW;
+--    END;
+--$post_insert$ LANGUAGE plpgsql;
+--
+--CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE post_insert();
 
 -- post delete --
-
-CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
-    DECLARE
-        posts_count integer;
-    BEGIN
-        -- hubs meta
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id;
-        IF posts_count = 0 THEN
-            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
-        ELSE
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
-        END IF;
-        --
-        RETURN OLD;
-    END;
-$post_delete$ LANGUAGE plpgsql;
-
-CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
+--
+--CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
+--    DECLARE
+--        posts_count integer;
+--    BEGIN
+--        -- hubs meta
+--        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id;
+--        IF posts_count = 0 THEN
+--            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+--        ELSE
+--            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+--        END IF;
+--        --
+--        RETURN OLD;
+--    END;
+--$post_delete$ LANGUAGE plpgsql;
+--
+--CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
 
 -- comment insert --
 
@@ -282,7 +298,7 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
         END IF;
         -- users alerts
         FOR i IN 
-            SELECT users_roles.user_id FROM users_roles WHERE users_roles.hub_id IN (
+            SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.hub_id IN (
                 SELECT posts.hub_id FROM posts WHERE posts.id = NEW.post_id)
         LOOP
             IF EXISTS (SELECT id FROM users_alerts WHERE user_id = i AND post_id = NEW.post_id) THEN
@@ -318,7 +334,7 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
 
         -- users alerts
         FOR i IN 
-            SELECT users_roles.user_id FROM users_roles WHERE users_roles.hub_id IN (
+            SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.hub_id IN (
                 SELECT posts.hub_id FROM posts WHERE posts.id = OLD.post_id)
         LOOP
             SELECT users_alerts.alerts_count INTO alerts_count FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
@@ -449,7 +465,7 @@ CREATE OR REPLACE VIEW vw_users_vols AS
     WHERE users_vols.expire_date >= NOW()
     ORDER BY users_vols.vol_size DESC
     LIMIT 1;
-    
+
 -- data --
 
 INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (1, 'approved', '11111111111111111111111111111111111111111111111111111111111111111111111111111111', '14november@mail.ru', '', 'art abramov');
@@ -481,6 +497,7 @@ INSERT INTO uploads (id, user_id, comment_id, upload_name, upload_file, upload_m
 -- drop all --
 
 DROP VIEW IF EXISTS vw_users_relations;
+DROP VIEW IF EXISTS vw_users_vols;
 
 DROP TABLE IF EXISTS users_meta;
 DROP TABLE IF EXISTS users_roles;
@@ -515,8 +532,8 @@ DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 
 DROP TRIGGER IF EXISTS role_insert ON users_roles;
 DROP TRIGGER IF EXISTS role_delete ON users_roles;
-DROP TRIGGER IF EXISTS post_insert ON posts;
-DROP TRIGGER IF EXISTS post_delete ON posts;
+--DROP TRIGGER IF EXISTS post_insert ON posts;
+--DROP TRIGGER IF EXISTS post_delete ON posts;
 DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
@@ -527,8 +544,8 @@ DROP TRIGGER IF EXISTS alert_update ON users_alerts;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
-DROP FUNCTION IF EXISTS post_insert;
-DROP FUNCTION IF EXISTS post_delete;
+--DROP FUNCTION IF EXISTS post_insert;
+--DROP FUNCTION IF EXISTS post_delete;
 DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
@@ -555,5 +572,6 @@ DELETE FROM users;
 -- select all
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
 SELECT * FROM vw_users_relations; SELECT * FROM vw_users_vols;
+SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
+

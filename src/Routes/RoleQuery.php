@@ -58,19 +58,17 @@ class RoleQuery
 
         $roles = array_map(fn($n) => $em->find('App\Entities\Role', $n['id']), $qb1->getQuery()->getResult());
 
-        // -- Hub meta --
-        $roles_count = 0;
-        foreach($hub->hub_meta as $meta) {
-            if($meta->meta_key == 'roles_count') {
-                $roles_count = $meta->meta_value;
-                break;
-            }
-        }
+        // -- Roles count --
+        $tmp = $hub->hub_meta->filter(function($element) {
+            return $element->meta_key == 'roles_count';
+        })->first();
+        $roles_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
         // -- End --
         Flight::json([
             'success' => 'true',
             'roles_count' => $roles_count,
+            'roles_limit' => ROLE_QUERY_LIMIT,
             'roles'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

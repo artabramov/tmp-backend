@@ -33,14 +33,12 @@ class Comment
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $post_id;
@@ -53,20 +51,13 @@ class Comment
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Post", inversedBy="post_comments", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
      * @OneToMany(targetEntity="\App\Entities\Upload", mappedBy="comment", fetch="EXTRA_LAZY")
      * @JoinColumn(name="comment_id", referencedColumnName="id")
      */
-    private $uploads;
+    private $comment_uploads;
 
     public function __construct() {
-        $this->uploads = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->comment_uploads = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set( $key, $value ) {

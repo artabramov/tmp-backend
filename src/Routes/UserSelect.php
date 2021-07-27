@@ -30,15 +30,21 @@ class UserSelect
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Pal ---
-        $pal = $em->find('\App\Entities\User', $user_id);
+        // -- Member ---
+        $member = $em->find('\App\Entities\User', $user_id);
 
-        if(empty($pal)) {
-            throw new AppException('Pal error: user_id not found.');
+        if(empty($member)) {
+            throw new AppException('Member error: user_id not found.');
         }
 
         // -- End --
-        if($user->id == $pal->id) {
+        if($user->id == $member->id) {
+
+            // -- Alerts sum --
+            $tmp = $user->user_meta->filter(function($element) {
+                return $element->meta_key == 'alerts_sum';
+            })->first();
+            $alerts_sum = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
             // -- Uploads sum --
             $tmp = $user->user_meta->filter(function($element) {
@@ -52,27 +58,11 @@ class UserSelect
             })->first();
             $roles_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
-            // -- Alerts sum --
-            $tmp = $user->user_meta->filter(function($element) {
-                return $element->meta_key == 'alerts_sum';
-            })->first();
-            $alerts_sum = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
             // -- User vol (view) --
             $stmt = $em->getConnection()->prepare("SELECT vol_id FROM vw_users_vols WHERE user_id = :user_id LIMIT 1");
             $stmt->bindValue('user_id', $user->id);
             $stmt->execute();
             $user_vol = $em->find('App\Entities\Vol', $stmt->fetchOne());
-
-            /*
-            // -- Alerts count --
-            $alerts_count = 0;
-            if(!empty($user->user_alerts)) {
-                foreach($user->user_alerts as $alert) {
-                    $alerts_count += $alert->alerts_count;
-                }
-            }
-            */
 
             // -- User --
             Flight::json([
@@ -83,7 +73,7 @@ class UserSelect
                     'user_status' => $user->user_status,
                     'user_token' => $user->user_token,
                     'user_email' => $user->user_email,
-                    'user_phone' => $user->user_phone,
+                    'user_phone' => !emty($user->user_phone) ? $user->user_phone : '',
                     'user_name' => $user->user_name,
 
                     'user_meta' => [
@@ -102,14 +92,14 @@ class UserSelect
 
         } else {
 
-            // -- Pal --
+            // -- Member --
             Flight::json([
                 'success' => 'true',
                 'user' => [
-                    'id' => $pal->id, 
-                    'create_date' => $pal->create_date->format('Y-m-d H:i:s'),
-                    'user_status' => $pal->user_status,
-                    'user_name' => $pal->user_name
+                    'id' => $member->id, 
+                    'create_date' => $member->create_date->format('Y-m-d H:i:s'),
+                    'user_status' => $member->user_status,
+                    'user_name' => $member->user_name
                 ]
             ]);
         }

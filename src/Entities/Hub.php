@@ -32,7 +32,6 @@ class Hub
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
@@ -57,7 +56,7 @@ class Hub
     private $hub_meta;
 
     public function __construct() {
-        $this->user_roles = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->hub_meta = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set( $key, $value ) {

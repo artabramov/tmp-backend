@@ -32,7 +32,6 @@ class Usermeta
 
     /**
      * @Column(type="integer")
-     * @Cache("NONSTRICT_READ_WRITE")
      * @var int
      */
     private $user_id;
@@ -50,7 +49,6 @@ class Usermeta
     private $meta_value;
 
     /**
-     * Many metas have one user. This is the owning side.
      * @Cache("NONSTRICT_READ_WRITE")
      * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_meta", fetch="EXTRA_LAZY")
      * @JoinColumn(name="user_id", referencedColumnName="id")

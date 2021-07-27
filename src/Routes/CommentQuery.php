@@ -15,15 +15,15 @@ use \Flight,
     \App\Entities\Vol,
     \App\Exceptions\AppException;
 
-class CommentInsert
+class CommentQuery
 {
     public function do() {
 
         $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
         $post_id = (int) Flight::request()->query['post_id'];
-        $comment_content = (string) Flight::request()->query['comment_content'];
- 
+        $offset = (int) Flight::request()->query['offset'];
+
         // -- User --
         $user = $em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
 
@@ -39,7 +39,7 @@ class CommentInsert
         }
 
         // -- Hub --
-        $hub = $em->find('App\Entities\Hub', $post->hub_id);
+        $hub = $em->find('App\Entities\Hub', $post->id);
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
@@ -55,44 +55,47 @@ class CommentInsert
             throw new AppException('User role error: role_status must be editor or admin.');
         }
 
-        // -- Comment --
-        $comment = new Comment();
-        $comment->create_date = Flight::get('date');
-        $comment->update_date = Flight::get('zero');
-        $comment->user_id = $user->id;
-        $comment->post_id = $post->id;
-        $comment->comment_content = $comment_content;
-        $comment->post = $post;
-        $em->persist($comment);
-        $em->flush();
-
-        // -- Postmeta cache --
-        foreach($post->post_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Postmeta', $meta->id) and $meta->meta_key == 'comments_count') {
-                $em->getCache()->evictEntity('\App\Entities\Postmeta', $meta->id);
-            }
-        }
-
-        // -- Members --
+        // -- Comments --
         $qb1 = $em->createQueryBuilder();
-        $qb1->select('role.user_id')
-            ->from('App\Entities\Role', 'role')
-            ->where($qb1->expr()->eq('role.hub_id', $hub->id));
+        $qb1->select('comment.id')->from('App\Entities\Comment', 'comment')
+            ->where($qb1->expr()->eq('comment.post_id', $post->id))
+            ->orderBy('comment.id', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults(COMMENT_QUERY_LIMIT);
+        $comments = array_map(fn($n) => $em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
 
-        $members = array_map(fn($n) => $em->find('App\Entities\User', $n['user_id']), $qb1->getQuery()->getResult());
+        // -- Comments count --
+        $tmp = $post->post_meta->filter(function($element) {
+            return $element->meta_key == 'comments_count';
+        })->first();
+        $comments_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
-        // -- Usermeta cache --
-        foreach($members as $member) {
-            foreach($member->user_meta->getValues() as $meta) {
-                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'alerts_sum') {
-                    $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
-                }
+        // -- Delete alerts --
+        // TODO...
+
+        foreach($comments as $comment) {
+            foreach($comment->comment_uploads as $upload) {
+                $a = 1;
             }
         }
 
         // -- End --
-        Flight::json([ 
-            'success' => 'true'
+        Flight::json([
+            'success' => 'true',
+            'comments_count' => $comments_count,
+            'comments_limit' => COMMENT_QUERY_LIMIT,
+            'comments'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'comment_content' => $n->comment_content,
+                'comment_uploads' => array_map(fn($m) => [
+                    'id' => $m->id,
+                    'create_date' => $m->create_date->format('Y-m-d H:i:s')
+                ], $n->comment_uploads->toArray())
+            ], $comments)
         ]);
     }
 }
+
+
+

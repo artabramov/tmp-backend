@@ -90,51 +90,22 @@ class CommentDelete
             }
         }
 
+        // -- Members --
+        $qb1 = $em->createQueryBuilder();
+        $qb1->select('role.user_id')
+            ->from('App\Entities\Role', 'role')
+            ->where($qb1->expr()->eq('role.hub_id', $hub->id));
 
+        $members = array_map(fn($n) => $em->find('App\Entities\User', $n['user_id']), $qb1->getQuery()->getResult());
 
-
-
-
-        /*
-        // -- Delete uploads --
-        $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('upload.id')->from('App\Entities\Upload', 'upload')
-            ->where($qb1->expr()->eq('upload.comment_id', $comment_id));
-
-        $uploads_ids = $qb1->getQuery()->getResult();
-        $uploads = array_map(fn($n) => Flight::get('em')->find('App\Entities\Upload', $n['id']), $uploads_ids);
-
-        foreach($uploads as $upload) {
-
-            if(file_exists($upload->upload_file)) {
-                unlink($upload->upload_file);
+        // -- Usermeta cache --
+        foreach($members as $member) {
+            foreach($member->user_meta->getValues() as $meta) {
+                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'alerts_sum') {
+                    $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
+                }
             }
-
-            Flight::get('em')->remove($upload);
-            Flight::get('em')->flush();
         }
-
-        // -- Delete comment --
-        Flight::get('em')->remove($comment);
-        Flight::get('em')->flush();
-
-        // -- Recount total user uploads size --
-        $qb2 = Flight::get('em')->createQueryBuilder();
-        $qb2->select('comment.id')
-            ->from('App\Entities\Comment', 'comment')
-            ->where($qb2->expr()->eq('comment.user_id', Flight::get('em')->getConnection()->quote($auth->id, ParameterType::INTEGER)));
-
-        $qb1 = Flight::get('em')->createQueryBuilder();
-        $qb1->select('sum(upload.upload_size)')->from('App\Entities\Upload', 'upload')
-            ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
-
-        $qb1_result = $qb1->getQuery()->getResult();
-
-        $uploads_size = Flight::get('em')->getRepository('\App\Entities\Usermeta')->findOneBy(['user_id' => $auth->id, 'meta_key' => 'uploads_size']);
-        $uploads_size->meta_value = (int) $qb1_result[0][1];;
-        Flight::get('em')->persist($uploads_size);
-        Flight::get('em')->flush();
-        */
 
         // -- End --
         Flight::json([ 
