@@ -125,7 +125,7 @@ class UserRegister
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_email' => $user->user_email,
-                'user_phone' => !emty($user->user_phone) ? $user->user_phone : '',
+                'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
                 'user_name' => $user->user_name
             ]
         ]);

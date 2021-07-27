@@ -70,8 +70,12 @@ class CommentQuery
         })->first();
         $comments_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
 
-        // -- Delete alerts --
-        // TODO...
+        // -- Delete alert --
+        $user_alert = $em->getRepository('\App\Entities\Alert')->findOneBy(['user_id' => $user->id, 'post_id' => $post->id]);
+        if(!empty($user_alert)) {
+            $em->remove($user_alert);
+            $em->flush();
+        }
 
         // -- End --
         Flight::json([

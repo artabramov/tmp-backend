@@ -6,6 +6,7 @@ use \App\Exceptions\AppException;
  * @Entity
  * @HasLifecycleCallbacks
  * @Table(name="users_vols")
+ * @Cache("NONSTRICT_READ_WRITE")
  */
 class Vol
 {

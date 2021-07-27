@@ -30,15 +30,7 @@ class UserSelect
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Member ---
-        $member = $em->find('\App\Entities\User', $user_id);
-
-        if(empty($member)) {
-            throw new AppException('Member error: user_id not found.');
-        }
-
-        // -- End --
-        if($user->id == $member->id) {
+        if($user->id == $user_id) {
 
             // -- Alerts sum --
             $tmp = $user->user_meta->filter(function($element) {
@@ -64,7 +56,7 @@ class UserSelect
             $stmt->execute();
             $user_vol = $em->find('App\Entities\Vol', $stmt->fetchOne());
 
-            // -- User --
+            // -- End --
             Flight::json([
                 'success' => 'true',
                 'user' => [
@@ -73,7 +65,7 @@ class UserSelect
                     'user_status' => $user->user_status,
                     'user_token' => $user->user_token,
                     'user_email' => $user->user_email,
-                    'user_phone' => !emty($user->user_phone) ? $user->user_phone : '',
+                    'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
                     'user_name' => $user->user_name,
 
                     'user_meta' => [
@@ -92,7 +84,14 @@ class UserSelect
 
         } else {
 
-            // -- Member --
+            // -- Member ---
+            $member = $em->find('\App\Entities\User', $user_id);
+
+            if(empty($member)) {
+                throw new AppException('Member error: user_id not found.');
+            }
+
+            // -- End --
             Flight::json([
                 'success' => 'true',
                 'user' => [
