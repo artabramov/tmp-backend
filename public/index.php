@@ -131,6 +131,7 @@ Flight::before('json', function( &$params, &$output ) {
 
 // -- Default --
 Flight::route('GET /', function() {
+    require_once(__DIR__ . '/webapp/index.php');
 });
 
 // -- User register --
