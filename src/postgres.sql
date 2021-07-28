@@ -243,44 +243,44 @@ $role_delete$ LANGUAGE plpgsql;
 CREATE TRIGGER role_delete AFTER DELETE ON users_roles FOR EACH ROW EXECUTE PROCEDURE role_delete();
 
 -- post insert --
---
---CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
---    DECLARE
---        posts_count integer;
---    BEGIN
---        -- hubs meta
---        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
---        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
---            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
---        ELSE
---            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
---        END IF;
---        --
---        RETURN NEW;
---    END;
---$post_insert$ LANGUAGE plpgsql;
---
---CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE post_insert();
+
+CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
+    DECLARE
+        posts_count integer;
+    BEGIN
+        -- hubs meta
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
+        ELSE
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
+        END IF;
+        --
+        RETURN NEW;
+    END;
+$post_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE post_insert();
 
 -- post delete --
---
---CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
---    DECLARE
---        posts_count integer;
---    BEGIN
---        -- hubs meta
---        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id;
---        IF posts_count = 0 THEN
---            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
---        ELSE
---            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
---        END IF;
---        --
---        RETURN OLD;
---    END;
---$post_delete$ LANGUAGE plpgsql;
---
---CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
+
+CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
+    DECLARE
+        posts_count integer;
+    BEGIN
+        -- hubs meta
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id;
+        IF posts_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+        ELSE
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+        END IF;
+        --
+        RETURN OLD;
+    END;
+$post_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
 
 -- comment insert --
 
@@ -532,8 +532,8 @@ DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
 
 DROP TRIGGER IF EXISTS role_insert ON users_roles;
 DROP TRIGGER IF EXISTS role_delete ON users_roles;
---DROP TRIGGER IF EXISTS post_insert ON posts;
---DROP TRIGGER IF EXISTS post_delete ON posts;
+DROP TRIGGER IF EXISTS post_insert ON posts;
+DROP TRIGGER IF EXISTS post_delete ON posts;
 DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
@@ -544,8 +544,8 @@ DROP TRIGGER IF EXISTS alert_update ON users_alerts;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
---DROP FUNCTION IF EXISTS post_insert;
---DROP FUNCTION IF EXISTS post_delete;
+DROP FUNCTION IF EXISTS post_insert;
+DROP FUNCTION IF EXISTS post_delete;
 DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
