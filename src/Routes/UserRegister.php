@@ -120,14 +120,7 @@ class UserRegister
         // -- End --
         Flight::json([
             'success' => 'true',
-            'user' =>  [
-                'id' => $user->id, 
-                'create_date' => $user->create_date->format('Y-m-d H:i:s'),
-                'user_status' => $user->user_status,
-                'user_email' => $user->user_email,
-                'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
-                'user_name' => $user->user_name
-            ]
+            'user_id' => $user->id
         ]);
     }
 }

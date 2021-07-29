@@ -102,20 +102,34 @@ class PostQuery
             throw new AppException('Post error: posts not found.');
         }
 
-        //$dql = $qb1->getDQL();
         $posts = array_map(fn($n) => $em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
         $posts_count = $qc1->getQuery()->getResult();
 
         // -- End --
         Flight::json([
             'success' => 'true',
-            'posts_count' => $posts_count[0][1],
+
             'posts_limit' => POST_QUERY_LIMIT,
+            'posts_count' => $posts_count[0][1],
+
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $post->user_id,
+                'user_name' => $em->find('App\Entities\User', $post->user_id)->user_name,
+                'hub_id' => $post->hub_id,
+                'hub_name' => $em->find('App\Entities\Hub', $hub->id)->hub_name,
                 'post_status' => $n->post_status,
-                'post_title' => $n->post_title
+                'post_title' => $n->post_title,
+
+                'comments_count' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $n->post_meta, 'comments_count', 0 )
+
             ], $posts)
         ]);
     }

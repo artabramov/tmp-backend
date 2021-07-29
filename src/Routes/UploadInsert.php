@@ -90,6 +90,7 @@ class UploadInsert
             }
         }
 
+        $uploads = [];
         foreach($files->keys() as $key) {
 
             // -- File --
@@ -119,6 +120,7 @@ class UploadInsert
                 $file->upload();
                 $em->persist($upload);
                 $em->flush();
+                array_push($uploads, $upload);
 
             } catch (\Exception $e) {
                 throw new AppException('Upload error: file upload error.');
@@ -134,7 +136,8 @@ class UploadInsert
 
         // -- End --
         Flight::json([ 
-            'success' => 'true'
+            'success' => 'true',
+            'upload_id' => array_map(fn($n) => $n->id, $uploads)
         ]);
     }
 }

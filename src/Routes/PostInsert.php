@@ -87,7 +87,7 @@ class PostInsert
         // -- End --
         Flight::json([ 
             'success' => 'true',
-            'error' => ''
+            'post_id' => $post->id
         ]);
     }
 }

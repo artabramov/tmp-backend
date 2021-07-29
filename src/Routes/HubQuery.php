@@ -46,22 +46,43 @@ class HubQuery
 
         $hubs = array_map(fn($n) => $em->find('App\Entities\Hub', $n['id']), $qb1->getQuery()->getResult());
 
-        // -- Comments count --
-        $tmp = $user->user_meta->filter(function($element) {
-            return $element->meta_key == 'roles_count';
-        })->first();
-        $roles_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
         // -- End --
         Flight::json([
             'success' => 'true',
-            'hubs_count' => $roles_count,
+
             'hubs_limit' => HUB_QUERY_LIMIT,
+            'hubs_count' => call_user_func( 
+                function($meta, $key, $default) {
+                    $tmp = $meta->filter(function($el) use ($key) {
+                        return $el->meta_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->meta_value;
+                }, $user->user_meta, 'roles_count', 0 ),
+
             'hubs'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
                 'hub_status' => $n->hub_status,
-                'hub_name' => $n->hub_name
+                'hub_name' => $n->hub_name,
+                'user_id' => $n->user_id,
+                'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,
+
+                'roles_count' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $n->hub_meta, 'roles_count', 0 ),
+
+                'posts_count' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $n->hub_meta, 'posts_count', 0 ),
+
             ], $hubs)
         ]);
     }

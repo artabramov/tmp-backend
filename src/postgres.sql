@@ -197,7 +197,7 @@ CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
         SELECT COUNT(to_id) INTO relations_count FROM vw_users_relations WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'relations_count') THEN
             UPDATE users_meta SET meta_value = relations_count WHERE user_id = NEW.user_id AND meta_key = 'relations_count';
-        ELSE
+        ELSIF relations_count > 0 THEN
             INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'relations_count', relations_count);
         END IF;
         --

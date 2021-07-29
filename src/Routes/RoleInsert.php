@@ -94,13 +94,7 @@ class RoleInsert
         // -- End --
         Flight::json([
             'success' => 'true',
-            'user_role' => [
-                'id' => $member_role->id, 
-                'create_date' => $member_role->create_date->format('Y-m-d H:i:s'),
-                'user_id' => $member_role->user_id,
-                'hub_id' => $member_role->hub_id,
-                'role_status' => $member_role->role_status
-            ]
+            'role_id' => $member_role->id
         ]);
     }
 }

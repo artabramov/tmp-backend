@@ -52,7 +52,40 @@ class UserSignin
                 'user_token' => $user->user_token,
                 'user_email' => $user->user_email,
                 'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
-                'user_name' => $user->user_name
+                'user_name' => $user->user_name,
+
+                'roles_count' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $user->user_meta, 'roles_count', 0 ),
+
+                'relations_count' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $user->user_meta, 'relations_count', 0 ),
+
+                'uploads_sum' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $user->user_meta, 'uploads_sum', 0 ),
+
+                'alerts_sum' => call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $user->user_meta, 'alerts_sum', 0 ),
+
             ]
         ]);
     }

@@ -64,12 +64,6 @@ class CommentQuery
             ->setMaxResults(COMMENT_QUERY_LIMIT);
         $comments = array_map(fn($n) => $em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
 
-        // -- Comments count --
-        $tmp = $post->post_meta->filter(function($element) {
-            return $element->meta_key == 'comments_count';
-        })->first();
-        $comments_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
         // -- Delete alert --
         $user_alert = $em->getRepository('\App\Entities\Alert')->findOneBy(['user_id' => $user->id, 'post_id' => $post->id]);
         if(!empty($user_alert)) {
@@ -80,11 +74,21 @@ class CommentQuery
         // -- End --
         Flight::json([
             'success' => 'true',
-            'comments_count' => $comments_count,
+
             'comments_limit' => COMMENT_QUERY_LIMIT,
+            'comments_count' => call_user_func( 
+                function($meta, $key, $default) {
+                    $tmp = $meta->filter(function($el) use ($key) {
+                        return $el->meta_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->meta_value;
+                }, $post->post_meta, 'comments_count', 0 ),
+
             'comments'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $comment->user_id,
+                'user_name' => $em->find('App\Entities\User', $comment->user_id)->user_name,
                 'comment_content' => $n->comment_content,
                 'comment_uploads' => array_map(fn($m) => [
                     'id' => $m->id,

@@ -40,17 +40,19 @@ class UserQuery
             ->setParameter('limit', USER_QUERY_LIMIT);
         $users = array_map(fn($n) => $em->find('App\Entities\User', $n['to_id']), $query->getResult());
 
-        // -- Relations count --
-        $tmp = $user->user_meta->filter(function($element) {
-            return $element->meta_key == 'relations_count';
-        })->first();
-        $relations_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
         // -- End --
         Flight::json([
             'success' => 'true',
-            'users_count' => $relations_count,
+
             'users_limit' => USER_QUERY_LIMIT,
+            'users_count' => call_user_func( 
+                function($meta, $key, $default) {
+                    $tmp = $meta->filter(function($el) use ($key) {
+                        return $el->meta_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->meta_value;
+                }, $user->user_meta, 'relations_count', 0 ),
+
             'users'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),

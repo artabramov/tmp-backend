@@ -92,7 +92,8 @@ class CommentInsert
 
         // -- End --
         Flight::json([ 
-            'success' => 'true'
+            'success' => 'true',
+            'comment_id' => $comment->id
         ]);
     }
 }

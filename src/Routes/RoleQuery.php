@@ -58,25 +58,28 @@ class RoleQuery
 
         $roles = array_map(fn($n) => $em->find('App\Entities\Role', $n['id']), $qb1->getQuery()->getResult());
 
-        // -- Roles count --
-        $tmp = $hub->hub_meta->filter(function($element) {
-            return $element->meta_key == 'roles_count';
-        })->first();
-        $roles_count = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
         // -- End --
         Flight::json([
             'success' => 'true',
-            'roles_count' => $roles_count,
+
             'roles_limit' => ROLE_QUERY_LIMIT,
+            'roles_count' => call_user_func( 
+                function($meta, $key, $default) {
+                    $tmp = $meta->filter(function($el) use ($key) {
+                        return $el->meta_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->meta_value;
+                }, $hub->hub_meta, 'roles_count', 0 ),
+
             'roles'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
                 'user_id' => $n->user_id,
-                'hub_id' => $n->hub_id,
-                'role_status' => $n->role_status,
                 'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,
-                'hub_name' => $em->find('App\Entities\Hub', $n->hub_id)->hub_name
+                'hub_id' => $n->hub_id,
+                'hub_name' => $em->find('App\Entities\Hub', $n->hub_id)->hub_name,
+                'role_status' => $n->role_status
+                
             ], $roles)
         ]);
     }

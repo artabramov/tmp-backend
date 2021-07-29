@@ -90,7 +90,7 @@ class UploadDelete
 
         // -- End --
         Flight::json([ 
-            'success' => 'true',
+            'success' => 'true'
         ]);
     }
 }
