@@ -134,6 +134,12 @@ Flight::route('GET /', function() {
     require_once(__DIR__ . '/webapp/index.php');
 });
 
+// -- User auth --
+Flight::route('POST /api/token', function() {
+    $route = new \App\Routes\UserAuth();
+    $route->do();
+});
+
 // -- User register --
 Flight::route('POST /api/user', function() {
     $route = new \App\Routes\UserRegister();
