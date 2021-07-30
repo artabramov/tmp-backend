@@ -2,10 +2,10 @@
 .vscode/
 .xdebug/
 vendor/
+public/monolog/
 public/uploads/
 public/webapp/
 gb/
-webapp/
 composer.phar
 composer.lock
 composer-setup.php

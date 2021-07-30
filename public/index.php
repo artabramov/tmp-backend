@@ -101,6 +101,7 @@ Flight::set('phpmailer', $phpmailer);
 // -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
+    Flight::set('microtime', microtime(true));
 
     $stmt = Flight::get('em')->getConnection()->prepare("SELECT to_timestamp(0)");
     $stmt->execute();
@@ -127,6 +128,7 @@ Flight::after('stop', function( &$params, &$output ) {
 Flight::before('json', function( &$params, &$output ) {
     $params[0]['datetime']['date'] = Flight::get('date')->format('Y-m-d H:i:s');
     $params[0]['datetime']['timezone'] = Flight::get('timezone');
+    $params[0]['datetime']['microtime'] = microtime(true) - Flight::get('microtime');
 });
 
 // -- Default --
