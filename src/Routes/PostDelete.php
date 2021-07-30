@@ -83,7 +83,7 @@ class PostDelete
 
         // -- Hubmeta cache --
         foreach($hub->hub_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id) and $meta->meta_key == 'posts_count') {
+            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
             }
         }

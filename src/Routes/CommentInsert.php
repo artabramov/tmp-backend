@@ -68,7 +68,7 @@ class CommentInsert
 
         // -- Postmeta cache --
         foreach($post->post_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Postmeta', $meta->id) and $meta->meta_key == 'comments_count') {
+            if($em->getCache()->containsEntity('\App\Entities\Postmeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Postmeta', $meta->id);
             }
         }
@@ -84,7 +84,7 @@ class CommentInsert
         // -- Usermeta cache --
         foreach($members as $member) {
             foreach($member->user_meta->getValues() as $meta) {
-                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'alerts_sum') {
+                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
                     $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
                 }
             }

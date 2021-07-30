@@ -53,7 +53,7 @@ class HubInsert
 
         // -- User meta cache --
         foreach($user->user_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
+            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }
         }

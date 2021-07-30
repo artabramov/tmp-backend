@@ -45,7 +45,7 @@ class UserQuery
             'success' => 'true',
 
             'users_limit' => USER_QUERY_LIMIT,
-            'users_count' => call_user_func( 
+            'users_count' => (int) call_user_func( 
                 function($meta, $key, $default) {
                     $tmp = $meta->filter(function($el) use ($key) {
                         return $el->meta_key == $key;

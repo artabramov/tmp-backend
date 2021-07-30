@@ -79,14 +79,14 @@ class RoleInsert
 
         // -- Usermeta cache --
         foreach($member->user_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
+            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }
         }
 
         // -- Hubmeta cache --
         foreach($hub->hub_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id) and $meta->meta_key == 'roles_count') {
+            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
             }
         }

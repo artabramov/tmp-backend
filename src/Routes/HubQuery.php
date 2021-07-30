@@ -51,7 +51,7 @@ class HubQuery
             'success' => 'true',
 
             'hubs_limit' => HUB_QUERY_LIMIT,
-            'hubs_count' => call_user_func( 
+            'hubs_count' => (int) call_user_func( 
                 function($meta, $key, $default) {
                     $tmp = $meta->filter(function($el) use ($key) {
                         return $el->meta_key == $key;
@@ -66,7 +66,7 @@ class HubQuery
                 'user_id' => $n->user_id,
                 'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,
 
-                'roles_count' => call_user_func( 
+                'roles_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
@@ -74,13 +74,29 @@ class HubQuery
                         return empty($tmp) ? $default : $tmp->meta_value;
                     }, $n->hub_meta, 'roles_count', 0 ),
 
-                'posts_count' => call_user_func( 
+                'todo_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
                         })->first();
                         return empty($tmp) ? $default : $tmp->meta_value;
-                    }, $n->hub_meta, 'posts_count', 0 ),
+                    }, $n->hub_meta, 'todo_count', 0 ),
+
+                'doing_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $n->hub_meta, 'doing_count', 0 ),
+
+                'done_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $n->hub_meta, 'done_count', 0 ),
 
             ], $hubs)
         ]);

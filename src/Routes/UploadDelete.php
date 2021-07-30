@@ -83,7 +83,7 @@ class UploadDelete
 
         // -- Usermeta cache --
         foreach($user->user_meta->getValues() as $meta) {
-            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'uploads_sum') {
+            if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
                 $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
             }
         }

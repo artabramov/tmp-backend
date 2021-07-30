@@ -46,6 +46,15 @@ class HubUpdate
         $em->persist($hub);
         $em->flush();
 
+        /*
+        // -- Hubmeta cache --
+        foreach($hub->hub_meta->getValues() as $meta) {
+            if($em->getCache()->containsEntity('\App\Entities\Hubmeta', $meta->id)) {
+                $em->getCache()->evictEntity('\App\Entities\Hubmeta', $meta->id);
+            }
+        }
+        */
+
         // -- End --
         Flight::json([
             'success' => 'true'

@@ -110,7 +110,7 @@ class PostQuery
             'success' => 'true',
 
             'posts_limit' => POST_QUERY_LIMIT,
-            'posts_count' => $posts_count[0][1],
+            'posts_count' => (int) $posts_count[0][1],
 
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
@@ -122,7 +122,7 @@ class PostQuery
                 'post_status' => $n->post_status,
                 'post_title' => $n->post_title,
 
-                'comments_count' => call_user_func( 
+                'comments_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;

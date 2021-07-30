@@ -80,7 +80,7 @@ class HubDelete
         // -- Usermeta cache --
         foreach($pals as $pal) {
             foreach($pal->user_meta->getValues() as $meta) {
-                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id) and $meta->meta_key == 'roles_count') {
+                if($em->getCache()->containsEntity('\App\Entities\Usermeta', $meta->id)) {
                     $em->getCache()->evictEntity('\App\Entities\Usermeta', $meta->id);
                 }
             }

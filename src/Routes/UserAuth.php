@@ -46,7 +46,7 @@ class UserAuth
                 'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
                 'user_name' => $user->user_name,
 
-                'roles_count' => call_user_func( 
+                'roles_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
@@ -54,7 +54,7 @@ class UserAuth
                         return empty($tmp) ? $default : $tmp->meta_value;
                     }, $user->user_meta, 'roles_count', 0 ),
 
-                'relations_count' => call_user_func( 
+                'relations_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
@@ -62,7 +62,7 @@ class UserAuth
                         return empty($tmp) ? $default : $tmp->meta_value;
                     }, $user->user_meta, 'relations_count', 0 ),
 
-                'uploads_sum' => call_user_func( 
+                'uploads_sum' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
@@ -70,7 +70,7 @@ class UserAuth
                         return empty($tmp) ? $default : $tmp->meta_value;
                     }, $user->user_meta, 'uploads_sum', 0 ),
 
-                'alerts_sum' => call_user_func( 
+                'alerts_sum' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;

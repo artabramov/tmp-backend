@@ -76,7 +76,7 @@ class CommentQuery
             'success' => 'true',
 
             'comments_limit' => COMMENT_QUERY_LIMIT,
-            'comments_count' => call_user_func( 
+            'comments_count' => (int) call_user_func( 
                 function($meta, $key, $default) {
                     $tmp = $meta->filter(function($el) use ($key) {
                         return $el->meta_key == $key;

@@ -63,7 +63,7 @@ class RoleQuery
             'success' => 'true',
 
             'roles_limit' => ROLE_QUERY_LIMIT,
-            'roles_count' => call_user_func( 
+            'roles_count' => (int) call_user_func( 
                 function($meta, $key, $default) {
                     $tmp = $meta->filter(function($el) use ($key) {
                         return $el->meta_key == $key;

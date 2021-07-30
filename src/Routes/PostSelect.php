@@ -67,7 +67,7 @@ class PostSelect
                 'post_status' => $post->post_status,
                 'post_title' => $post->post_title,
 
-                'comments_count' => call_user_func( 
+                'comments_count' => (int) call_user_func( 
                     function($meta, $key, $default) {
                         $tmp = $meta->filter(function($el) use ($key) {
                             return $el->meta_key == $key;
