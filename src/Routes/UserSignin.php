@@ -48,6 +48,7 @@ class UserSignin
             'user' => [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
+                'auth_date' => $user->auth_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_token' => $user->user_token,
                 'user_email' => $user->user_email,

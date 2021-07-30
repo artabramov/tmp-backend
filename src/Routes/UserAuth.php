@@ -29,23 +29,9 @@ class UserAuth
             throw new AppException('User error: user not found or not approved.');
         }
 
-        // -- Alerts sum --
-        $tmp = $user->user_meta->filter(function($element) {
-            return $element->meta_key == 'alerts_sum';
-        })->first();
-        $alerts_sum = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
-        // -- Uploads sum --
-        $tmp = $user->user_meta->filter(function($element) {
-            return $element->meta_key == 'uploads_sum';
-        })->first();
-        $uploads_sum = !empty($tmp->meta_value) ? $tmp->meta_value : 0;
-
-        // -- User vol (view) --
-        $stmt = $em->getConnection()->prepare("SELECT vol_id FROM vw_users_vols WHERE user_id = :user_id LIMIT 1");
-        $stmt->bindValue('user_id', $user->id);
-        $stmt->execute();
-        $user_vol = $em->find('App\Entities\Vol', $stmt->fetchOne());
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
 
         // -- End --
         Flight::json([
@@ -53,6 +39,7 @@ class UserAuth
             'user' => [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
+                'auth_date' => $user->auth_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_token' => $user->user_token,
                 'user_email' => $user->user_email,

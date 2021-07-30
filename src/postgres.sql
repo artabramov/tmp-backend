@@ -1,3 +1,63 @@
+-- drop all --
+
+DROP VIEW IF EXISTS vw_users_relations;
+DROP VIEW IF EXISTS vw_users_vols;
+
+DROP TABLE IF EXISTS users_meta;
+DROP TABLE IF EXISTS users_roles;
+DROP TABLE IF EXISTS users_vols;
+DROP TABLE IF EXISTS users_alerts;
+DROP TABLE IF EXISTS hubs_meta;
+DROP TABLE IF EXISTS posts_meta;
+DROP TABLE IF EXISTS posts_tags;
+DROP TABLE IF EXISTS uploads;
+DROP TABLE IF EXISTS posts_comments;
+DROP TABLE IF EXISTS posts;
+DROP TABLE IF EXISTS hubs;
+DROP TABLE IF EXISTS users;
+
+DROP TYPE IF EXISTS user_status;
+DROP TYPE IF EXISTS hub_status;
+DROP TYPE IF EXISTS role_status;
+DROP TYPE IF EXISTS post_status;
+
+DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_vols_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS users_alerts_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS hubs_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS hubs_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_meta_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_comments_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
+
+DROP TRIGGER IF EXISTS role_insert ON users_roles;
+DROP TRIGGER IF EXISTS role_delete ON users_roles;
+DROP TRIGGER IF EXISTS post_insert ON posts;
+DROP TRIGGER IF EXISTS post_delete ON posts;
+DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
+DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
+DROP TRIGGER IF EXISTS upload_insert ON uploads;
+DROP TRIGGER IF EXISTS upload_delete ON uploads;
+DROP TRIGGER IF EXISTS alert_insert ON users_alerts;
+DROP TRIGGER IF EXISTS alert_delete ON users_alerts;
+DROP TRIGGER IF EXISTS alert_update ON users_alerts;
+
+DROP FUNCTION IF EXISTS role_insert;
+DROP FUNCTION IF EXISTS role_delete;
+DROP FUNCTION IF EXISTS post_insert;
+DROP FUNCTION IF EXISTS post_delete;
+DROP FUNCTION IF EXISTS comment_insert;
+DROP FUNCTION IF EXISTS comment_delete;
+DROP FUNCTION IF EXISTS upload_insert;
+DROP FUNCTION IF EXISTS upload_delete;
+DROP FUNCTION IF EXISTS alert_insert;
+DROP FUNCTION IF EXISTS alert_delete;
+DROP FUNCTION IF EXISTS alert_update;
+
 -- users --
 
 CREATE SEQUENCE users_id_seq START WITH 1 INCREMENT BY 1;
@@ -9,6 +69,7 @@ CREATE TABLE IF NOT EXISTS users (
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    auth_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
@@ -466,112 +527,8 @@ CREATE OR REPLACE VIEW vw_users_vols AS
     ORDER BY users_vols.vol_size DESC
     LIMIT 1;
 
--- data --
-
-INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (1, 'approved', '11111111111111111111111111111111111111111111111111111111111111111111111111111111', '14november@mail.ru', '', 'art abramov');
-INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (2, 'approved', '22222222222222222222222222222222222222222222222222222222222222222222222222222222', 'notdepot@gmail.com', '', 'not depot');
-INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (3, 'approved', '33333333333333333333333333333333333333333333333333333333333333333333333333333333', 'strangerb@gmail.com', '', 'stranger b');
-INSERT INTO users (id, user_status, user_token, user_email, user_hash, user_name) VALUES (4, 'approved', '44444444444444444444444444444444444444444444444444444444444444444444444444444444', 'strangerc@gmail.com', '', 'stranger c');
-INSERT INTO hubs (id, user_id, hub_status, hub_name) VALUES (1, 1, 'custom', 'first hub');
-INSERT INTO hubs (id, user_id, hub_status, hub_name) VALUES (2, 2, 'custom', 'second hub');
-INSERT INTO hubs (id, user_id, hub_status, hub_name) VALUES (3, 3, 'custom', 'third hub');
-INSERT INTO hubs (id, user_id, hub_status, hub_name) VALUES (4, 3, 'custom', 'fourth hub');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (1, 1, 1, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (2, 2, 2, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (3, 2, 3, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (4, 3, 1, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (5, 3, 2, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (6, 3, 3, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (7, 3, 4, 'admin');
-INSERT INTO users_roles (id, user_id, hub_id, role_status) VALUES (8, 4, 4, 'admin');
-INSERT INTO posts (id, user_id, hub_id, post_status, post_title) VALUES (1, 1, 1, 'todo', 'first post');
-INSERT INTO posts (id, user_id, hub_id, post_status, post_title) VALUES (2, 2, 2, 'todo', 'second post');
-INSERT INTO posts_comments (id, user_id, post_id, comment_content) VALUES (1, 1, 1, 'first comment');
-INSERT INTO posts_comments (id, user_id, post_id, comment_content) VALUES (2, 1, 1, 'second comment');
-INSERT INTO posts_comments (id, user_id, post_id, comment_content) VALUES (3, 1, 1, 'third comment');
-INSERT INTO posts_comments (id, user_id, post_id, comment_content) VALUES (4, 1, 1, 'fourth comment');
-INSERT INTO uploads (id, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, 1, 1, 'file1.txt', 'uploads/file1.txt', 'plain/text', 100);
-INSERT INTO uploads (id, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (2, 1, 1, 'file2.txt', 'uploads/file2.txt', 'plain/text', 100);
-INSERT INTO uploads (id, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (3, 1, 1, 'file3.txt', 'uploads/file3.txt', 'plain/text', 100);
-
--- drop all --
-
-DROP VIEW IF EXISTS vw_users_relations;
-DROP VIEW IF EXISTS vw_users_vols;
-
-DROP TABLE IF EXISTS users_meta;
-DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users_vols;
-DROP TABLE IF EXISTS users_alerts;
-DROP TABLE IF EXISTS hubs_meta;
-DROP TABLE IF EXISTS posts_meta;
-DROP TABLE IF EXISTS posts_tags;
-DROP TABLE IF EXISTS uploads;
-DROP TABLE IF EXISTS posts_comments;
-DROP TABLE IF EXISTS posts;
-DROP TABLE IF EXISTS hubs;
-DROP TABLE IF EXISTS users;
-
-DROP TYPE IF EXISTS user_status;
-DROP TYPE IF EXISTS hub_status;
-DROP TYPE IF EXISTS role_status;
-DROP TYPE IF EXISTS post_status;
-
-DROP SEQUENCE IF EXISTS users_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_meta_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_vols_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_alerts_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS hubs_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS hubs_meta_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS posts_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS posts_meta_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS posts_comments_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
-
-DROP TRIGGER IF EXISTS role_insert ON users_roles;
-DROP TRIGGER IF EXISTS role_delete ON users_roles;
-DROP TRIGGER IF EXISTS post_insert ON posts;
-DROP TRIGGER IF EXISTS post_delete ON posts;
-DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
-DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
-DROP TRIGGER IF EXISTS upload_insert ON uploads;
-DROP TRIGGER IF EXISTS upload_delete ON uploads;
-DROP TRIGGER IF EXISTS alert_insert ON users_alerts;
-DROP TRIGGER IF EXISTS alert_delete ON users_alerts;
-DROP TRIGGER IF EXISTS alert_update ON users_alerts;
-
-DROP FUNCTION IF EXISTS role_insert;
-DROP FUNCTION IF EXISTS role_delete;
-DROP FUNCTION IF EXISTS post_insert;
-DROP FUNCTION IF EXISTS post_delete;
-DROP FUNCTION IF EXISTS comment_insert;
-DROP FUNCTION IF EXISTS comment_delete;
-DROP FUNCTION IF EXISTS upload_insert;
-DROP FUNCTION IF EXISTS upload_delete;
-DROP FUNCTION IF EXISTS alert_insert;
-DROP FUNCTION IF EXISTS alert_delete;
-DROP FUNCTION IF EXISTS alert_update;
-
--- erase --
-
-DELETE FROM users_meta;
-DELETE FROM users_roles;
-DELETE FROM users_vols;
-DELETE FROM users_alerts;
-DELETE FROM hubs_meta;
-DELETE FROM posts_meta;
-DELETE FROM posts_tags;
-DELETE FROM uploads;
-DELETE FROM posts_comments;
-DELETE FROM posts;
-DELETE FROM hubs;
-DELETE FROM users;
-
 -- select all
 
 \pset format wrapped
 SELECT * FROM vw_users_relations; SELECT * FROM vw_users_vols;
 SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
-

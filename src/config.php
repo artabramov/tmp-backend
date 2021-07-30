@@ -14,7 +14,7 @@ define('POSTGRES_USER', 'postgres');
 define('POSTGRES_PASS', '123456');
 
 // Monolog
-define('MONOLOG_PATH', __DIR__ . '/../.monolog/');
+define('MONOLOG_PATH', __DIR__ . '/../monolog/');
 
 // Phpmailer
 define('PHPMAILER_DEBUG', 2); // 0 = off (for production use) - 1 = client messages - 2 = client and server messages

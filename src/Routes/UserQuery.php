@@ -56,6 +56,7 @@ class UserQuery
             'users'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'auth_date' => $n->auth_date->format('Y-m-d H:i:s'),
                 'user_status' => $n->user_status,
                 'user_name' => $n->user_name
             ], $users)

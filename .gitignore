@@ -1,14 +1,11 @@
-.monolog/
 .nginx/
 .vscode/
 .xdebug/
 vendor/
 public/uploads/
 public/webapp/
-geekbrains/
 gb/
 webapp/
-webapp2/
 composer.phar
 composer.lock
 composer-setup.php

@@ -43,6 +43,7 @@ class UserSelect
             'user' => [
                 'id' => $member->id, 
                 'create_date' => $member->create_date->format('Y-m-d H:i:s'),
+                'auth_date' => $member->auth_date->format('Y-m-d H:i:s'),
                 'user_status' => $member->user_status,
                 'user_name' => $member->user_name
             ]

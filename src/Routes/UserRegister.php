@@ -37,6 +37,7 @@ class UserRegister
         $user->create_date = Flight::get('date');
         $user->update_date = Flight::get('zero');
         $user->remind_date = Flight::get('date');
+        $user->auth_date = Flight::get('zero');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
         $user->user_email = $user_email;

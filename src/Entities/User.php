@@ -36,6 +36,12 @@ class User
      */
     protected $remind_date;
 
+    /**
+     * @Column(type="datetime")
+     * @var DateTime
+     */
+    protected $auth_date;
+
     /** 
      * @Column(type="string", columnDefinition="ENUM('pending', 'approved', 'trash')") 
      * @var string
