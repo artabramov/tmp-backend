@@ -1,1 +1,0 @@
-[2021-07-30T05:21:25.824226+00:00] app.DEBUG: Undefined variable $asdf {"method":"POST","url":"/api/token/?user_token=b222c7c7957910ebebb08c8a39bbaa230dbd0d59aecd76935ef897945d475fe37f6b16b24ef87881","file":"/var/www/project.local/public/index.php","line":141} []

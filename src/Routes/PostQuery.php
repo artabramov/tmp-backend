@@ -115,10 +115,10 @@ class PostQuery
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
-                'user_id' => $post->user_id,
-                'user_name' => $em->find('App\Entities\User', $post->user_id)->user_name,
-                'hub_id' => $post->hub_id,
-                'hub_name' => $em->find('App\Entities\Hub', $hub->id)->hub_name,
+                'user_id' => $n->user_id,
+                'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,
+                'hub_id' => $n->hub_id,
+                'hub_name' => $em->find('App\Entities\Hub', $n->hub_id)->hub_name,
                 'post_status' => $n->post_status,
                 'post_title' => $n->post_title,
 

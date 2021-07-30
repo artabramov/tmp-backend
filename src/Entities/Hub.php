@@ -37,12 +37,6 @@ class Hub
     private $user_id;
 
     /** 
-     * @Column(type="string", columnDefinition="ENUM('custom', 'trash')") 
-     * @var string
-     */
-    private $hub_status;
-
-    /** 
      * @Column(type="string", length="128")
      * @var string
      */
@@ -85,13 +79,7 @@ class Hub
      */
     public function validate() {
 
-        if(empty($this->hub_status)) {
-            throw new AppException('Hub error: hub_status is empty.');
-
-        } elseif(!in_array($this->hub_status, ['custom', 'trash'])) {
-            throw new AppException('Hub error: hub_status is incorrect.');
-
-        } elseif(empty($this->user_id)) {
+        if(empty($this->user_id)) {
             throw new AppException('Hub error: user_id is empty.');
 
         } elseif(!is_numeric($this->user_id)) {

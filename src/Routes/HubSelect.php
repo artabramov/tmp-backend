@@ -50,7 +50,6 @@ class HubSelect
             'hub'=> [
                 'id' => $hub->id,
                 'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
-                'hub_status' => $hub->hub_status,
                 'hub_name' => $hub->hub_name,
                 'user_id' => $n->user_id,
                 'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,

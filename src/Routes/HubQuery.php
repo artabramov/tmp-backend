@@ -62,7 +62,6 @@ class HubQuery
             'hubs'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
-                'hub_status' => $n->hub_status,
                 'hub_name' => $n->hub_name,
                 'user_id' => $n->user_id,
                 'user_name' => $em->find('App\Entities\User', $n->user_id)->user_name,

@@ -36,9 +36,6 @@ class HubDelete
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
 
-        } elseif($hub->hub_status != 'trash') {
-            throw new AppException('Hub error: hub_status must be trash.');
-
         } elseif($hub->user_id != $user->id) {
             throw new AppException('Hub error: permission denied.');
         }

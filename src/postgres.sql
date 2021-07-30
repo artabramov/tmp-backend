@@ -17,7 +17,6 @@ DROP TABLE IF EXISTS hubs;
 DROP TABLE IF EXISTS users;
 
 DROP TYPE IF EXISTS user_status;
-DROP TYPE IF EXISTS hub_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
 
@@ -38,6 +37,7 @@ DROP TRIGGER IF EXISTS role_insert ON users_roles;
 DROP TRIGGER IF EXISTS role_delete ON users_roles;
 DROP TRIGGER IF EXISTS post_insert ON posts;
 DROP TRIGGER IF EXISTS post_delete ON posts;
+DROP TRIGGER IF EXISTS post_update ON posts;
 DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
@@ -50,6 +50,7 @@ DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
 DROP FUNCTION IF EXISTS post_insert;
 DROP FUNCTION IF EXISTS post_delete;
+DROP FUNCTION IF EXISTS post_update;
 DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
@@ -108,14 +109,12 @@ CREATE TABLE IF NOT EXISTS users_vols (
 -- hubs --
 
 CREATE SEQUENCE hubs_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TYPE hub_status AS ENUM ('custom', 'trash');
 
 CREATE TABLE IF NOT EXISTS hubs (
     id          BIGINT DEFAULT NEXTVAL('hubs_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    hub_status  hub_status NOT NULL,
     hub_name    VARCHAR(128) NOT NULL
 );
 
@@ -151,7 +150,7 @@ CREATE TABLE IF NOT EXISTS users_roles (
 -- posts --
 
 CREATE SEQUENCE posts_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done', 'trash');
+CREATE TYPE post_status AS ENUM ('todo', 'doing', 'done');
 
 CREATE TABLE IF NOT EXISTS posts (
     id          BIGINT DEFAULT NEXTVAL('posts_id_seq'::regclass) NOT NULL PRIMARY KEY,
@@ -308,13 +307,26 @@ CREATE TRIGGER role_delete AFTER DELETE ON users_roles FOR EACH ROW EXECUTE PROC
 CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
     DECLARE
         posts_count integer;
+        p_status post_status;
+        m_key VARCHAR;
     BEGIN
         -- hubs meta
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id;
-        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count') THEN
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = 'posts_count';
+        SELECT NEW.post_status INTO p_status FROM posts WHERE id = NEW.id;
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
+        m_key = CONCAT(p_status, '_count');
+
+        --IF p_status = 'todo' THEN
+        --    m_key = 'todo_count';
+        --ELSIF p_status = 'doing' THEN
+        --    m_key = 'doing_count';
+        --ELSE
+        --    m_key = 'done_count';
+        --END IF;
+
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
         ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'posts_count', posts_count);
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
         END IF;
         --
         RETURN NEW;
@@ -328,13 +340,26 @@ CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE 
 CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
     DECLARE
         posts_count integer;
+        p_status post_status;
+        m_key VARCHAR;
     BEGIN
         -- hubs meta
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id;
+        SELECT OLD.post_status INTO p_status FROM posts WHERE id = OLD.id;
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
+        m_key = CONCAT(p_status, '_count');
+
+        --IF p_status = 'todo' THEN
+        --    m_key = 'todo_count';
+        --ELSIF p_status = 'doing' THEN
+        --    m_key = 'doing_count';
+        --ELSE
+        --    m_key = 'done';
+        --END IF;
+
         IF posts_count = 0 THEN
-            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
         ELSE
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = 'posts_count';
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = m_key;
         END IF;
         --
         RETURN OLD;
@@ -342,6 +367,58 @@ CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
 $post_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE post_delete();
+
+-- post update --
+
+CREATE FUNCTION post_update() RETURNS trigger AS $post_update$
+    DECLARE
+        posts_count integer;
+        p_status post_status;
+        m_key VARCHAR;
+    BEGIN
+        -- hubs meta (prev)
+        SELECT OLD.post_status INTO p_status FROM posts WHERE id = OLD.id;
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
+        m_key = CONCAT(p_status, '_count');
+
+        --IF p_status = 'todo' THEN
+        --    m_key = 'todo_count';
+        --ELSIF p_status = 'doing' THEN
+        --    m_key = 'doing';
+        --ELSE
+        --    m_key = 'done';
+        --EN DIF;
+
+        IF posts_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+        ELSE
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+        END IF;
+
+        -- hubs meta (next)
+        SELECT NEW.post_status INTO p_status FROM posts WHERE id = NEW.id;
+        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
+        m_key = CONCAT(p_status, '_count');
+
+        --IF p_status = 'todo' THEN
+        --    m_key = 'todo_count';
+        --ELSIF p_status = 'doing' THEN
+        --    m_key = 'doing';
+        --ELSE
+        --    m_key = 'done';
+        --END IF;
+
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
+        ELSE
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
+        END IF;
+        --
+        RETURN OLD;
+    END;
+$post_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER post_update AFTER UPDATE ON posts FOR EACH ROW EXECUTE PROCEDURE post_update();
 
 -- comment insert --
 

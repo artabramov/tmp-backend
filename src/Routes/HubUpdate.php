@@ -22,7 +22,6 @@ class HubUpdate
         $em = Flight::get('em');
         $user_token = (string) Flight::request()->query['user_token'];
         $hub_id = (int) $hub_id;
-        $hub_status = (string) Flight::request()->query['hub_status'];
         $hub_name = (string) Flight::request()->query['hub_name'];
 
         // -- User --
@@ -43,7 +42,6 @@ class HubUpdate
         }
 
         // -- Update hub --
-        $hub->hub_status = $hub_status;
         $hub->hub_name = $hub_name;
         $em->persist($hub);
         $em->flush();

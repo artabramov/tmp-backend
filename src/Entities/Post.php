@@ -115,7 +115,7 @@ class Post
         } elseif(empty($this->post_status)) {
             throw new AppException('Post error: post_status is empty.');
 
-        } elseif(!in_array($this->post_status, ['todo', 'doing', 'done', 'trash'])) {
+        } elseif(!in_array($this->post_status, ['todo', 'doing', 'done'])) {
             throw new AppException('Post error: post_status is incorrect.');
 
         } elseif(empty($this->post_title)) {

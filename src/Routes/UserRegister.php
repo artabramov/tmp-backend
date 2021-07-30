@@ -52,7 +52,6 @@ class UserRegister
         $hub = new Hub();
         $hub->create_date = Flight::get('date');
         $hub->update_date = Flight::get('zero');
-        $hub->hub_status = 'custom';
         $hub->user_id = $user->id;
         $hub->hub_name = 'First hub';
         $em->persist($hub);
