@@ -184,6 +184,12 @@ Flight::route('GET /api/users', function() {
     $route->do();
 });
 
+// -- User search --
+Flight::route('GET /api/search/user/@user_search', function($user_search) {
+    $route = new \App\Routes\UserSearch();
+    $route->do($user_search);
+});
+
 // -- Hub insert --
 Flight::route('POST /api/hub', function() {
     $route = new \App\Routes\HubInsert();

@@ -32,6 +32,7 @@ define('VOL_DEFAULT_SIZE', '1000000'); // default depot size
 define('VOL_DEFAULT_EXPIRE', 'P20Y'); // + 20 years
 define('USER_REMIND_TIME', 30); // delay between reminds
 define('USER_PASS_TIME', 180); // pass expires time
+define('USER_SEARCH_LIMIT', 2);
 define('USER_QUERY_LIMIT', 10);
 define('UPLOAD_PATH', __DIR__ . '/../public/uploads/');
 define('UPLOAD_FILESIZE', '10M'); // max size of one file
