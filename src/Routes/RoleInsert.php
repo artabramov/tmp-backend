@@ -53,10 +53,10 @@ class RoleInsert
         $member = $em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
         if(empty($member)) {
-            throw new AppException('User error: user_id not found.');
+            throw new AppException('User error: user_email not found.');
 
         } elseif($member->user_status == 'trash') {
-            throw new AppException('User error: user_id is trash.');
+            throw new AppException('User error: user_email is trash.');
         }
 
         // -- Member role --
