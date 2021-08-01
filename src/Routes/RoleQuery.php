@@ -43,9 +43,6 @@ class RoleQuery
 
         if(empty($user_role)) {
             throw new AppException('User role error: user_role not found.');
-
-        } elseif($user_role->role_status != 'admin') {
-            throw new AppException('User role error: role_status must be admin.');
         }
 
         // -- Roles --

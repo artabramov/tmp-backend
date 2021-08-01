@@ -604,6 +604,11 @@ CREATE OR REPLACE VIEW vw_users_vols AS
     ORDER BY users_vols.vol_size DESC
     LIMIT 1;
 
+-- privileges --
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
+
 -- select all
 
 \pset format wrapped
