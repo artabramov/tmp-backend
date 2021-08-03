@@ -39,9 +39,16 @@ class HubDelete
 
         if(empty($hub)) {
             throw new AppException('Hub error: hub_id not found.');
+        }
 
-        } elseif($hub->user_id != $user->id) {
-            throw new AppException('Hub error: permission denied.');
+        // -- User role --
+        $user_role = $em->getRepository('\App\Entities\Role')->findOneBy(['hub_id' => $hub_id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('User role error: user_role not found.');
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('User role error: role_status must be admin.');
         }
 
         // -- Uploads --

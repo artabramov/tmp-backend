@@ -113,6 +113,14 @@ class PostQuery
         Flight::json([
             'success' => 'true',
 
+            'role' => [
+                'id' => $user_role->id,
+                'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $user_role->user_id,
+                'hub_id' => $user_role->hub_id,
+                'role_status' => $user_role->role_status,
+            ],
+
             'hub' => [
                 'id' => $hub->id,
                 'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
@@ -165,6 +173,11 @@ class PostQuery
                 'hub_name' => $em->find('App\Entities\Hub', $n->hub_id)->hub_name,
                 'post_status' => $n->post_status,
                 'post_title' => $n->post_title,
+
+                'post_tags' => call_user_func( 
+                    function($post_tags) {
+                        return array_map(fn($m) => $m->tag_value, $post_tags);
+                    }, $n->post_tags->toArray() ),
 
                 'comments_count' => (int) call_user_func( 
                     function($meta, $key, $default) {

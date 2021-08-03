@@ -63,6 +63,14 @@ class RoleQuery
         Flight::json([
             'success' => 'true',
 
+            'hub'=> [
+                'id' => $hub->id,
+                'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
+                'hub_name' => $hub->hub_name,
+                'user_id' => $hub->user_id,
+                'user_name' => $em->find('App\Entities\User', $hub->user_id)->user_name,
+            ],
+
             'roles_limit' => ROLE_QUERY_LIMIT,
             'roles_count' => (int) call_user_func( 
                 function($meta, $key, $default) {
