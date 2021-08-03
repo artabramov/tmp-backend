@@ -30,6 +30,10 @@ class UserSearch
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- user search --
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('id', 'id');

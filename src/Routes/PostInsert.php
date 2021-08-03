@@ -37,6 +37,10 @@ class PostInsert
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Hub --
         $hub = $em->find('App\Entities\Hub', $hub_id);
 

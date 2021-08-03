@@ -30,6 +30,10 @@ class HubInsert
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Hub --
         $hub = new Hub();
         $hub->create_date = Flight::get('date');

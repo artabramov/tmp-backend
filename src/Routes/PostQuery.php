@@ -34,6 +34,10 @@ class PostQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Hub --
         $hub = $em->find('App\Entities\Hub', $hub_id);
 
@@ -108,6 +112,46 @@ class PostQuery
         // -- End --
         Flight::json([
             'success' => 'true',
+
+            'hub' => [
+                'id' => $hub->id,
+                'create_date' => $hub->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $hub->user_id,
+                'user_name' => $em->find('App\Entities\User', $hub->user_id)->user_name,
+                'hub_name' => $hub->hub_name,
+
+                'roles_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $hub->hub_meta, 'roles_count', 0 ),
+
+                'todo_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $hub->hub_meta, 'todo_count', 0 ),
+
+                'doing_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $hub->hub_meta, 'doing_count', 0 ),
+
+                'done_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $hub->hub_meta, 'done_count', 0 ),
+            ],
 
             'posts_limit' => POST_QUERY_LIMIT,
             'posts_count' => (int) $posts_count[0][1],

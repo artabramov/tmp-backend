@@ -30,6 +30,10 @@ class UserQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- User relations --
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('to_id', 'to_id');

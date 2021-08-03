@@ -36,6 +36,7 @@ class UserSignin
             throw new AppException('User error: user_pass expired.');
         }
 
+        $user->auth_date = Flight::get('date');
         $user->user_status = 'approved';
         $user->user_pass = null;
         $user->user_hash = null;

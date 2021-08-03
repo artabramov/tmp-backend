@@ -37,6 +37,10 @@ class PostUpdate
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Post --
         $post = $em->find('App\Entities\Post', $post_id);
 

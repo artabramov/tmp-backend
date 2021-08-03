@@ -29,6 +29,7 @@ class UserSignout
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
         $user->user_token = $user->create_token();
         $em->persist($user);
         $em->flush();

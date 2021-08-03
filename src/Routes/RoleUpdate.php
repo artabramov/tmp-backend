@@ -32,6 +32,10 @@ class RoleUpdate
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Member --
         $member = $em->getRepository('\App\Entities\User')->findOneBy(['id' => $user_id]);
 

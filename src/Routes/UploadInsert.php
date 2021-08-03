@@ -35,6 +35,10 @@ class UploadInsert
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Comment --
         $comment = $em->find('App\Entities\Comment', $comment_id);
 

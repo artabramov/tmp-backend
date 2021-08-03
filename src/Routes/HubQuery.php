@@ -30,6 +30,10 @@ class HubQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Hubs --
         $qb2 = $em->createQueryBuilder();
         $qb2->select('role.hub_id')

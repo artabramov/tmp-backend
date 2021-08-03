@@ -31,6 +31,10 @@ class CommentQuery
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
+        $em->persist($user);
+        $em->flush();
+
         // -- Post --
         $post = $em->find('App\Entities\Post', $post_id);
 
@@ -74,6 +78,25 @@ class CommentQuery
         // -- End --
         Flight::json([
             'success' => 'true',
+
+            'post' => [
+                'id' => $post->id, 
+                'create_date' => $post->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $post->user_id,
+                'user_name' => $em->find('App\Entities\User', $post->user_id)->user_name,
+                'hub_id' => $post->hub_id,
+                'hub_name' => $em->find('App\Entities\Hub', $hub->id)->hub_name,
+                'post_status' => $post->post_status,
+                'post_title' => $post->post_title,
+
+                'comments_count' => (int) call_user_func( 
+                    function($meta, $key, $default) {
+                        $tmp = $meta->filter(function($el) use ($key) {
+                            return $el->meta_key == $key;
+                        })->first();
+                        return empty($tmp) ? $default : $tmp->meta_value;
+                    }, $post->post_meta, 'comments_count', 0 )
+            ],
 
             'comments_limit' => COMMENT_QUERY_LIMIT,
             'comments_count' => (int) call_user_func( 

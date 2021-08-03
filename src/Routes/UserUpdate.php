@@ -35,6 +35,7 @@ class UserUpdate
             throw new AppException('User error: user not found or not approved.');
         }
 
+        $user->auth_date = Flight::get('date');
         $user->user_phone = $user_phone;
         $user->user_name = $user_name;
         $em->persist($user);
