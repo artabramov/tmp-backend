@@ -315,14 +315,6 @@ CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
         SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
         m_key = CONCAT(p_status, '_count');
 
-        --IF p_status = 'todo' THEN
-        --    m_key = 'todo_count';
-        --ELSIF p_status = 'doing' THEN
-        --    m_key = 'doing_count';
-        --ELSE
-        --    m_key = 'done_count';
-        --END IF;
-
         IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
             UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
         ELSE
@@ -347,14 +339,6 @@ CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
         SELECT OLD.post_status INTO p_status FROM posts WHERE id = OLD.id;
         SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
         m_key = CONCAT(p_status, '_count');
-
-        --IF p_status = 'todo' THEN
-        --    m_key = 'todo_count';
-        --ELSIF p_status = 'doing' THEN
-        --    m_key = 'doing_count';
-        --ELSE
-        --    m_key = 'done';
-        --END IF;
 
         IF posts_count = 0 THEN
             DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
@@ -381,14 +365,6 @@ CREATE FUNCTION post_update() RETURNS trigger AS $post_update$
         SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
         m_key = CONCAT(p_status, '_count');
 
-        --IF p_status = 'todo' THEN
-        --    m_key = 'todo_count';
-        --ELSIF p_status = 'doing' THEN
-        --    m_key = 'doing';
-        --ELSE
-        --    m_key = 'done';
-        --EN DIF;
-
         IF posts_count = 0 THEN
             DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
         ELSE
@@ -399,14 +375,6 @@ CREATE FUNCTION post_update() RETURNS trigger AS $post_update$
         SELECT NEW.post_status INTO p_status FROM posts WHERE id = NEW.id;
         SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
         m_key = CONCAT(p_status, '_count');
-
-        --IF p_status = 'todo' THEN
-        --    m_key = 'todo_count';
-        --ELSIF p_status = 'doing' THEN
-        --    m_key = 'doing';
-        --ELSE
-        --    m_key = 'done';
-        --END IF;
 
         IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
             UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
@@ -495,13 +463,53 @@ CREATE TRIGGER comment_delete AFTER DELETE ON posts_comments FOR EACH ROW EXECUT
 CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
     DECLARE
         uploads_sum INTEGER;
+        p_id INTEGER;
+        h_id INTEGER;
     BEGIN
+        -- post id
+        SELECT posts.id INTO p_id FROM posts
+        JOIN posts_comments ON posts.id = posts_comments.post_id 
+        WHERE posts_comments.id = NEW.comment_id
+        LIMIT 1;
+
+        -- hub id
+        SELECT hubs.id FROM hubs INTO h_id
+        JOIN posts ON posts.hub_id = hubs.id
+        JOIN posts_comments ON posts.id = posts_comments.post_id 
+        WHERE posts_comments.id = NEW.comment_id
+        LIMIT 1;
+
         -- users meta
         SELECT SUM(upload_size) INTO uploads_sum FROM uploads WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum') THEN
             UPDATE users_meta SET meta_value = uploads_sum WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum';
         ELSE
             INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'uploads_sum', uploads_sum);
+        END IF;
+
+        -- post meta
+        SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
+        JOIN posts_comments ON posts_comments.id = uploads.comment_id 
+        JOIN posts ON posts.id = posts_comments.post_id 
+        WHERE posts.id = p_id;
+
+        IF EXISTS (SELECT id FROM posts_meta WHERE post_id = p_id AND meta_key = 'uploads_sum') THEN
+            UPDATE posts_meta SET meta_value = uploads_sum WHERE post_id = NEW.post_id AND meta_key = 'uploads_sum';
+        ELSE
+            INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'uploads_sum', uploads_sum);
+        END IF;
+
+        -- hub meta
+        SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
+        JOIN posts_comments ON posts_comments.id = uploads.comment_id 
+        JOIN posts ON posts.id = posts_comments.post_id 
+        JOIN hubs ON hubs.id = posts.hub_id
+        WHERE hubs.id = h_id;
+
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
+            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
+        ELSE
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
         END IF;
         --
         RETURN NEW;
