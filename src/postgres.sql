@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS users (
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    auth_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    auth_date   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
@@ -235,31 +235,36 @@ CREATE TABLE IF NOT EXISTS uploads (
 -- role insert --
 
 CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
+
     DECLARE
-        roles_count integer;
-        relations_count integer;
+        ro_count INTEGER;
+        re_count INTEGER;
     BEGIN
+
         -- users meta
-        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = NEW.user_id;
+        SELECT COUNT(id) INTO ro_count FROM users_roles WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'roles_count') THEN
-            UPDATE users_meta SET meta_value = roles_count WHERE user_id = NEW.user_id AND meta_key = 'roles_count';
+            UPDATE users_meta SET meta_value = ro_count WHERE user_id = NEW.user_id AND meta_key = 'roles_count';
         ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'roles_count', roles_count);
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'roles_count', ro_count);
         END IF;
+
         -- hubs meta
-        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE hub_id = NEW.hub_id;
+        SELECT COUNT(id) INTO ro_count FROM users_roles WHERE hub_id = NEW.hub_id;
         IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = 'roles_count') THEN
-            UPDATE hubs_meta SET meta_value = roles_count WHERE hub_id = NEW.hub_id AND meta_key = 'roles_count';
+            UPDATE hubs_meta SET meta_value = ro_count WHERE hub_id = NEW.hub_id AND meta_key = 'roles_count';
         ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'roles_count', roles_count);
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, 'roles_count', ro_count);
         END IF;
+
         -- relations count (user meta)
-        SELECT COUNT(to_id) INTO relations_count FROM vw_users_relations WHERE user_id = NEW.user_id;
+        SELECT COUNT(to_id) INTO re_count FROM vw_users_relations WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'relations_count') THEN
-            UPDATE users_meta SET meta_value = relations_count WHERE user_id = NEW.user_id AND meta_key = 'relations_count';
-        ELSIF relations_count > 0 THEN
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'relations_count', relations_count);
+            UPDATE users_meta SET meta_value = re_count WHERE user_id = NEW.user_id AND meta_key = 'relations_count';
+        ELSIF re_count > 0 THEN
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'relations_count', re_count);
         END IF;
+
         --
         RETURN NEW;
     END;
@@ -271,30 +276,34 @@ CREATE TRIGGER role_insert AFTER INSERT ON users_roles FOR EACH ROW EXECUTE PROC
 
 CREATE FUNCTION role_delete() RETURNS trigger AS $role_delete$
     DECLARE
-        roles_count integer;
-        relations_count integer;
+        ro_count integer;
+        re_count integer;
     BEGIN
+
         -- users meta
-        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE user_id = OLD.user_id;
-        IF roles_count = 0 THEN
+        SELECT COUNT(id) INTO ro_count FROM users_roles WHERE user_id = OLD.user_id;
+        IF ro_count = 0 THEN
             DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'roles_count';
         ELSE
-            UPDATE users_meta SET meta_value = roles_count WHERE user_id = OLD.user_id AND meta_key = 'roles_count';
+            UPDATE users_meta SET meta_value = ro_count WHERE user_id = OLD.user_id AND meta_key = 'roles_count';
         END IF;
+
         -- hubs meta
-        SELECT COUNT(id) INTO roles_count FROM users_roles WHERE hub_id = OLD.hub_id;
-        IF roles_count = 0 THEN
+        SELECT COUNT(id) INTO ro_count FROM users_roles WHERE hub_id = OLD.hub_id;
+        IF ro_count = 0 THEN
             DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
         ELSE
-            UPDATE hubs_meta SET meta_value = roles_count WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
+            UPDATE hubs_meta SET meta_value = ro_count WHERE hub_id = OLD.hub_id AND meta_key = 'roles_count';
         END IF;
+
         -- relations count (user meta)
-        SELECT COUNT(to_id) INTO relations_count FROM vw_users_relations WHERE user_id = OLD.user_id;
-        IF relations_count = 0 THEN
+        SELECT COUNT(to_id) INTO re_count FROM vw_users_relations WHERE user_id = OLD.user_id;
+        IF re_count = 0 THEN
             DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'relations_count';
         ELSE
-            UPDATE users_meta SET meta_value = relations_count WHERE user_id = OLD.user_id AND meta_key = 'relations_count';
+            UPDATE users_meta SET meta_value = re_count WHERE user_id = OLD.user_id AND meta_key = 'relations_count';
         END IF;
+
         --
         RETURN OLD;
     END;
@@ -306,20 +315,21 @@ CREATE TRIGGER role_delete AFTER DELETE ON users_roles FOR EACH ROW EXECUTE PROC
 
 CREATE FUNCTION post_insert() RETURNS trigger AS $post_insert$
     DECLARE
-        posts_count integer;
-        p_status post_status;
-        m_key VARCHAR;
+        po_status post_status;
+        po_count INTEGER;
+        me_key VARCHAR;
     BEGIN
-        -- hubs meta
-        SELECT NEW.post_status INTO p_status FROM posts WHERE id = NEW.id;
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
-        m_key = CONCAT(p_status, '_count');
 
-        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
+        -- hubs meta
+        SELECT NEW.post_status INTO po_status FROM posts WHERE id = NEW.id;
+        SELECT COUNT(id) INTO po_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = po_status;
+        me_key = CONCAT(po_status, '_count');
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = me_key) THEN
+            UPDATE hubs_meta SET meta_value = po_count WHERE hub_id = NEW.hub_id AND meta_key = me_key;
         ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, me_key, po_count);
         END IF;
+
         --
         RETURN NEW;
     END;
@@ -331,20 +341,22 @@ CREATE TRIGGER post_insert AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE 
 
 CREATE FUNCTION post_delete() RETURNS trigger AS $post_delete$
     DECLARE
-        posts_count integer;
-        p_status post_status;
-        m_key VARCHAR;
+        po_status post_status;
+        po_count INTEGER;
+        me_key VARCHAR;
     BEGIN
-        -- hubs meta
-        SELECT OLD.post_status INTO p_status FROM posts WHERE id = OLD.id;
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
-        m_key = CONCAT(p_status, '_count');
 
-        IF posts_count = 0 THEN
-            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+        -- hubs meta
+        SELECT OLD.post_status INTO po_status FROM posts WHERE id = OLD.id;
+        SELECT COUNT(id) INTO po_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = po_status;
+        me_key = CONCAT(po_status, '_count');
+
+        IF po_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = me_key;
         ELSE
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+            UPDATE hubs_meta SET meta_value = po_count WHERE hub_id = OLD.hub_id AND meta_key = me_key;
         END IF;
+
         --
         RETURN OLD;
     END;
@@ -356,31 +368,33 @@ CREATE TRIGGER post_delete AFTER DELETE ON posts FOR EACH ROW EXECUTE PROCEDURE 
 
 CREATE FUNCTION post_update() RETURNS trigger AS $post_update$
     DECLARE
-        posts_count integer;
-        p_status post_status;
-        m_key VARCHAR;
+        po_status post_status;
+        po_count INTEGER;
+        me_key VARCHAR;
     BEGIN
-        -- hubs meta (prev)
-        SELECT OLD.post_status INTO p_status FROM posts WHERE id = OLD.id;
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = p_status;
-        m_key = CONCAT(p_status, '_count');
 
-        IF posts_count = 0 THEN
-            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+        -- hubs meta (prev)
+        SELECT OLD.post_status INTO po_status FROM posts WHERE id = OLD.id;
+        SELECT COUNT(id) INTO po_count FROM posts WHERE hub_id = OLD.hub_id AND post_status = po_status;
+        me_key = CONCAT(po_status, '_count');
+
+        IF po_count = 0 THEN
+            DELETE FROM hubs_meta WHERE hub_id = OLD.hub_id AND meta_key = me_key;
         ELSE
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = OLD.hub_id AND meta_key = m_key;
+            UPDATE hubs_meta SET meta_value = po_count WHERE hub_id = OLD.hub_id AND meta_key = me_key;
         END IF;
 
         -- hubs meta (next)
-        SELECT NEW.post_status INTO p_status FROM posts WHERE id = NEW.id;
-        SELECT COUNT(id) INTO posts_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = p_status;
-        m_key = CONCAT(p_status, '_count');
+        SELECT NEW.post_status INTO po_status FROM posts WHERE id = NEW.id;
+        SELECT COUNT(id) INTO po_count FROM posts WHERE hub_id = NEW.hub_id AND post_status = po_status;
+        me_key = CONCAT(po_status, '_count');
 
-        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
+        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = me_key) THEN
+            UPDATE hubs_meta SET meta_value = po_count WHERE hub_id = NEW.hub_id AND meta_key = me_key;
         ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
+            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, me_key, po_count);
         END IF;
+
         --
         RETURN OLD;
     END;
@@ -392,16 +406,18 @@ CREATE TRIGGER post_update AFTER UPDATE ON posts FOR EACH ROW EXECUTE PROCEDURE 
 
 CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
     DECLARE
-        comments_count integer;
-        i integer;
+        co_count INTEGER;
+        i INTEGER;
     BEGIN
+
         -- post meta
-        SELECT COUNT(id) INTO comments_count FROM posts_comments WHERE post_id = NEW.post_id;
+        SELECT COUNT(id) INTO co_count FROM posts_comments WHERE post_id = NEW.post_id;
         IF EXISTS (SELECT id FROM posts_meta WHERE post_id = NEW.post_id AND meta_key = 'comments_count') THEN
-            UPDATE posts_meta SET meta_value = comments_count WHERE post_id = NEW.post_id AND meta_key = 'comments_count';
+            UPDATE posts_meta SET meta_value = co_count WHERE post_id = NEW.post_id AND meta_key = 'comments_count';
         ELSE
-            INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'comments_count', comments_count);
+            INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'comments_count', co_count);
         END IF;
+
         -- users alerts
         FOR i IN 
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.hub_id IN (
@@ -415,6 +431,7 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
 
         END LOOP;
         
+        --
         RETURN NEW;
     END;
 $comment_insert$ LANGUAGE plpgsql;
@@ -425,17 +442,18 @@ CREATE TRIGGER comment_insert AFTER INSERT ON posts_comments FOR EACH ROW EXECUT
 
 CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
     DECLARE
-        comments_count INTEGER;
-        alerts_count INTEGER;
+        co_count INTEGER;
+        al_count INTEGER;
         i INTEGER;
     BEGIN
-        -- post meta
-        SELECT COUNT(id) INTO comments_count FROM posts_comments WHERE post_id = OLD.post_id;
 
-        IF comments_count = 0 THEN
+        -- post meta
+        SELECT COUNT(id) INTO co_count FROM posts_comments WHERE post_id = OLD.post_id;
+
+        IF co_count = 0 THEN
             DELETE FROM posts_meta WHERE post_id = OLD.post_id AND meta_key = 'comments_count';
         ELSE
-            UPDATE posts_meta SET meta_value = comments_count WHERE post_id = OLD.post_id AND meta_key = 'comments_count';
+            UPDATE posts_meta SET meta_value = co_count WHERE post_id = OLD.post_id AND meta_key = 'comments_count';
         END IF;
 
         -- users alerts
@@ -443,15 +461,16 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.hub_id IN (
                 SELECT posts.hub_id FROM posts WHERE posts.id = OLD.post_id)
         LOOP
-            SELECT users_alerts.alerts_count INTO alerts_count FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
-            IF alerts_count = 1 THEN
+            SELECT users_alerts.alerts_count INTO al_count FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
+            IF al_count = 1 THEN
                 DELETE FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
-            ELSIF alerts_count > 1 THEN
-                UPDATE users_alerts SET alerts_count = users_alerts.alerts_count - 1 WHERE user_id = i AND post_id = OLD.post_id;
+            ELSIF al_count > 1 THEN
+                UPDATE users_alerts SET alerts_count = users_alerts.al_count - 1 WHERE user_id = i AND post_id = OLD.post_id;
             END IF;
 
         END LOOP;
         
+        --
         RETURN OLD;
     END;
 $comment_delete$ LANGUAGE plpgsql;
@@ -462,55 +481,56 @@ CREATE TRIGGER comment_delete AFTER DELETE ON posts_comments FOR EACH ROW EXECUT
 
 CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
     DECLARE
-        uploads_sum INTEGER;
-        p_id INTEGER;
-        h_id INTEGER;
+        up_sum INTEGER;
+        po_id INTEGER;
+        hu_id INTEGER;
     BEGIN
         -- post id
-        SELECT posts.id INTO p_id FROM posts
+        SELECT posts.id INTO po_id FROM posts
         JOIN posts_comments ON posts.id = posts_comments.post_id 
         WHERE posts_comments.id = NEW.comment_id
         LIMIT 1;
 
         -- hub id
-        SELECT hubs.id FROM hubs INTO h_id
+        SELECT hubs.id FROM hubs INTO hu_id
         JOIN posts ON posts.hub_id = hubs.id
         JOIN posts_comments ON posts.id = posts_comments.post_id 
         WHERE posts_comments.id = NEW.comment_id
         LIMIT 1;
 
         -- users meta
-        SELECT SUM(upload_size) INTO uploads_sum FROM uploads WHERE user_id = NEW.user_id;
+        SELECT SUM(upload_size) INTO up_sum FROM uploads WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum') THEN
-            UPDATE users_meta SET meta_value = uploads_sum WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum';
+            UPDATE users_meta SET meta_value = up_sum WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum';
         ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'uploads_sum', uploads_sum);
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'uploads_sum', up_sum);
         END IF;
 
         -- post meta
-        SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
-        JOIN posts_comments ON posts_comments.id = uploads.comment_id 
-        JOIN posts ON posts.id = posts_comments.post_id 
-        WHERE posts.id = p_id;
+        --SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
+        --JOIN posts_comments ON posts_comments.id = uploads.comment_id 
+        --JOIN posts ON posts.id = posts_comments.post_id 
+        --WHERE posts.id = p_id;
 
-        IF EXISTS (SELECT id FROM posts_meta WHERE post_id = p_id AND meta_key = 'uploads_sum') THEN
-            UPDATE posts_meta SET meta_value = uploads_sum WHERE post_id = NEW.post_id AND meta_key = 'uploads_sum';
-        ELSE
-            INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'uploads_sum', uploads_sum);
-        END IF;
+        --IF EXISTS (SELECT id FROM posts_meta WHERE post_id = p_id AND meta_key = 'uploads_sum') THEN
+        --    UPDATE posts_meta SET meta_value = uploads_sum WHERE post_id = NEW.post_id AND meta_key = 'uploads_sum';
+        --ELSE
+        --    INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'uploads_sum', uploads_sum);
+        --END IF;
 
         -- hub meta
-        SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
-        JOIN posts_comments ON posts_comments.id = uploads.comment_id 
-        JOIN posts ON posts.id = posts_comments.post_id 
-        JOIN hubs ON hubs.id = posts.hub_id
-        WHERE hubs.id = h_id;
+        --SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
+        --JOIN posts_comments ON posts_comments.id = uploads.comment_id 
+        --JOIN posts ON posts.id = posts_comments.post_id 
+        --JOIN hubs ON hubs.id = posts.hub_id
+        --WHERE hubs.id = h_id;
 
-        IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
-            UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
-        ELSE
-            INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
-        END IF;
+        --IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
+        --    UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
+        --ELSE
+        --    INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
+        --END IF;
+
         --
         RETURN NEW;
     END;
@@ -522,15 +542,17 @@ CREATE TRIGGER upload_insert AFTER INSERT ON uploads FOR EACH ROW EXECUTE PROCED
 
 CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
     DECLARE
-        uploads_sum INTEGER;
+        up_sum INTEGER;
     BEGIN
+
         -- users meta
-        SELECT SUM(upload_size) INTO uploads_sum FROM uploads WHERE user_id = OLD.user_id;
-        IF uploads_sum IS NULL THEN
+        SELECT SUM(upload_size) INTO up_sum FROM uploads WHERE user_id = OLD.user_id;
+        IF up_sum IS NULL THEN
             DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'uploads_sum';
         ELSE
-            UPDATE users_meta SET meta_value = uploads_sum WHERE user_id = OLD.user_id AND meta_key = 'uploads_sum';
+            UPDATE users_meta SET meta_value = up_sum WHERE user_id = OLD.user_id AND meta_key = 'uploads_sum';
         END IF;
+
         --
         RETURN OLD;
     END;
@@ -542,15 +564,17 @@ CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCED
 
 CREATE FUNCTION alert_insert() RETURNS trigger AS $alert_insert$
     DECLARE
-        alerts_sum INTEGER;
+        al_sum INTEGER;
     BEGIN
+
         -- users meta
-        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = NEW.user_id;
+        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum') THEN
-            UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
+            UPDATE users_meta SET meta_value = al_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
         ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', alerts_sum);
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', al_sum);
         END IF;
+
         --
         RETURN NEW;
     END;
@@ -562,14 +586,14 @@ CREATE TRIGGER alert_insert AFTER INSERT ON users_alerts FOR EACH ROW EXECUTE PR
 
 CREATE FUNCTION alert_delete() RETURNS trigger AS $alert_delete$
     DECLARE
-        alerts_sum INTEGER;
+        al_sum INTEGER;
     BEGIN
         -- users meta
-        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = OLD.user_id;
-        IF alerts_sum IS NULL THEN
+        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = OLD.user_id;
+        IF al_sum IS NULL THEN
             DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
         ELSE
-            UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+            UPDATE users_meta SET meta_value = al_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
         END IF;
         --
         RETURN OLD;
@@ -582,17 +606,45 @@ CREATE TRIGGER alert_delete AFTER DELETE ON users_alerts FOR EACH ROW EXECUTE PR
 
 CREATE FUNCTION alert_update() RETURNS trigger AS $alert_update$
     DECLARE
-        alerts_sum INTEGER;
+        al_sum INTEGER;
     BEGIN
+
         -- users meta
-        SELECT SUM(alerts_count) INTO alerts_sum FROM users_alerts WHERE user_id = OLD.user_id;
-        UPDATE users_meta SET meta_value = alerts_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = OLD.user_id;
+        UPDATE users_meta SET meta_value = al_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
+
         --
         RETURN OLD;
     END;
 $alert_update$ LANGUAGE plpgsql;
 
 CREATE TRIGGER alert_update AFTER UPDATE ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_update();
+
+-- vol insert --
+
+CREATE FUNCTION vol_insert() RETURNS trigger AS $vol_insert$
+    DECLARE
+        vol_sum INTEGER;
+    BEGIN
+
+        -- users meta
+        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum') THEN
+            UPDATE users_meta SET meta_value = al_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
+        ELSE
+            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', al_sum);
+        END IF;
+
+        --
+        RETURN NEW;
+    END;
+$vol_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER vol_insert AFTER INSERT ON users_vols FOR EACH ROW EXECUTE PROCEDURE vol_insert();
+
+-- vol delete --
+
+-- vol update --
 
 -- view: users relations --
 
