@@ -4,9 +4,9 @@ DROP VIEW IF EXISTS vw_users_relations;
 
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users_alerts;
 DROP TABLE IF EXISTS users_volumes;
 DROP TABLE IF EXISTS repos_terms;
+DROP TABLE IF EXISTS posts_alerts;
 DROP TABLE IF EXISTS posts_terms;
 DROP TABLE IF EXISTS posts_tags;
 DROP TABLE IF EXISTS uploads;
@@ -21,9 +21,9 @@ DROP TYPE IF EXISTS post_status;
 
 DROP SEQUENCE IF EXISTS users_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_alerts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_volumes_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS repos_terms_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS posts_alerts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS uploads_id_seq CASCADE;
@@ -41,9 +41,7 @@ DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 --DROP TRIGGER IF EXISTS upload_insert ON uploads;
 --DROP TRIGGER IF EXISTS upload_delete ON uploads;
---DROP TRIGGER IF EXISTS alert_insert ON users_alerts;
---DROP TRIGGER IF EXISTS alert_delete ON users_alerts;
---DROP TRIGGER IF EXISTS alert_update ON users_alerts;
+
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
@@ -54,9 +52,7 @@ DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 --DROP FUNCTION IF EXISTS upload_insert;
 --DROP FUNCTION IF EXISTS upload_delete;
---DROP FUNCTION IF EXISTS alert_insert;
---DROP FUNCTION IF EXISTS alert_delete;
---DROP FUNCTION IF EXISTS alert_update;
+
 
 -- table: users --
 
@@ -160,12 +156,12 @@ CREATE TABLE IF NOT EXISTS posts (
     post_title  VARCHAR(255) NOT NULL
 );
 
--- table: users_alerts --
+-- table: posts_alerts --
 
-CREATE SEQUENCE users_alerts_id_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE posts_alerts_id_seq START WITH 1 INCREMENT BY 1;
 
-CREATE TABLE IF NOT EXISTS users_alerts (
-    id           BIGINT DEFAULT NEXTVAL('users_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS posts_alerts (
+    id           BIGINT DEFAULT NEXTVAL('posts_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
@@ -242,7 +238,6 @@ CREATE OR REPLACE VIEW vw_users_relations AS
 -- trigger: role insert --
 
 CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
-
     DECLARE
         rol_count INTEGER;
         rel_count INTEGER;
@@ -435,10 +430,10 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN 
                 (SELECT posts.repo_id FROM posts WHERE posts.id = NEW.post_id)
         LOOP
-            IF EXISTS (SELECT id FROM users_alerts WHERE user_id = i AND post_id = NEW.post_id) THEN
-                UPDATE users_alerts SET alerts_count = users_alerts.alerts_count + 1 WHERE user_id = i AND post_id = NEW.post_id;
+            IF EXISTS (SELECT id FROM posts_alerts WHERE user_id = i AND post_id = NEW.post_id) THEN
+                UPDATE posts_alerts SET alerts_count = posts_alerts.alerts_count + 1 WHERE user_id = i AND post_id = NEW.post_id;
             ELSE
-                INSERT INTO users_alerts (user_id, post_id, alerts_count) VALUES (i, NEW.post_id, 1);
+                INSERT INTO posts_alerts (user_id, post_id, alerts_count) VALUES (i, NEW.post_id, 1);
             END IF;
 
         END LOOP;
@@ -448,7 +443,7 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN 
                 (SELECT posts.repo_id FROM posts WHERE posts.id = NEW.post_id)
         LOOP
-            SELECT SUM(alerts_count) INTO ale_count FROM users_alerts WHERE user_id = i;
+            SELECT SUM(alerts_count) INTO ale_count FROM posts_alerts WHERE user_id = i;
             IF EXISTS (SELECT id FROM users_terms WHERE user_id = i AND term_key = 'alerts_count') THEN
                 UPDATE users_terms SET term_value = ale_count WHERE user_id = i AND term_key = 'alerts_count';
             ELSE
@@ -485,11 +480,11 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.repo_id IN 
                 (SELECT posts.repo_id FROM posts WHERE posts.id = OLD.post_id)
         LOOP
-            SELECT users_alerts.alerts_count INTO ale_count FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
+            SELECT posts_alerts.alerts_count INTO ale_count FROM posts_alerts WHERE user_id = i AND post_id = OLD.post_id;
             IF ale_count = 1 THEN
-                DELETE FROM users_alerts WHERE user_id = i AND post_id = OLD.post_id;
+                DELETE FROM posts_alerts WHERE user_id = i AND post_id = OLD.post_id;
             ELSIF ale_count > 1 THEN
-                UPDATE users_alerts SET alerts_count = users_alerts.alerts_count - 1 WHERE user_id = i AND post_id = OLD.post_id;
+                UPDATE posts_alerts SET alerts_count = posts_alerts.alerts_count - 1 WHERE user_id = i AND post_id = OLD.post_id;
             END IF;
 
         END LOOP;
@@ -499,8 +494,8 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.repo_id IN 
                 (SELECT posts.repo_id FROM posts WHERE posts.id = OLD.post_id)
         LOOP
-            SELECT SUM(alerts_count) INTO ale_count FROM users_alerts WHERE user_id = i;
-            IF ale_count IS NULL THEN
+            SELECT COALESCE(SUM(alerts_count), 0) INTO ale_count FROM posts_alerts WHERE user_id = i;
+            IF ale_count = 0 THEN
                 DELETE FROM users_terms WHERE user_id = i AND term_key = 'alerts_count';
             ELSE
                 UPDATE users_terms SET term_value = ale_count WHERE user_id = i AND term_key = 'alerts_count';
@@ -545,10 +540,10 @@ DELETE FROM comments WHERE id = 2;
 DELETE FROM comments WHERE id = 3;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM users_alerts;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts;
 SELECT * FROM vw_users_relations;
 
--- TODO: = 0 / IS NULL ?
+
 
 
 
