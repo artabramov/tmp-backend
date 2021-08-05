@@ -781,48 +781,48 @@ CREATE TRIGGER volume_delete AFTER DELETE ON users_volumes FOR EACH ROW EXECUTE 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
--- test data --
-
-INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
-INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');
-INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '31234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply3@noreply.no', '', 'user 3');
-INSERT INTO repos (id, create_date, update_date, user_id, repo_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 'repo 1 (by user 1)');
-INSERT INTO repos (id, create_date, update_date, user_id, repo_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 'repo 2 (by user 2)');
-INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'admin');
-INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 2, 'admin');
-INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 1, 'reader');
-INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'reader');
-INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (5, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 3, 1, 'reader');
-DELETE FROM users_roles WHERE id = 4;
-DELETE FROM users_roles WHERE id = 5;
-INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 1');
-INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 2');
-INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 3');
-INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'done', 'post 4');
---DELETE FROM posts WHERE id = 3;
---DELETE FROM posts WHERE id = 4;
-UPDATE posts SET post_status = 'done' WHERE id = 1;
-UPDATE posts SET post_status = 'done' WHERE id = 2;
-INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'comment 1');
-INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'comment 2');
-INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 4, 'comment 2');
---DELETE FROM comments WHERE id = 3;
-INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 1', 'file 1', 'image/jpeg', 100);
-INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 2', 'file 2', 'image/jpeg', 100);
-INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'upload name 3', 'file 3', 'image/jpeg', 100);
-INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 3, 'upload name 4', 'file 4', 'image/jpeg', 100);
---DELETE FROM uploads WHERE id = 1;
---DELETE FROM uploads WHERE id = 2;
---DELETE FROM uploads WHERE id = 3;
---DELETE FROM uploads WHERE id = 4;
-INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1900);
-INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1800);
-INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 2100);
-DELETE FROM users_volumes WHERE id = 3;
---DELETE FROM users_volumes WHERE id = 1;
-UPDATE users_volumes SET volume_size = 2900 WHERE id = 2;
-
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes;
 SELECT * FROM vw_users_relations;
 SELECT * FROM vw_users_volumes;
+
+-- test data --
+
+--INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
+--INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');
+--INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '31234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply3@noreply.no', '', 'user 3');
+--INSERT INTO repos (id, create_date, update_date, user_id, repo_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 'repo 1 (by user 1)');
+--INSERT INTO repos (id, create_date, update_date, user_id, repo_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 'repo 2 (by user 2)');
+--INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'admin');
+--INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 2, 'admin');
+--INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 1, 'reader');
+--INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'reader');
+--INSERT INTO users_roles (id, create_date, update_date, user_id, repo_id, role_status) VALUES (5, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 3, 1, 'reader');
+--DELETE FROM users_roles WHERE id = 4;
+--DELETE FROM users_roles WHERE id = 5;
+--INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 1');
+--INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 2');
+--INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 3');
+--INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'done', 'post 4');
+--DELETE FROM posts WHERE id = 3;
+--DELETE FROM posts WHERE id = 4;
+--UPDATE posts SET post_status = 'done' WHERE id = 1;
+--UPDATE posts SET post_status = 'done' WHERE id = 2;
+--INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'comment 1');
+--INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'comment 2');
+--INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 4, 'comment 2');
+--DELETE FROM comments WHERE id = 3;
+--INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 1', 'file 1', 'image/jpeg', 100);
+--INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 2', 'file 2', 'image/jpeg', 100);
+--INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'upload name 3', 'file 3', 'image/jpeg', 100);
+--INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 3, 'upload name 4', 'file 4', 'image/jpeg', 100);
+--DELETE FROM uploads WHERE id = 1;
+--DELETE FROM uploads WHERE id = 2;
+--DELETE FROM uploads WHERE id = 3;
+--DELETE FROM uploads WHERE id = 4;
+--INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1900);
+--INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1800);
+--INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 2100);
+--DELETE FROM users_volumes WHERE id = 3;
+--DELETE FROM users_volumes WHERE id = 1;
+--UPDATE users_volumes SET volume_size = 2900 WHERE id = 2;

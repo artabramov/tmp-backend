@@ -1,64 +1,45 @@
 <?php
 namespace App\Wrappers;
-use \App\Exceptions\UserException;
+use \DateTime,
+    \App\Exceptions\AppException,
+    \App\Entities\User;
 
 /*
-use \Flight,
-    \App\Entities\Alert,
-    \App\Entities\Comment,
-    \App\Entities\Hub,
-    \App\Entities\Hubmeta,
-    \App\Entities\Post,
-    \App\Entities\Postmeta,
-    \App\Entities\Role,
-    \App\Entities\Tag,
-    \App\Entities\Upload,
-    \App\Entities\User,
-    \App\Entities\Usermeta,
-    \App\Entities\Vol,
-    \App\Exceptions\AppException;
+\App\Entities\Alert,
+\App\Entities\Comment,
+\App\Entities\Hub,
+\App\Entities\Hubmeta,
+\App\Entities\Post,
+\App\Entities\Postmeta,
+\App\Entities\Role,
+\App\Entities\Tag,
+\App\Entities\Upload,
+\App\Entities\User,
+\App\Entities\Usermeta,
+\App\Entities\Vol,
+\App\Exceptions\AppException;
 */
 
-class UserWrapper
+class UserWrapper extends Wrapper
 {
-    protected $em;
-    protected $user;
-
-    public function __construct($em) {
-        $this->em = $em;
-    }
-
-    private function date($timestamp = null) {
-        if($timestamp == 'now') {
-            $stmt = $this->em->getConnection()->prepare("SELECT to_timestamp(0)");
-            $stmt->execute();
-            return new \DateTime($stmt->fetchOne());
-
-        } else {
-            $stmt = $this->em->getConnection()->prepare("SELECT NOW()::timestamp(0)");
-            $stmt->execute();
-            return new \DateTime($stmt->fetchOne());
-        }
-    }
-
     public function create(string $user_email, string $user_name, string $user_phone = '') {
 
         $user_email = mb_strtolower($user_email);
         $user_phone = preg_replace('/[^0-9]/', '', $user_phone) ? !empty($user_phone) : null;
 
         if($this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new UserException('user_email is occupied', 19);
+            throw new AppException('user_email is occupied', 2001);
 
         } elseif(!empty($user_phone) and $em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
-            throw new UserException('user_phone is occupied', 20);
+            throw new AppException('user_phone is occupied', 2002);
         }
 
         // -- User --
-        $user = new \App\Entities\User();
-        $user->create_date = $this->date();
-        $user->update_date = $this->date('now');
-        $user->remind_date = $this->date();
-        $user->auth_date = $this->date();
+        $user = new User();
+        $user->create_date = $this->time;
+        $user->update_date = new DateTime('1970-01-01 00:00:00');
+        $user->remind_date = new DateTime('1970-01-01 00:00:00');
+        $user->auth_date = new DateTime('1970-01-01 00:00:00');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
         $user->user_email = $user_email;
@@ -69,11 +50,15 @@ class UserWrapper
         $this->em->persist($user);
         $this->em->flush();
 
+        // -- End --
+        $this->json = [
+            'datetime' => [
+                'date' => $this->time->format('Y-m-d H:i:s'),
+                'timezone' => $this->timezone],
+            'success' => 'true',
+            'user_id' => $user->id
+        ];
 
-
-        /*
-
-        */
 
         /*
         $em = Flight::get('em');
