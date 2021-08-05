@@ -1,6 +1,7 @@
 -- drop all --
 
 DROP VIEW IF EXISTS vw_users_relations;
+DROP VIEW IF EXISTS vw_users_volumes;
 
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
@@ -40,8 +41,10 @@ DROP TRIGGER IF EXISTS post_update ON posts;
 DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
---DROP TRIGGER IF EXISTS upload_delete ON uploads;
-
+DROP TRIGGER IF EXISTS upload_delete ON uploads;
+DROP TRIGGER IF EXISTS volume_insert ON users_volumes;
+DROP TRIGGER IF EXISTS volume_update ON users_volumes;
+DROP TRIGGER IF EXISTS volume_delete ON users_volumes;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
@@ -51,8 +54,9 @@ DROP FUNCTION IF EXISTS post_update;
 DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
---DROP FUNCTION IF EXISTS upload_delete;
-
+DROP FUNCTION IF EXISTS upload_delete;
+DROP FUNCTION IF EXISTS volume_insert;
+DROP FUNCTION IF EXISTS volume_update;
 
 -- table: users --
 
@@ -92,12 +96,12 @@ CREATE TABLE IF NOT EXISTS users_terms (
 CREATE SEQUENCE users_volumes_id_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS users_volumes (
-    id          BIGINT DEFAULT NEXTVAL('users_volumes_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    expire_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    volume_size INT NOT NULL
+    id           BIGINT DEFAULT NEXTVAL('users_volumes_id_seq'::regclass) NOT NULL PRIMARY KEY,
+    create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    expires_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    volume_size  INT NOT NULL
 );
 
 -- table: repos --
@@ -234,6 +238,15 @@ CREATE OR REPLACE VIEW vw_users_relations AS
     JOIN users ON users.id IN (SELECT users_roles.user_id FROM users_roles WHERE users_roles.repo_id = repos.id)
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
+
+-- view: vw_users_volumes --
+
+CREATE OR REPLACE VIEW vw_users_volumes AS
+    SELECT users.id AS user_id, users_volumes.id AS volume_id FROM users
+    JOIN users_volumes ON users.id = users_volumes.user_id
+    WHERE users_volumes.expires_date >= NOW()
+    ORDER BY users_volumes.volume_size DESC
+    LIMIT 1;
 
 -- trigger: role insert --
 
@@ -514,6 +527,7 @@ CREATE TRIGGER comment_delete AFTER DELETE ON comments FOR EACH ROW EXECUTE PROC
 CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
     DECLARE
         upl_sum INTEGER;
+        upl_count INTEGER;
         pos_id INTEGER;
         rep_id INTEGER;
     BEGIN
@@ -531,6 +545,16 @@ CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
             UPDATE posts_terms SET term_value = upl_sum WHERE post_id = pos_id AND term_key = 'uploads_sum';
         ELSE
             INSERT INTO posts_terms (post_id, term_key, term_value) VALUES (pos_id, 'uploads_sum', upl_sum);
+        END IF;
+
+        -- posts terms: uploads_count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id = pos_id);
+
+        IF EXISTS (SELECT id FROM posts_terms WHERE post_id = pos_id AND term_key = 'uploads_count') THEN
+            UPDATE posts_terms SET term_value = upl_count WHERE post_id = pos_id AND term_key = 'uploads_count';
+        ELSE
+            INSERT INTO posts_terms (post_id, term_key, term_value) VALUES (pos_id, 'uploads_count', upl_count);
         END IF;
 
         -- repo id
@@ -552,12 +576,32 @@ CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
             INSERT INTO repos_terms (repo_id, term_key, term_value) VALUES (rep_id, 'uploads_sum', upl_sum);
         END IF;
 
+        -- repos terms: uploads_count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id IN (
+                (SELECT posts.id FROM posts WHERE posts.repo_id = rep_id)
+            ));
+
+        IF EXISTS (SELECT id FROM repos_terms WHERE repo_id = rep_id AND term_key = 'uploads_count') THEN
+            UPDATE repos_terms SET term_value = upl_count WHERE repo_id = rep_id AND term_key = 'uploads_count';
+        ELSE
+            INSERT INTO repos_terms (repo_id, term_key, term_value) VALUES (rep_id, 'uploads_count', upl_count);
+        END IF;
+
         -- users terms: uploads_sum
         SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE user_id = NEW.user_id;
         IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'uploads_sum') THEN
             UPDATE users_terms SET term_value = upl_sum WHERE user_id = NEW.user_id AND term_key = 'uploads_sum';
         ELSE
             INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'uploads_sum', upl_sum);
+        END IF;
+
+        -- users terms: uploads_count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'uploads_count') THEN
+            UPDATE users_terms SET term_value = upl_count WHERE user_id = NEW.user_id AND term_key = 'uploads_count';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'uploads_count', upl_count);
         END IF;
 
         --
@@ -572,9 +616,69 @@ CREATE TRIGGER upload_insert AFTER INSERT ON uploads FOR EACH ROW EXECUTE PROCED
 CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
     DECLARE
         upl_sum INTEGER;
+        upl_count INTEGER;
+        pos_id INTEGER;
+        rep_id INTEGER;
     BEGIN
 
-        -- users meta
+        -- post id
+        SELECT posts.id INTO pos_id FROM posts
+        JOIN comments ON posts.id = comments.post_id 
+        WHERE comments.id = OLD.comment_id
+        LIMIT 1;
+
+        -- posts terms: uploads_sum
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id = pos_id);
+
+        IF upl_sum = 0 THEN
+            DELETE FROM posts_terms WHERE post_id = pos_id AND term_key = 'uploads_sum';
+        ELSE
+            UPDATE posts_terms SET term_value = upl_sum WHERE post_id = pos_id AND term_key = 'uploads_sum';
+        END IF;
+
+        -- posts terms: uploads_count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id = pos_id);
+
+        IF upl_count = 0 THEN
+            DELETE FROM posts_terms WHERE post_id = pos_id AND term_key = 'uploads_count';
+        ELSE
+            UPDATE posts_terms SET term_value = upl_count WHERE post_id = pos_id AND term_key = 'uploads_count';
+        END IF;
+
+        -- repo id
+        SELECT repos.id FROM repos INTO rep_id
+        JOIN posts ON posts.repo_id = repos.id
+        JOIN comments ON posts.id = comments.post_id 
+        WHERE comments.id = OLD.comment_id
+        LIMIT 1;
+
+        -- repos terms: uploads_sum
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id IN (
+                (SELECT posts.id FROM posts WHERE posts.repo_id = rep_id)
+            ));
+
+        IF upl_sum = 0 THEN
+            DELETE FROM repos_terms WHERE repo_id = rep_id AND term_key = 'uploads_sum';
+        ELSE
+            UPDATE repos_terms SET term_value = upl_sum WHERE repo_id = rep_id AND term_key = 'uploads_sum';
+        END IF;
+
+        -- repos terms: uploads count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id IN (
+                (SELECT posts.id FROM posts WHERE posts.repo_id = rep_id)
+            ));
+
+        IF upl_count = 0 THEN
+            DELETE FROM repos_terms WHERE repo_id = rep_id AND term_key = 'uploads_count';
+        ELSE
+            UPDATE repos_terms SET term_value = upl_count WHERE repo_id = rep_id AND term_key = 'uploads_count';
+        END IF;
+
+        -- users terms: uploads_sum
         SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE user_id = OLD.user_id;
         IF upl_sum = 0 THEN
             DELETE FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'uploads_sum';
@@ -582,7 +686,13 @@ CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
             UPDATE users_terms SET term_value = upl_sum WHERE user_id = OLD.user_id AND term_key = 'uploads_sum';
         END IF;
 
-        -- TODO: other handlers
+        -- users terms: uploads_count
+        SELECT COUNT(id) INTO upl_count FROM uploads WHERE user_id = OLD.user_id;
+        IF upl_count = 0 THEN
+            DELETE FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'uploads_count';
+        ELSE
+            UPDATE users_terms SET term_value = upl_count WHERE user_id = OLD.user_id AND term_key = 'uploads_count';
+        END IF;
 
         --
         RETURN OLD;
@@ -590,6 +700,86 @@ CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
 $upload_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
+
+-- trigger: volume_insert --
+
+CREATE FUNCTION volume_insert() RETURNS trigger AS $volume_insert$
+    DECLARE
+        vol_size INTEGER;
+        vol_expires VARCHAR;
+    BEGIN
+
+        -- users terms: volume_expires
+        SELECT volume_size INTO vol_size FROM users_volumes 
+        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
+        WHERE vw_users_volumes.user_id = NEW.user_id;
+
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_size') THEN
+            UPDATE users_terms SET term_value = vol_size WHERE user_id = NEW.user_id AND term_key = 'volume_size';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'volume_size', vol_size);
+        END IF;
+
+        -- users terms: volume_expires
+        SELECT expires_date INTO vol_expires FROM users_volumes 
+        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
+        WHERE vw_users_volumes.user_id = NEW.user_id;
+
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_expires') THEN
+            UPDATE users_terms SET term_value = vol_expires WHERE user_id = NEW.user_id AND term_key = 'volume_expires';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'volume_expires', vol_expires);
+        END IF;
+
+        --
+        RETURN NEW;
+    END;
+$volume_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER volume_insert AFTER INSERT ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_insert();
+
+-- triggers: volume_update, volume_delete --
+
+CREATE FUNCTION volume_update() RETURNS trigger AS $volume_update$
+    DECLARE
+        vol_size INTEGER;
+        vol_expires VARCHAR;
+    BEGIN
+
+        -- users terms: volume_expires
+        SELECT volume_size INTO vol_size FROM users_volumes 
+        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
+        WHERE vw_users_volumes.user_id = OLD.user_id;
+
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_size') THEN
+            UPDATE users_terms SET term_value = vol_size WHERE user_id = OLD.user_id AND term_key = 'volume_size';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'volume_size', vol_size);
+        END IF;
+
+        -- users terms: volume_expires
+        SELECT expires_date INTO vol_expires FROM users_volumes 
+        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
+        WHERE vw_users_volumes.user_id = OLD.user_id;
+
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_expires') THEN
+            UPDATE users_terms SET term_value = vol_expires WHERE user_id = OLD.user_id AND term_key = 'volume_expires';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'volume_expires', vol_expires);
+        END IF;
+
+        --
+        RETURN OLD;
+    END;
+$volume_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER volume_update AFTER UPDATE ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_update();
+CREATE TRIGGER volume_delete AFTER DELETE ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_update();
+
+-- privileges --
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 -- test data --
 
@@ -621,149 +811,18 @@ INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_n
 INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 2', 'file 2', 'image/jpeg', 100);
 INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'upload name 3', 'file 3', 'image/jpeg', 100);
 INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 3, 'upload name 4', 'file 4', 'image/jpeg', 100);
-DELETE FROM uploads WHERE id = 1;
-DELETE FROM uploads WHERE id = 2;
-DELETE FROM uploads WHERE id = 3;
-DELETE FROM uploads WHERE id = 4;
+--DELETE FROM uploads WHERE id = 1;
+--DELETE FROM uploads WHERE id = 2;
+--DELETE FROM uploads WHERE id = 3;
+--DELETE FROM uploads WHERE id = 4;
+INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1900);
+INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1800);
+INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 2100);
+DELETE FROM users_volumes WHERE id = 3;
+--DELETE FROM users_volumes WHERE id = 1;
+UPDATE users_volumes SET volume_size = 2900 WHERE id = 2;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes;
 SELECT * FROM vw_users_relations;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--- alert insert --
-
-CREATE FUNCTION alert_insert() RETURNS trigger AS $alert_insert$
-    DECLARE
-        al_sum INTEGER;
-    BEGIN
-
-        -- users meta
-        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = NEW.user_id;
-        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum') THEN
-            UPDATE users_meta SET meta_value = al_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
-        ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', al_sum);
-        END IF;
-
-        --
-        RETURN NEW;
-    END;
-$alert_insert$ LANGUAGE plpgsql;
-
-CREATE TRIGGER alert_insert AFTER INSERT ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_insert();
-
--- alert delete --
-
-CREATE FUNCTION alert_delete() RETURNS trigger AS $alert_delete$
-    DECLARE
-        al_sum INTEGER;
-    BEGIN
-        -- users meta
-        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = OLD.user_id;
-        IF al_sum IS NULL THEN
-            DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
-        ELSE
-            UPDATE users_meta SET meta_value = al_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
-        END IF;
-        --
-        RETURN OLD;
-    END;
-$alert_delete$ LANGUAGE plpgsql;
-
-CREATE TRIGGER alert_delete AFTER DELETE ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_delete();
-
--- alert update --
-
-CREATE FUNCTION alert_update() RETURNS trigger AS $alert_update$
-    DECLARE
-        al_sum INTEGER;
-    BEGIN
-
-        -- users meta
-        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = OLD.user_id;
-        UPDATE users_meta SET meta_value = al_sum WHERE user_id = OLD.user_id AND meta_key = 'alerts_sum';
-
-        --
-        RETURN OLD;
-    END;
-$alert_update$ LANGUAGE plpgsql;
-
-CREATE TRIGGER alert_update AFTER UPDATE ON users_alerts FOR EACH ROW EXECUTE PROCEDURE alert_update();
-
--- vol insert --
-
-CREATE FUNCTION vol_insert() RETURNS trigger AS $vol_insert$
-    DECLARE
-        vol_sum INTEGER;
-    BEGIN
-
-        -- users meta
-        SELECT SUM(alerts_count) INTO al_sum FROM users_alerts WHERE user_id = NEW.user_id;
-        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum') THEN
-            UPDATE users_meta SET meta_value = al_sum WHERE user_id = NEW.user_id AND meta_key = 'alerts_sum';
-        ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'alerts_sum', al_sum);
-        END IF;
-
-        --
-        RETURN NEW;
-    END;
-$vol_insert$ LANGUAGE plpgsql;
-
-CREATE TRIGGER vol_insert AFTER INSERT ON users_vols FOR EACH ROW EXECUTE PROCEDURE vol_insert();
-
--- vol delete --
-
--- vol update --
-
--- view: users vols --
-
-CREATE OR REPLACE VIEW vw_users_vols AS
-    SELECT users.id AS user_id, users_vols.id AS vol_id FROM users
-    JOIN users_vols ON users.id = users_vols.user_id
-    WHERE users_vols.expire_date >= NOW()
-    ORDER BY users_vols.vol_size DESC
-    LIMIT 1;
-
--- privileges --
-
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
-
--- select all
-
-\pset format wrapped
-SELECT * FROM vw_users_relations; SELECT * FROM vw_users_vols;
-SELECT * FROM users; SELECT * FROM users_meta; SELECT * FROM users_vols; SELECT * FROM users_roles; SELECT * FROM users_alerts; SELECT * FROM hubs; SELECT * FROM hubs_meta; SELECT * FROM posts; SELECT * FROM posts_meta; SELECT * FROM posts_tags; SELECT * FROM posts_comments; SELECT * FROM uploads; 
+SELECT * FROM vw_users_volumes;
