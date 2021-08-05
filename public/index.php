@@ -11,10 +11,13 @@ Flight::get('monolog')->pushHandler(new \Monolog\Handler\StreamHandler(MONOLOG_P
 // -- Error handle --
 Flight::map('error', function(Throwable $e) {
 
-    if($e instanceof \App\Exceptions\AppException) {
+    if($e instanceof \App\Exceptions\UserException) {
         Flight::json([
             'success' => 'false',
-            'error' => $e->getMessage()
+            'error' => [
+                'message' => $e->getMessage(),
+                'code' => 'US' . $e->getCode()
+            ]
         ]);
 
     } else {
@@ -130,7 +133,7 @@ Flight::after('stop', function( &$params, &$output ) {
 Flight::before('json', function( &$params, &$output ) {
     $params[0]['datetime']['date'] = Flight::get('date')->format('Y-m-d H:i:s');
     $params[0]['datetime']['timezone'] = Flight::get('timezone');
-    $params[0]['datetime']['microtime'] = microtime(true) - Flight::get('microtime');
+    $params[0]['debug']['microtime'] = microtime(true) - Flight::get('microtime');
 });
 
 // -- Default --
@@ -148,8 +151,15 @@ Flight::route('POST /api/token', function() {
 
 // -- User register --
 Flight::route('POST /api/user', function() {
-    $route = new \App\Routes\UserRegister();
-    $route->do();
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->create(
+        (string) Flight::request()->query['user_email'],
+        (string) Flight::request()->query['user_name'],
+        (string) Flight::request()->query['user_phone']
+    );
+
+    //$route = new \App\Routes\UserRegister();
+    //$route->do();
 });
 
 // -- User remind --
