@@ -73,9 +73,6 @@ $cacheConfig->setCacheFactory($factory);
 $config->setSecondLevelCacheConfiguration($cacheConfig);
 $config->setSecondLevelCacheEnabled(true);
 
-// --
-//Flight::set('cache', $cache);
-
 // Postgres config
 $conn = array(
     'driver' => POSTGRES_DRIVER,
@@ -107,18 +104,6 @@ Flight::set('phpmailer', $phpmailer);
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
     Flight::set('microtime', microtime(true));
-
-    //$stmt = Flight::get('em')->getConnection()->prepare("SELECT to_timestamp(0)");
-    //$stmt->execute();
-    //Flight::set('zero', new DateTime($stmt->fetchOne()));
-
-    //$stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
-    //$stmt->execute();
-    //Flight::set('date', new DateTime($stmt->fetchOne()));
-
-    //$stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
-    //$stmt->execute();
-    //Flight::set('timezone', $stmt->fetchOne());
 });
 
 Flight::after('error', function( &$params, &$output ) {
@@ -131,23 +116,29 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    //$params[0]['datetime']['date'] = Flight::get('date')->format('Y-m-d H:i:s');
-    //$params[0]['datetime']['timezone'] = Flight::get('timezone');
+    $params[0]['datetime']['date'] = Flight::date()->format('Y-m-d H:i:s');
+    $params[0]['datetime']['timezone'] = Flight::timezone();
     $params[0]['debug']['microtime'] = microtime(true) - Flight::get('microtime');
+});
+
+// date
+Flight::map('date', function(){
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
+    $stmt->execute();
+    return new DateTime($stmt->fetchOne());
+});
+
+// timezone
+Flight::map('timezone', function(){
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
+    $stmt->execute();
+    return $stmt->fetchOne();
 });
 
 // -- Default --
 Flight::route('GET /', function() {
     require_once(__DIR__ . '/webapp/index.php');
 });
-
-/*
-// -- User auth --
-Flight::route('POST /api/token', function() {
-    $route = new \App\Routes\UserAuth();
-    $route->do();
-});
-*/
 
 // -- User register --
 Flight::route('POST /api/user', function() {

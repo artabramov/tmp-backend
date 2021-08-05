@@ -1,6 +1,7 @@
 <?php
 namespace App\Wrappers;
 use \DateTime,
+    \Flight,
     \App\Exceptions\AppException,
     \App\Entities\User;
 
@@ -20,8 +21,30 @@ use \DateTime,
 \App\Exceptions\AppException;
 */
 
-class UserWrapper extends Wrapper
+class UserWrapper
 {
+    protected $em;
+    protected $json;
+
+    public function __construct($em) {
+        $this->em = $em;
+        $this->json = [];
+    }
+
+    public function __set($key, $value) {
+        if(property_exists($this, $key)) {
+            $this->$key = $value;
+        }
+    }
+
+    public function __get($key) {
+        return property_exists($this, $key) ? $this->$key : null;
+    }
+
+    public function __isset( $key ) {
+        return property_exists($this, $key) ? !empty($this->$key) : false;
+    }
+
     public function create(string $user_email, string $user_name, string $user_phone = '') {
 
         $user_email = mb_strtolower($user_email);
@@ -36,7 +59,7 @@ class UserWrapper extends Wrapper
 
         // -- User --
         $user = new User();
-        $user->create_date = $this->time;
+        $user->create_date = Flight::date();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = new DateTime('1970-01-01 00:00:00');
         $user->auth_date = new DateTime('1970-01-01 00:00:00');
@@ -52,9 +75,6 @@ class UserWrapper extends Wrapper
 
         // -- End --
         $this->json = [
-            'datetime' => [
-                'date' => $this->time->format('Y-m-d H:i:s'),
-                'timezone' => $this->timezone],
             'success' => 'true',
             'user_id' => $user->id
         ];
