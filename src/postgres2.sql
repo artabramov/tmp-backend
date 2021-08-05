@@ -39,7 +39,7 @@ DROP TRIGGER IF EXISTS post_delete ON posts;
 DROP TRIGGER IF EXISTS post_update ON posts;
 DROP TRIGGER IF EXISTS comment_insert ON posts_comments;
 DROP TRIGGER IF EXISTS comment_delete ON posts_comments;
---DROP TRIGGER IF EXISTS upload_insert ON uploads;
+DROP TRIGGER IF EXISTS upload_insert ON uploads;
 --DROP TRIGGER IF EXISTS upload_delete ON uploads;
 
 
@@ -50,7 +50,7 @@ DROP FUNCTION IF EXISTS post_delete;
 DROP FUNCTION IF EXISTS post_update;
 DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
---DROP FUNCTION IF EXISTS upload_insert;
+DROP FUNCTION IF EXISTS upload_insert;
 --DROP FUNCTION IF EXISTS upload_delete;
 
 
@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS posts_alerts (
     user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     post_id      BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     alerts_count INT NOT NULL,
-    CONSTRAINT user_alert_uid UNIQUE(user_id, post_id)
+    CONSTRAINT post_alert_uid UNIQUE(user_id, post_id)
 );
 
 -- table: posts_terms --
@@ -509,9 +509,89 @@ $comment_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER comment_delete AFTER DELETE ON comments FOR EACH ROW EXECUTE PROCEDURE comment_delete();
 
+-- upload insert --
 
+CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
+    DECLARE
+        upl_sum INTEGER;
+        pos_id INTEGER;
+        rep_id INTEGER;
+    BEGIN
+        -- post id
+        SELECT posts.id INTO pos_id FROM posts
+        JOIN comments ON posts.id = comments.post_id 
+        WHERE comments.id = NEW.comment_id
+        LIMIT 1;
 
+        -- posts terms: uploads_sum
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id = pos_id);
 
+        IF EXISTS (SELECT id FROM posts_terms WHERE post_id = pos_id AND term_key = 'uploads_sum') THEN
+            UPDATE posts_terms SET term_value = upl_sum WHERE post_id = pos_id AND term_key = 'uploads_sum';
+        ELSE
+            INSERT INTO posts_terms (post_id, term_key, term_value) VALUES (pos_id, 'uploads_sum', upl_sum);
+        END IF;
+
+        -- repo id
+        SELECT repos.id FROM repos INTO rep_id
+        JOIN posts ON posts.repo_id = repos.id
+        JOIN comments ON posts.id = comments.post_id 
+        WHERE comments.id = NEW.comment_id
+        LIMIT 1;
+
+        -- repos terms: uploads_sum
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE uploads.comment_id IN
+            (SELECT comments.id FROM comments WHERE comments.post_id IN (
+                (SELECT posts.id FROM posts WHERE posts.repo_id = rep_id)
+            ));
+
+        IF EXISTS (SELECT id FROM repos_terms WHERE repo_id = rep_id AND term_key = 'uploads_sum') THEN
+            UPDATE repos_terms SET term_value = upl_sum WHERE repo_id = rep_id AND term_key = 'uploads_sum';
+        ELSE
+            INSERT INTO repos_terms (repo_id, term_key, term_value) VALUES (rep_id, 'uploads_sum', upl_sum);
+        END IF;
+
+        -- users terms: uploads_sum
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE user_id = NEW.user_id;
+        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'uploads_sum') THEN
+            UPDATE users_terms SET term_value = upl_sum WHERE user_id = NEW.user_id AND term_key = 'uploads_sum';
+        ELSE
+            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'uploads_sum', upl_sum);
+        END IF;
+
+        --
+        RETURN NEW;
+    END;
+$upload_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upload_insert AFTER INSERT ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_insert();
+
+-- upload delete --
+
+CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
+    DECLARE
+        upl_sum INTEGER;
+    BEGIN
+
+        -- users meta
+        SELECT COALESCE(SUM(upload_size), 0) INTO upl_sum FROM uploads WHERE user_id = OLD.user_id;
+        IF upl_sum = 0 THEN
+            DELETE FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'uploads_sum';
+        ELSE
+            UPDATE users_terms SET term_value = upl_sum WHERE user_id = OLD.user_id AND term_key = 'uploads_sum';
+        END IF;
+
+        -- TODO: other handlers
+
+        --
+        RETURN OLD;
+    END;
+$upload_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
+
+-- test data --
 
 INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
 INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');
@@ -529,18 +609,25 @@ INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, 
 INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 2');
 INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'todo', 'post 3');
 INSERT INTO posts (id, create_date, update_date, user_id, repo_id, post_status, post_title) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'done', 'post 4');
-DELETE FROM posts WHERE id = 3;
-DELETE FROM posts WHERE id = 4;
+--DELETE FROM posts WHERE id = 3;
+--DELETE FROM posts WHERE id = 4;
 UPDATE posts SET post_status = 'done' WHERE id = 1;
 UPDATE posts SET post_status = 'done' WHERE id = 2;
 INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'comment 1');
-INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'comment 2');
-INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 1, 'comment 2');
-DELETE FROM comments WHERE id = 2;
-DELETE FROM comments WHERE id = 3;
+INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'comment 2');
+INSERT INTO comments (id, create_date, update_date, user_id, post_id, comment_content) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 2, 4, 'comment 2');
+--DELETE FROM comments WHERE id = 3;
+INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 1', 'file 1', 'image/jpeg', 100);
+INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 1, 'upload name 2', 'file 2', 'image/jpeg', 100);
+INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 2, 'upload name 3', 'file 3', 'image/jpeg', 100);
+INSERT INTO uploads (id, create_date, update_date, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size) VALUES (4, '1970-01-01 00:00:00', '1970-01-01 00:00:00', 1, 3, 'upload name 4', 'file 4', 'image/jpeg', 100);
+DELETE FROM uploads WHERE id = 1;
+DELETE FROM uploads WHERE id = 2;
+DELETE FROM uploads WHERE id = 3;
+DELETE FROM uploads WHERE id = 4;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads;
 SELECT * FROM vw_users_relations;
 
 
@@ -573,88 +660,7 @@ SELECT * FROM vw_users_relations;
 
 
 
--- upload insert --
 
-CREATE FUNCTION upload_insert() RETURNS trigger AS $upload_insert$
-    DECLARE
-        up_sum INTEGER;
-        po_id INTEGER;
-        hu_id INTEGER;
-    BEGIN
-        -- post id
-        SELECT posts.id INTO po_id FROM posts
-        JOIN posts_comments ON posts.id = posts_comments.post_id 
-        WHERE posts_comments.id = NEW.comment_id
-        LIMIT 1;
-
-        -- hub id
-        SELECT hubs.id FROM hubs INTO hu_id
-        JOIN posts ON posts.hub_id = hubs.id
-        JOIN posts_comments ON posts.id = posts_comments.post_id 
-        WHERE posts_comments.id = NEW.comment_id
-        LIMIT 1;
-
-        -- users meta
-        SELECT SUM(upload_size) INTO up_sum FROM uploads WHERE user_id = NEW.user_id;
-        IF EXISTS (SELECT id FROM users_meta WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum') THEN
-            UPDATE users_meta SET meta_value = up_sum WHERE user_id = NEW.user_id AND meta_key = 'uploads_sum';
-        ELSE
-            INSERT INTO users_meta (user_id, meta_key, meta_value) VALUES (NEW.user_id, 'uploads_sum', up_sum);
-        END IF;
-
-        -- post meta
-        --SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
-        --JOIN posts_comments ON posts_comments.id = uploads.comment_id 
-        --JOIN posts ON posts.id = posts_comments.post_id 
-        --WHERE posts.id = p_id;
-
-        --IF EXISTS (SELECT id FROM posts_meta WHERE post_id = p_id AND meta_key = 'uploads_sum') THEN
-        --    UPDATE posts_meta SET meta_value = uploads_sum WHERE post_id = NEW.post_id AND meta_key = 'uploads_sum';
-        --ELSE
-        --    INSERT INTO posts_meta (post_id, meta_key, meta_value) VALUES (NEW.post_id, 'uploads_sum', uploads_sum);
-        --END IF;
-
-        -- hub meta
-        --SELECT SUM(uploads.upload_size) INTO uploads_sum FROM uploads
-        --JOIN posts_comments ON posts_comments.id = uploads.comment_id 
-        --JOIN posts ON posts.id = posts_comments.post_id 
-        --JOIN hubs ON hubs.id = posts.hub_id
-        --WHERE hubs.id = h_id;
-
-        --IF EXISTS (SELECT id FROM hubs_meta WHERE hub_id = NEW.hub_id AND meta_key = m_key) THEN
-        --    UPDATE hubs_meta SET meta_value = posts_count WHERE hub_id = NEW.hub_id AND meta_key = m_key;
-        --ELSE
-        --    INSERT INTO hubs_meta (hub_id, meta_key, meta_value) VALUES (NEW.hub_id, m_key, posts_count);
-        --END IF;
-
-        --
-        RETURN NEW;
-    END;
-$upload_insert$ LANGUAGE plpgsql;
-
-CREATE TRIGGER upload_insert AFTER INSERT ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_insert();
-
--- upload delete --
-
-CREATE FUNCTION upload_delete() RETURNS trigger AS $upload_delete$
-    DECLARE
-        up_sum INTEGER;
-    BEGIN
-
-        -- users meta
-        SELECT SUM(upload_size) INTO up_sum FROM uploads WHERE user_id = OLD.user_id;
-        IF up_sum IS NULL THEN
-            DELETE FROM users_meta WHERE user_id = OLD.user_id AND meta_key = 'uploads_sum';
-        ELSE
-            UPDATE users_meta SET meta_value = up_sum WHERE user_id = OLD.user_id AND meta_key = 'uploads_sum';
-        END IF;
-
-        --
-        RETURN OLD;
-    END;
-$upload_delete$ LANGUAGE plpgsql;
-
-CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
 
 -- alert insert --
 
