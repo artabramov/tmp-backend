@@ -160,20 +160,6 @@ CREATE TABLE IF NOT EXISTS posts (
     post_title  VARCHAR(255) NOT NULL
 );
 
--- table: posts_alerts --
-
-CREATE SEQUENCE posts_alerts_id_seq START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE IF NOT EXISTS posts_alerts (
-    id           BIGINT DEFAULT NEXTVAL('posts_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    post_id      BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
-    alerts_count INT NOT NULL,
-    CONSTRAINT post_alert_uid UNIQUE(user_id, post_id)
-);
-
 -- table: posts_terms --
 
 CREATE SEQUENCE posts_terms_id_seq START WITH 1 INCREMENT BY 1;
@@ -199,6 +185,20 @@ CREATE TABLE IF NOT EXISTS posts_tags (
     post_id     BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     tag_value   VARCHAR(255) NOT NULL,
     CONSTRAINT post_tag_uid UNIQUE(post_id, tag_value)
+);
+
+-- table: posts_alerts --
+
+CREATE SEQUENCE posts_alerts_id_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE IF NOT EXISTS posts_alerts (
+    id           BIGINT DEFAULT NEXTVAL('posts_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
+    create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
+    post_id      BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
+    alerts_count INT NOT NULL,
+    CONSTRAINT post_alert_uid UNIQUE(user_id, post_id)
 );
 
 -- table: comments --
@@ -782,7 +782,7 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes;
 SELECT * FROM vw_users_relations;
 SELECT * FROM vw_users_volumes;
 

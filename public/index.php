@@ -166,6 +166,36 @@ Flight::route('POST /api/user', function() {
     );
 });
 
+// -- cache test --
+Flight::route('GET /api/cache', function() {
+    $user = Flight::get('em')->find('\App\Entities\User', 1);
+
+    Flight::json([
+        'success' => 'true',
+        'user' => [
+            'id' => $user->id, 
+            'create_date' => $user->create_date->format('Y-m-d H:i:s'),
+            'update_date' => $user->update_date->format('Y-m-d H:i:s'),
+            'remind_date' => $user->remind_date->format('Y-m-d H:i:s'),
+            'auth_date' => $user->auth_date->format('Y-m-d H:i:s'),
+            'user_status' => $user->user_status,
+            'user_token' => $user->user_token,
+            'user_email' => $user->user_email,
+            'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
+            'user_name' => $user->user_name,
+
+            'user_terms' => call_user_func( 
+                function($user_terms) {
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $user_terms), 
+                        array_map(fn($n) => $n->term_value, $user_terms));
+                }, $user->user_terms->toArray()),
+        ]
+    ]);
+
+    $a = 1;
+});
+
 // -- User remind --
 Flight::route('GET /api/pass', function() {
     $route = new \App\Routes\UserRemind();

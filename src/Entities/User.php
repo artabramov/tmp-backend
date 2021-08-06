@@ -87,8 +87,16 @@ class User
      */
     private $user_terms;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\UserRole", mappedBy="user", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
+     */
+    private $user_roles;
+
     public function __construct() {
         $this->user_terms = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->user_roles = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set($key, $value) {

@@ -41,10 +41,10 @@ class Post
      * @Column(type="integer")
      * @var int
      */
-    private $hub_id;
+    private $repo_id;
 
     /** 
-     * @Column(type="string", columnDefinition="ENUM('todo', 'doing', 'done', 'trash')") 
+     * @Column(type="string", columnDefinition="ENUM('todo', 'doing', 'done')") 
      * @var string
      */
     private $post_status;
@@ -57,41 +57,42 @@ class Post
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Postmeta", mappedBy="post", fetch="EXTRA_LAZY")
+     * @OneToMany(targetEntity="\App\Entities\PostTerm", mappedBy="post", fetch="EXTRA_LAZY")
      * @JoinColumn(name="post_id", referencedColumnName="id")
      */
-    private $post_meta;
+    private $post_terms;
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Tag", mappedBy="post", fetch="EXTRA_LAZY")
+     * @OneToMany(targetEntity="\App\Entities\PostTag", mappedBy="post", fetch="EXTRA_LAZY")
      * @JoinColumn(name="post_id", referencedColumnName="id")
      */
     private $post_tags;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\PostAlert", mappedBy="post", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="post_id", referencedColumnName="id")
+     */
+    private $post_alerts;
+
     public function __construct() {
-        $this->post_meta = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->post_terms = new \Doctrine\Common\Collections\ArrayCollection();
         $this->post_tags = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
-    public function __set( $key, $value ) {
-        if( property_exists( $this, $key )) {
+    public function __set($key, $value) {
+        if(property_exists($this, $key)) {
             $this->$key = $value;
         }
     }
 
-    public function __get( $key ) {
-        if( property_exists( $this, $key )) {
-            return $this->$key;
-        }
-        return null;
+    public function __get($key) {
+        return property_exists($this, $key) ? $this->$key : null;
     }
 
     public function __isset( $key ) {
-        if( property_exists( $this, $key )) {
-            return !empty( $this->$key );
-        }
-        return false;
+        return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
     /** 
@@ -100,33 +101,41 @@ class Post
      */
     public function validate() {
 
-        if(empty($this->user_id)) {
-            throw new AppException('Post error: user_id is empty.');
+        if(empty($this->create_date)) {
+            throw new AppException('create_date is empty', 6001);
 
-        } elseif(!is_numeric($this->user_id)) {
-            throw new AppException('Post error: user_id is not numeric.');
+        } elseif(!$this->create_date  instanceof \DateTime) {
+            throw new AppException('create_date is incorrect', 6002);
 
-        } elseif(empty($this->hub_id)) {
-            throw new AppException('Post error: hub_id is empty.');
+        } elseif(empty($this->update_date)) {
+            throw new AppException('update_date is empty', 6003);
 
-        } elseif(!is_numeric($this->hub_id)) {
-            throw new AppException('Post error: hub_id is not numeric.');
+        } elseif(!$this->update_date  instanceof \DateTime) {
+            throw new AppException('update_date is incorrect', 6004);
+
+        } elseif(empty($this->user_id)) {
+            throw new AppException('user_id is empty', 6005);
+
+        } elseif(!is_int($this->user_id)) {
+            throw new AppException('user_id is incorrect', 6006);
+
+        } elseif(empty($this->repo_id)) {
+            throw new AppException('repo_id is empty', 6007);
+
+        } elseif(!is_int($this->repo_id)) {
+            throw new AppException('repo_id is incorrect', 6008);
 
         } elseif(empty($this->post_status)) {
-            throw new AppException('Post error: post_status is empty.');
+            throw new AppException('post_status is empty', 6009);
 
         } elseif(!in_array($this->post_status, ['todo', 'doing', 'done'])) {
-            throw new AppException('Post error: post_status is incorrect.');
+            throw new AppException('post_status is incorrect', 6010);
 
         } elseif(empty($this->post_title)) {
-            throw new AppException('Post error: post_title is empty.');
+            throw new AppException('post_title is empty', 6011);
 
-        } elseif(mb_strlen($this->post_title) < 4) {
-            throw new AppException('Post error: post_title is too short.');
-
-        } elseif(mb_strlen($this->post_title) > 255) {
-            throw new AppException('Post error: post_title is too long.');
+        } elseif(!is_string($this->post_title) or mb_strlen($this->post_title) < 4 or mb_strlen($this->post_title) > 255) {
+            throw new AppException('post_title is incorrect', 6012);
         }
     }
-    
 }

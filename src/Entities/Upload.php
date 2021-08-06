@@ -71,26 +71,20 @@ class Upload
      * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_uploads", fetch="EXTRA_LAZY")
      * @JoinColumn(name="comment_id", referencedColumnName="id")
      */
-    private $post_comment;
+    private $comment;
 
-    public function __set( $key, $value ) {
-        if( property_exists( $this, $key )) {
+    public function __set($key, $value) {
+        if(property_exists($this, $key)) {
             $this->$key = $value;
         }
     }
 
-    public function __get( $key ) {
-        if( property_exists( $this, $key )) {
-            return $this->$key;
-        }
-        return null;
+    public function __get($key) {
+        return property_exists($this, $key) ? $this->$key : null;
     }
 
     public function __isset( $key ) {
-        if( property_exists( $this, $key )) {
-            return !empty( $this->$key );
-        }
-        return false;
+        return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
     /** 
@@ -99,42 +93,53 @@ class Upload
      */
     public function validate() {
 
-        if(empty($this->user_id)) {
-            throw new AppException('Upload error: user_id is empty.');
+        if(empty($this->create_date)) {
+            throw new AppException('create_date is empty', 1101);
 
-        } elseif(!is_numeric($this->user_id)) {
-            throw new AppException('Upload error: user_id is not numeric.');
+        } elseif(!$this->create_date  instanceof \DateTime) {
+            throw new AppException('create_date is incorrect', 1102);
+
+        } elseif(empty($this->update_date)) {
+            throw new AppException('update_date is empty', 1103);
+
+        } elseif(!$this->update_date  instanceof \DateTime) {
+            throw new AppException('update_date is incorrect', 1104);
+
+        } elseif(empty($this->user_id)) {
+            throw new AppException('user_id is empty', 1105);
+
+        } elseif(!is_int($this->user_id)) {
+            throw new AppException('user_id is incorrect', 1106);
 
         } elseif(empty($this->comment_id)) {
-            throw new AppException('Upload error: comment_id is empty.');
+            throw new AppException('comment_id is empty', 1107);
 
-        } elseif(!is_numeric($this->comment_id)) {
-            throw new AppException('Upload error: comment_id is not numeric.');
+        } elseif(!is_int($this->comment_id)) {
+            throw new AppException('comment_id is incorrect', 1108);
 
         } elseif(empty($this->upload_name)) {
-            throw new AppException('Upload error: upload_name is empty.');
+            throw new AppException('upload_name is empty', 1109);
 
-        } elseif(mb_strlen($this->upload_name) > 255) {
-            throw new AppException('Upload error: upload_name is too long.');
+        } elseif(!is_string($this->upload_name) or mb_strlen($this->upload_name) > 255) {
+            throw new AppException('upload_name is incorrect', 1110);
 
         } elseif(empty($this->upload_file)) {
-            throw new AppException('Upload error: upload_file is empty.');
+            throw new AppException('upload_file is empty', 1111);
 
-        } elseif(mb_strlen($this->upload_file) > 255) {
-            throw new AppException('Upload error: upload_file is too long.');
+        } elseif(!is_string($this->upload_file) or mb_strlen($this->upload_file) > 255) {
+            throw new AppException('upload_file is incorrect', 1112);
 
         } elseif(empty($this->upload_mime)) {
-            throw new AppException('Upload error: upload_mime is empty.');
+            throw new AppException('upload_mime is empty', 1113);
 
-        } elseif(mb_strlen($this->upload_mime) > 255) {
-            throw new AppException('Upload error: upload_mime is too long.');
+        } elseif(!is_string($this->upload_mime) or mb_strlen($this->upload_mime) > 255) {
+            throw new AppException('upload_mime is incorrect', 1114);
 
         } elseif(empty($this->upload_size)) {
-            throw new AppException('Upload error: upload_size is empty.');
+            throw new AppException('upload_size is empty', 1115);
 
-        } elseif(!is_numeric($this->upload_size)) {
-            throw new AppException('Upload error: upload_size is not numeric.');
+        } elseif(!is_int($this->upload_size)) {
+            throw new AppException('upload_size is incorrect', 1116);
         }
     }
-    
 }

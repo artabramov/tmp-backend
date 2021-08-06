@@ -5,10 +5,10 @@ use \App\Exceptions\AppException;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="repos")
+ * @Table(name="users_roles")
  * @Cache("NONSTRICT_READ_WRITE")
  */
-class Repo
+class UserRole
 {
     /**
      * @Id
@@ -36,29 +36,31 @@ class Repo
      */
     private $user_id;
 
+    /**
+     * @Column(type="integer")
+     * @var int
+     */
+    private $repo_id;
+
     /** 
-     * @Column(type="string", length="128")
+     * @Column(type="string", columnDefinition="ENUM('admin', 'editor', 'reader)") 
      * @var string
      */
-    private $repo_name;
+    private $role_status;
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\RepoTerm", mappedBy="repo", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="repo_id", referencedColumnName="id")
+     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_roles", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
      */
-    private $repo_terms;
+    private $user;
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\UserRole", mappedBy="repo", fetch="EXTRA_LAZY")
+     * @ManyToOne(targetEntity="\App\Entities\Repo", inversedBy="user_roles", fetch="EXTRA_LAZY")
      * @JoinColumn(name="repo_id", referencedColumnName="id")
      */
-    private $repo_roles;
-
-    public function __construct() {
-        $this->repo_terms = new \Doctrine\Common\Collections\ArrayCollection();
-    }
+    private $repo;
 
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
@@ -81,28 +83,34 @@ class Repo
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 3001);
+            throw new AppException('create_date is empty', 5001);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 3002);
+            throw new AppException('create_date is incorrect', 5002);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 3003);
+            throw new AppException('update_date is empty', 5003);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 3004);
+            throw new AppException('update_date is incorrect', 5004);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 3005);
+            throw new AppException('user_id is empty', 5005);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 3006);
+            throw new AppException('user_id is incorrect', 5006);
 
-        } elseif(empty($this->repo_name)) {
-            throw new AppException('repo_name is empty', 3007);
+        } elseif(empty($this->repo_id)) {
+            throw new AppException('repo_id is empty', 5007);
 
-        } elseif(!is_string($this->repo_name) or mb_strlen($this->repo_name) < 4 or mb_strlen($this->repo_name) > 128) {
-            throw new AppException('repo_name is incorrect', 3008);
+        } elseif(!is_int($this->repo_id)) {
+            throw new AppException('repo_id is incorrect', 5008);
+
+        } elseif(empty($this->role_status)) {
+            throw new AppException('role_status is empty', 5009);
+
+        } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
+            throw new AppException('role_status is incorrect', 5010);
         }
     }
 }
