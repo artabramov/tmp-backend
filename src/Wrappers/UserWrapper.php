@@ -131,9 +131,10 @@ class UserWrapper
         $upload->user_id = $user->id;
         $upload->comment_id = $comment->id;
         $upload->upload_name = 'upload name';
-        $upload->upload_file = 'upload file';
+        $upload->upload_path = 'upload path';
         $upload->upload_mime = 'upload mime';
         $upload->upload_size = 100;
+        $upload->thumb_path = 'thumb_path';
         $upload->comment = $comment;
         $this->em->persist($upload);
         $this->em->flush();

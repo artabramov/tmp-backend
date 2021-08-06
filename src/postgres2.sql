@@ -225,9 +225,10 @@ CREATE TABLE IF NOT EXISTS uploads (
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGINT REFERENCES comments(id) ON DELETE SET NULL,
     upload_name VARCHAR(255) NOT NULL,
-    upload_file VARCHAR(255) NOT NULL UNIQUE,
+    upload_path VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
-    upload_size INT NOT NULL
+    upload_size INT NOT NULL,
+    thumb_path  VARCHAR(255) NOT NULL UNIQUE
 );
 
 -- view: vw_users_relations --
