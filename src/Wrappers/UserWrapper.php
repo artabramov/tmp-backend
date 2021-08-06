@@ -21,6 +21,11 @@ class UserWrapper
 {
     protected $em;
 
+    const USER_REMIND_EXPIRES = 30;
+    const USER_SIGNIN_EXPIRES = 180;
+    const VOLUME_DEFAULT_SIZE = 1000000;
+    const VOLUME_DEFAULT_INTERVAL = 'P20Y';
+
     public function __construct($em) {
         $this->em = $em;
     }
