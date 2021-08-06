@@ -82,13 +82,13 @@ class User
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Usermeta", mappedBy="user", fetch="EXTRA_LAZY")
+     * @OneToMany(targetEntity="\App\Entities\UserTerm", mappedBy="user", fetch="EXTRA_LAZY")
      * @JoinColumn(name="user_id", referencedColumnName="id")
      */
-    private $user_meta;
+    private $user_terms;
 
     public function __construct() {
-        $this->user_meta = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->user_terms = new \Doctrine\Common\Collections\ArrayCollection();
     }
 
     public function __set($key, $value) {
@@ -159,7 +159,7 @@ class User
         } elseif(empty($this->user_token)) {
             throw new AppException('user_token is empty', 1011);
 
-        } elseif(!preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
+        } elseif(!is_string($this->user_token) or !preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
             throw new AppException('user_token is incorrect', 1012);
 
         } elseif(!empty($this->user_hash) and !preg_match("/^[0-9a-f]{40}$/", $this->user_hash)) {
@@ -168,19 +168,18 @@ class User
         } elseif(empty($this->user_email)) {
             throw new AppException('user_email is empty', 1014);
 
-        } elseif(mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
+        } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
             throw new AppException('user_email is incorrect', 1015);
 
-        } elseif(!empty($this->user_phone) and !preg_match("/^[0-9]{11,20}$/", $this->user_phone)) {
+        } elseif(!empty($this->user_phone) and (!is_string($this->user_phone) or !preg_match("/^[0-9]{11,20}$/", $this->user_phone))) {
             throw new AppException('user_phone is incorrect', 1016);
 
         } elseif(empty($this->user_name)) {
             throw new AppException('user_name is empty', 1017);
 
-        } elseif(mb_strlen($this->user_name) < 4 or mb_strlen($this->user_name) > 128) {
+        } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 4 or mb_strlen($this->user_name) > 128) {
             throw new AppException('user_name is incorrect', 1018);
         }
     }
-
     
 }

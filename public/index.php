@@ -116,23 +116,39 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    $params[0]['datetime']['date'] = Flight::date()->format('Y-m-d H:i:s');
-    $params[0]['datetime']['timezone'] = Flight::timezone();
+    //header('Content-Type: application/json');
+    $params[0]['datetime']['date'] = Flight::datetime()->format('Y-m-d H:i:s');
+    $params[0]['datetime']['timezone'] = Flight::datetime()->getTimezone()->getName();
     $params[0]['debug']['microtime'] = microtime(true) - Flight::get('microtime');
 });
 
-// date
-Flight::map('date', function(){
-    $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
-    $stmt->execute();
-    return new DateTime($stmt->fetchOne());
-});
+// datetime
+Flight::map('datetime', function() {
 
-// timezone
-Flight::map('timezone', function(){
-    $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
-    $stmt->execute();
-    return $stmt->fetchOne();
+    if(!Flight::has('timestamp_em')) {
+        $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
+        $stmt->execute();
+        $datetime = new DateTime($stmt->fetchOne());
+        Flight::set('timestamp_em', $datetime->getTimestamp());
+
+        $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
+        $stmt->execute();
+        Flight::set('timezone_em', $stmt->fetchOne());
+
+        $datetime = new DateTime('now');
+        Flight::set('timestamp_php', $datetime->getTimestamp());
+    }
+
+    $datetime = new DateTime('now');
+    $timestamp = $datetime->getTimestamp();
+    $time = $timestamp - Flight::get('timestamp_php');
+
+    $timestamp_em = Flight::get('timestamp_em') + $time;
+    $datetime_em = new DateTime();
+    $datetime_em->setTimestamp($timestamp_em);
+    $datetime_em->setTimezone(new DateTimeZone(Flight::get('timezone_em')));
+
+    return $datetime_em;
 });
 
 // -- Default --
@@ -148,10 +164,6 @@ Flight::route('POST /api/user', function() {
         (string) Flight::request()->query['user_name'],
         (string) Flight::request()->query['user_phone']
     );
-    Flight::json($wrapper->json);
-
-    //$route = new \App\Routes\UserRegister();
-    //$route->do();
 });
 
 // -- User remind --

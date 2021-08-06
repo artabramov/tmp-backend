@@ -3,7 +3,8 @@ namespace App\Wrappers;
 use \DateTime,
     \Flight,
     \App\Exceptions\AppException,
-    \App\Entities\User;
+    \App\Entities\User,
+    \App\Entities\Repo;
 
 /*
 \App\Entities\Alert,
@@ -59,7 +60,7 @@ class UserWrapper
 
         // -- User --
         $user = new User();
-        $user->create_date = Flight::date();
+        $user->create_date = Flight::datetime();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = new DateTime('1970-01-01 00:00:00');
         $user->auth_date = new DateTime('1970-01-01 00:00:00');
@@ -73,11 +74,22 @@ class UserWrapper
         $this->em->persist($user);
         $this->em->flush();
 
+        // -- Repo --
+        $repo = new Repo();
+        $repo->create_date = Flight::datetime();
+        $repo->update_date = new DateTime('1970-01-01 00:00:00');
+        $repo->user_id = $user->id;
+        $repo->repo_name = 'First hub';
+        $this->em->persist($repo);
+        $this->em->flush();
+
         // -- End --
-        $this->json = [
+        Flight::json([
             'success' => 'true',
-            'user_id' => $user->id
-        ];
+            'user' => [
+                'id' => $user->id
+            ]
+        ]);
 
 
         /*
