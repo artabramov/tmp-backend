@@ -76,34 +76,34 @@ class PostAlert
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1201);
+            throw new AppException('create_date is empty', 1801);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1202);
+            throw new AppException('create_date is incorrect', 1802);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1203);
+            throw new AppException('update_date is empty', 1803);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1204);
+            throw new AppException('update_date is incorrect', 1804);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1205);
+            throw new AppException('user_id is empty', 1805);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1206);
+            throw new AppException('user_id is incorrect', 1806);
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('post_id is empty', 1207);
+            throw new AppException('post_id is empty', 1807);
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('post_id is incorrect', 1208);
+            throw new AppException('post_id is incorrect', 1808);
 
         } elseif(empty($this->alerts_count)) {
-            throw new AppException('alerts_count is empty', 1209);
+            throw new AppException('alerts_count is empty', 1809);
 
         } elseif(!is_int($this->alerts_count)) {
-            throw new AppException('alerts_count is incorrect', 1210);
+            throw new AppException('alerts_count is incorrect', 1810);
         }
     }
 }

@@ -76,34 +76,34 @@ class UserTerm
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 2001);
+            throw new AppException('create_date is empty', 1101);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 2002);
+            throw new AppException('create_date is incorrect', 1102);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 2003);
+            throw new AppException('update_date is empty', 1103);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 2004);
+            throw new AppException('update_date is incorrect', 1104);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 2005);
+            throw new AppException('user_id is empty', 1105);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 2006);
+            throw new AppException('user_id is incorrect', 1106);
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 2007);
+            throw new AppException('term_key is empty', 1107);
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 2008);
+            throw new AppException('term_key is incorrect', 1108);
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 2009);
+            throw new AppException('term_value is empty', 1109);
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 2010);
+            throw new AppException('term_value is incorrect', 1110);
         }
     }
 }

@@ -6,7 +6,6 @@ use \App\Exceptions\AppException;
  * @Entity
  * @HasLifecycleCallbacks
  * @Table(name="users_volumes")
- * @Cache("NONSTRICT_READ_WRITE")
  */
 class UserVolume
 {
@@ -69,34 +68,34 @@ class UserVolume
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1301);
+            throw new AppException('create_date is empty', 2101);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1302);
+            throw new AppException('create_date is incorrect', 2102);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1303);
+            throw new AppException('update_date is empty', 2103);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1304);
+            throw new AppException('update_date is incorrect', 2104);
 
         } elseif(empty($this->expires_date)) {
-            throw new AppException('expires_date is empty', 1305);
+            throw new AppException('expires_date is empty', 2105);
 
         } elseif(!$this->expires_date  instanceof \DateTime) {
-            throw new AppException('expires_date is incorrect', 1306);
+            throw new AppException('expires_date is incorrect', 2106);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1307);
+            throw new AppException('user_id is empty', 2107);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1308);
+            throw new AppException('user_id is incorrect', 2108);
 
         } elseif(empty($this->volume_size)) {
-            throw new AppException('volume_size is empty', 1309);
+            throw new AppException('volume_size is empty', 2109);
 
         } elseif(!is_int($this->volume_size)) {
-            throw new AppException('volume_size is incorrect', 1310);
+            throw new AppException('volume_size is incorrect', 2110);
         }
     }
 }

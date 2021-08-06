@@ -179,7 +179,7 @@ class User
         } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
             throw new AppException('user_email is incorrect', 1015);
 
-        } elseif(!empty($this->user_phone) and (!is_string($this->user_phone) or !preg_match("/^[0-9]{11,20}$/", $this->user_phone))) {
+        } elseif(!empty($this->user_phone) and (!is_string($this->user_phone) or !preg_match("/^[0-9]{10,40}$/", $this->user_phone))) {
             throw new AppException('user_phone is incorrect', 1016);
 
         } elseif(empty($this->user_name)) {

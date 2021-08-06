@@ -4,27 +4,25 @@ use \Flight,
     \DateTime,
     \DateInterval,
     \App\Exceptions\AppException,
-    \App\Entities\User,       // 10
-    \App\Entities\UserTerm,   // 20
-    \App\Entities\UserVolume, // 13
-    \App\Entities\Repo,       // 30
-    \App\Entities\RepoTerm,   // 40
-    \App\Entities\UserRole,   // 50
-    \App\Entities\Post,       // 60
-    \App\Entities\PostTerm,   // 70
-    \App\Entities\PostTag,    // 80
-    \App\Entities\PostAlert,  // 12
-    \App\Entities\Comment,    // 90
-    \App\Entities\Upload;     // 11
+    \App\Entities\User,       // 10..
+    \App\Entities\UserTerm,   // 11..
+    \App\Entities\Repo,       // 12..
+    \App\Entities\RepoTerm,   // 13..
+    \App\Entities\UserRole,   // 14..
+    \App\Entities\Post,       // 15..
+    \App\Entities\PostTerm,   // 16..
+    \App\Entities\PostTag,    // 17..
+    \App\Entities\PostAlert,  // 18..
+    \App\Entities\Comment,    // 19..
+    \App\Entities\Upload,     // 20..
+    \App\Entities\UserVolume; // 21..
 
 class UserWrapper
 {
     protected $em;
-    protected $json;
 
     public function __construct($em) {
         $this->em = $em;
-        $this->json = [];
     }
 
     public function __set($key, $value) {

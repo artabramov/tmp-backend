@@ -76,34 +76,34 @@ class RepoTerm
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 4001);
+            throw new AppException('create_date is empty', 1301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 4002);
+            throw new AppException('create_date is incorrect', 1302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 4003);
+            throw new AppException('update_date is empty', 1303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 4004);
+            throw new AppException('update_date is incorrect', 1304);
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 4005);
+            throw new AppException('repo_id is empty', 1305);
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 4006);
+            throw new AppException('repo_id is incorrect', 1306);
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 4007);
+            throw new AppException('term_key is empty', 1307);
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 4008);
+            throw new AppException('term_key is incorrect', 1308);
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 4009);
+            throw new AppException('term_value is empty', 1309);
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 4010);
+            throw new AppException('term_value is incorrect', 1310);
         }
     }
 }

@@ -94,52 +94,52 @@ class Upload
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1101);
+            throw new AppException('create_date is empty', 2001);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1102);
+            throw new AppException('create_date is incorrect', 2002);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1103);
+            throw new AppException('update_date is empty', 2003);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1104);
+            throw new AppException('update_date is incorrect', 2004);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1105);
+            throw new AppException('user_id is empty', 2005);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1106);
+            throw new AppException('user_id is incorrect', 2006);
 
         } elseif(empty($this->comment_id)) {
-            throw new AppException('comment_id is empty', 1107);
+            throw new AppException('comment_id is empty', 2007);
 
         } elseif(!is_int($this->comment_id)) {
-            throw new AppException('comment_id is incorrect', 1108);
+            throw new AppException('comment_id is incorrect', 2008);
 
         } elseif(empty($this->upload_name)) {
-            throw new AppException('upload_name is empty', 1109);
+            throw new AppException('upload_name is empty', 2009);
 
         } elseif(!is_string($this->upload_name) or mb_strlen($this->upload_name) > 255) {
-            throw new AppException('upload_name is incorrect', 1110);
+            throw new AppException('upload_name is incorrect', 2010);
 
         } elseif(empty($this->upload_file)) {
-            throw new AppException('upload_file is empty', 1111);
+            throw new AppException('upload_file is empty', 2011);
 
         } elseif(!is_string($this->upload_file) or mb_strlen($this->upload_file) > 255) {
-            throw new AppException('upload_file is incorrect', 1112);
+            throw new AppException('upload_file is incorrect', 2012);
 
         } elseif(empty($this->upload_mime)) {
-            throw new AppException('upload_mime is empty', 1113);
+            throw new AppException('upload_mime is empty', 2013);
 
         } elseif(!is_string($this->upload_mime) or mb_strlen($this->upload_mime) > 255) {
-            throw new AppException('upload_mime is incorrect', 1114);
+            throw new AppException('upload_mime is incorrect', 2014);
 
         } elseif(empty($this->upload_size)) {
-            throw new AppException('upload_size is empty', 1115);
+            throw new AppException('upload_size is empty', 2015);
 
         } elseif(!is_int($this->upload_size)) {
-            throw new AppException('upload_size is incorrect', 1116);
+            throw new AppException('upload_size is incorrect', 2016);
         }
     }
 }

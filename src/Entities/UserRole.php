@@ -83,34 +83,34 @@ class UserRole
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 5001);
+            throw new AppException('create_date is empty', 1401);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 5002);
+            throw new AppException('create_date is incorrect', 1402);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 5003);
+            throw new AppException('update_date is empty', 1403);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 5004);
+            throw new AppException('update_date is incorrect', 1404);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 5005);
+            throw new AppException('user_id is empty', 1405);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 5006);
+            throw new AppException('user_id is incorrect', 1406);
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 5007);
+            throw new AppException('repo_id is empty', 1407);
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 5008);
+            throw new AppException('repo_id is incorrect', 1408);
 
         } elseif(empty($this->role_status)) {
-            throw new AppException('role_status is empty', 5009);
+            throw new AppException('role_status is empty', 1409);
 
         } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
-            throw new AppException('role_status is incorrect', 5010);
+            throw new AppException('role_status is incorrect', 1410);
         }
     }
 }

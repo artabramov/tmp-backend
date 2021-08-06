@@ -102,37 +102,37 @@ class Post
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 6001);
+            throw new AppException('create_date is empty', 1501);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 6002);
+            throw new AppException('create_date is incorrect', 1502);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 6003);
+            throw new AppException('update_date is empty', 1503);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 6004);
+            throw new AppException('update_date is incorrect', 1504);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 6005);
+            throw new AppException('user_id is empty', 1505);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 6006);
+            throw new AppException('user_id is incorrect', 1506);
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 6007);
+            throw new AppException('repo_id is empty', 1507);
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 6008);
+            throw new AppException('repo_id is incorrect', 1508);
 
         } elseif(empty($this->post_status)) {
-            throw new AppException('post_status is empty', 6009);
+            throw new AppException('post_status is empty', 1509);
 
         } elseif(!in_array($this->post_status, ['todo', 'doing', 'done'])) {
-            throw new AppException('post_status is incorrect', 6010);
+            throw new AppException('post_status is incorrect', 1510);
 
         } elseif(empty($this->post_title)) {
-            throw new AppException('post_title is empty', 6011);
+            throw new AppException('post_title is empty', 1511);
 
         } elseif(!is_string($this->post_title) or mb_strlen($this->post_title) < 4 or mb_strlen($this->post_title) > 255) {
             throw new AppException('post_title is incorrect', 6012);
