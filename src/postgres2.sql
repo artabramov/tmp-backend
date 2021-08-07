@@ -768,7 +768,7 @@ CREATE FUNCTION volume_update() RETURNS trigger AS $volume_update$
         vol_expires VARCHAR;
     BEGIN
 
-        -- users terms: volume_expires
+        -- users terms: volume_size
         SELECT volume_size INTO vol_size FROM users_volumes 
         JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
         WHERE vw_users_volumes.user_id = OLD.user_id;
