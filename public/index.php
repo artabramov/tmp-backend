@@ -166,6 +166,19 @@ Flight::route('POST /api/user', function() {
     );
 });
 
+// -- User signin --
+Flight::route('POST /api/pass', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->signin(
+        (string) Flight::request()->query['user_email'],
+        (string) Flight::request()->query['user_pass']
+    );
+    /*
+    $route = new \App\Routes\UserSignin();
+    $route->do();
+    */
+});
+
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
@@ -181,12 +194,6 @@ Flight::route('GET /api/cache', function() {
 // -- User remind --
 Flight::route('GET /api/pass', function() {
     $route = new \App\Routes\UserRemind();
-    $route->do();
-});
-
-// -- User signin --
-Flight::route('POST /api/pass', function() {
-    $route = new \App\Routes\UserSignin();
     $route->do();
 });
 
