@@ -22,6 +22,7 @@ class UserWrapper
     protected $em;
 
     const USER_REMIND_EXPIRES = 30;
+    const USER_RESET_EXPIRES = 60;
     const USER_SIGNIN_EXPIRES = 180;
     const VOLUME_DEFAULT_SIZE = 1000000;
     const VOLUME_DEFAULT_INTERVAL = 'P20Y';
@@ -61,6 +62,7 @@ class UserWrapper
         $user->create_date = Flight::datetime();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = new DateTime('1970-01-01 00:00:00');
+        $user->reset_date = new DateTime('1970-01-01 00:00:00');
         $user->auth_date = new DateTime('1970-01-01 00:00:00');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();

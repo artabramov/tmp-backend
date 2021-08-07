@@ -46,6 +46,7 @@ class CacheWrapper
         $user->create_date = Flight::datetime();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = new DateTime('1970-01-01 00:00:00');
+        $user->reset_date = new DateTime('1970-01-01 00:00:00');
         $user->auth_date = new DateTime('1970-01-01 00:00:00');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
@@ -62,6 +63,7 @@ class CacheWrapper
         $member->create_date = Flight::datetime();
         $member->update_date = new DateTime('1970-01-01 00:00:00');
         $member->remind_date = new DateTime('1970-01-01 00:00:00');
+        $member->reset_date = new DateTime('1970-01-01 00:00:00');
         $member->auth_date = new DateTime('1970-01-01 00:00:00');
         $member->user_status = 'pending';
         $member->user_token = $member->create_token();
@@ -197,6 +199,7 @@ class CacheWrapper
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
                 'update_date' => $user->update_date->format('Y-m-d H:i:s'),
                 'remind_date' => $user->remind_date->format('Y-m-d H:i:s'),
+                'reset_date' => $user->reset_date->format('Y-m-d H:i:s'),
                 'auth_date' => $user->auth_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_token' => $user->user_token,
