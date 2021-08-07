@@ -4,7 +4,6 @@ DROP VIEW IF EXISTS vw_users_relations;
 DROP VIEW IF EXISTS vw_users_volumes;
 
 DROP TABLE IF EXISTS premiums;
-DROP TABLE IF EXISTS referrers;
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS users_volumes;
@@ -24,7 +23,6 @@ DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
 
 DROP SEQUENCE IF EXISTS premiums_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS referrers_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_volumes_id_seq CASCADE;
@@ -237,33 +235,21 @@ CREATE TABLE IF NOT EXISTS uploads (
     thumb_path  VARCHAR(255) NOT NULL UNIQUE
 );
 
--- table: referrers --
-
-CREATE SEQUENCE referrers_id_seq START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE IF NOT EXISTS referrers (
-    id               BIGINT DEFAULT NEXTVAL('referrers_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    referrer_name    VARCHAR(40) NOT NULL,
-    referrer_comment VARCHAR(255) NOT NULL
-);
-
 -- table: premiums --
 
 CREATE SEQUENCE premiums_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TYPE premium_status AS ENUM ('await', 'trash');
+CREATE TYPE premium_status AS ENUM ('hold', 'trash');
 
 CREATE TABLE IF NOT EXISTS premiums (
     id               BIGINT DEFAULT NEXTVAL('premiums_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    accept_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    trash_date       TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
-    reaferrer_id     BIGINT REFERENCES referrers(id) ON DELETE NO ACTION NOT NULL,
     premium_status   premium_status NOT NULL,
+    premium_key      VARCHAR(20) NOT NULL,
     premium_size     INT NOT NULL,
-    premium_interval VARCHAR(40) NOT NULL -- P2Y
+    premium_interval VARCHAR(20) NOT NULL -- P2Y
 );
 
 -- view: vw_users_relations --
@@ -818,7 +804,7 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
 SELECT * FROM vw_users_relations;
 SELECT * FROM vw_users_volumes;
 

@@ -15,7 +15,8 @@ use \Flight,
     \App\Entities\PostAlert,  // 18..
     \App\Entities\Comment,    // 19..
     \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume; // 21..
+    \App\Entities\UserVolume, // 21..
+    \App\Entities\Premium;    // 22..
 
 class UserWrapper
 {
@@ -192,7 +193,6 @@ class UserWrapper
         $this->em->persist($user);
         $this->em->flush();
 
-        // -- json --
         Flight::json([
             'success' => 'true',
             'user' => [
@@ -204,23 +204,15 @@ class UserWrapper
                 'user_email' => $user->user_email,
                 'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
                 'user_name' => $user->user_name,
-    
                 'user_terms' => call_user_func( 
                     function($user_terms) {
                         return array_combine(
                             array_map(fn($n) => $n->term_key, $user_terms), 
                             array_map(fn($n) => $n->term_value, $user_terms));
                     }, $user->user_terms->toArray()),
-    
-                'user_roles' => call_user_func( 
-                    function($user_roles) {
-                        return array_combine(
-                            array_map(fn($n) => $n->repo_id, $user_roles), 
-                            array_map(fn($n) => $n->role_status, $user_roles));
-                    }, $user->user_roles->toArray()),
             ],
         ]);
     }
 
-    
+
 }

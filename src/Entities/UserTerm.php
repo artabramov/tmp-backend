@@ -96,13 +96,13 @@ class UserTerm
         } elseif(empty($this->term_key)) {
             throw new AppException('term_key is empty', 1107);
 
-        } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) > 20) {
+        } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
             throw new AppException('term_key is incorrect', 1108);
 
         } elseif(empty($this->term_value)) {
             throw new AppException('term_value is empty', 1109);
 
-        } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) > 255) {
+        } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
             throw new AppException('term_value is incorrect', 1110);
         }
     }

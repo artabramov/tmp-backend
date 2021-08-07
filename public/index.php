@@ -173,10 +173,6 @@ Flight::route('POST /api/pass', function() {
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_pass']
     );
-    /*
-    $route = new \App\Routes\UserSignin();
-    $route->do();
-    */
 });
 
 // -- POST cache --

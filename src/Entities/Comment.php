@@ -107,7 +107,7 @@ class Comment
         } elseif(empty($this->comment_content)) {
             throw new AppException('comment_content is empty', 1909);
 
-        } elseif(!is_string($this->comment_content) or mb_strlen($this->comment_content) < 4 or mb_strlen($this->comment_content) > 65535) {
+        } elseif(!is_string($this->comment_content) or mb_strlen($this->comment_content) < 2 or mb_strlen($this->comment_content) > 65535) {
             throw new AppException('post_title is incorrect', 1910);
         }
     }

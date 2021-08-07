@@ -101,7 +101,7 @@ class Repo
         } elseif(empty($this->repo_name)) {
             throw new AppException('repo_name is empty', 1207);
 
-        } elseif(!is_string($this->repo_name) or mb_strlen($this->repo_name) < 4 or mb_strlen($this->repo_name) > 128) {
+        } elseif(!is_string($this->repo_name) or mb_strlen($this->repo_name) < 2 or mb_strlen($this->repo_name) > 128) {
             throw new AppException('repo_name is incorrect', 1208);
         }
     }

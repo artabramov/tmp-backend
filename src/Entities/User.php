@@ -197,7 +197,7 @@ class User
         } elseif(empty($this->user_name)) {
             throw new AppException('user_name is empty', 1019);
 
-        } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 4 or mb_strlen($this->user_name) > 128) {
+        } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 2 or mb_strlen($this->user_name) > 128) {
             throw new AppException('user_name is incorrect', 1020);
         }
     }

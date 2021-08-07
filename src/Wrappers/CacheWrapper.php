@@ -15,7 +15,8 @@ use \Flight,
     \App\Entities\PostAlert,  // 18..
     \App\Entities\Comment,    // 19..
     \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume; // 21..
+    \App\Entities\UserVolume, // 21..
+    \App\Entities\Premium;    // 22..
 
 class CacheWrapper
 {
@@ -161,10 +162,22 @@ class CacheWrapper
         $user_volume->create_date = Flight::datetime();
         $user_volume->update_date = new DateTime('1970-01-01 00:00:00');
         $user_volume->expires_date = new DateTime('2030-01-01 00:00:00');
-        //$user_volume->expire_date = clone Flight::get('date')->add(new DateInterval(VOL_DEFAULT_EXPIRE));
         $user_volume->user_id = $user->id;
         $user_volume->volume_size = 500;
         $this->em->persist($user_volume);
+        $this->em->flush();
+
+        // -- Premium --
+        $premium = new Premium();
+        $premium->create_date = Flight::datetime();
+        $premium->update_date = new DateTime('1970-01-01 00:00:00');
+        $premium->trash_date = new DateTime('1970-01-01 00:00:00');
+        $premium->user_id = null;
+        $premium->premium_status = 'hold';
+        $premium->premium_key = 'geekbrains';
+        $premium->premium_size = 100000;
+        $premium->premium_interval = 'P1Y';
+        $this->em->persist($premium);
         $this->em->flush();
 
         // -- End --

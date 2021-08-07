@@ -90,7 +90,7 @@ class PostTag
         } elseif(empty($this->tag_value)) {
             throw new AppException('tag_value is empty', 1707);
 
-        } elseif(!is_string($this->tag_value) or mb_strlen($this->term_value) > 255) {
+        } elseif(!is_string($this->tag_value) or mb_strlen($this->tag_value) < 2 or mb_strlen($this->term_value) > 255) {
             throw new AppException('tag_value is incorrect', 1708);
         }
     }

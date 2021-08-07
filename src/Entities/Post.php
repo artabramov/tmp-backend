@@ -134,7 +134,7 @@ class Post
         } elseif(empty($this->post_title)) {
             throw new AppException('post_title is empty', 1511);
 
-        } elseif(!is_string($this->post_title) or mb_strlen($this->post_title) < 4 or mb_strlen($this->post_title) > 255) {
+        } elseif(!is_string($this->post_title) or mb_strlen($this->post_title) < 2 or mb_strlen($this->post_title) > 255) {
             throw new AppException('post_title is incorrect', 6012);
         }
     }
