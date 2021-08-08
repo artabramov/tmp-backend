@@ -200,6 +200,17 @@ Flight::route('GET /api/user/@user_id', function($user_id) {
     );
 });
 
+// -- User update --
+Flight::route('PUT /api/user', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_email'],
+        (string) Flight::request()->query['user_phone'],
+        (string) Flight::request()->query['user_name'],
+    );
+});
+
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
@@ -218,11 +229,7 @@ Flight::route('GET /api/cache', function() {
 
 
 
-// -- User update --
-Flight::route('PUT /api/user', function() {
-    $route = new \App\Routes\UserUpdate();
-    $route->do();
-});
+
 
 // -- User query --
 Flight::route('GET /api/users', function() {

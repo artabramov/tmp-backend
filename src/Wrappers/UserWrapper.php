@@ -81,7 +81,6 @@ class UserWrapper
             ->where('user.create_date > :last')
             ->setParameter('last', $dt, Type::DATETIME);
 
-        $tmp = $qb1->getQuery();
         $qb1_result = $qb1->getQuery()->getResult();
 
         if($qb1_result[0][1] > self::USER_REGISTER_LIMIT) {
@@ -167,14 +166,12 @@ class UserWrapper
         $this->em->persist($comment);
         $this->em->flush();
 
-        /*
         // -- Email --
         $phpmailer = Flight::get('phpmailer');
         $phpmailer->addAddress($user->user_email, $user->user_name);
         $phpmailer->Subject = self::USER_REGISTER_SUBJECT;
         $phpmailer->Body = self::USER_REGISTER_BODY . $user->user_pass;
         $phpmailer->send();
-        */
 
         // -- End --
         Flight::json([
@@ -182,7 +179,6 @@ class UserWrapper
             'user' => [
                 'id' => $user->id
             ],
-            'tmp' => $qb1_result[0][1]
         ]);
 
         /*
@@ -200,7 +196,7 @@ class UserWrapper
     public function read(string $user_token, int $user_id) {
 
         // -- User --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
             throw new AppException('user not found', 0);
@@ -361,7 +357,7 @@ class UserWrapper
     public function signout(string $user_token) {
 
         // -- User --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token, 'user_status' => 'approved']);
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
             throw new AppException('user not found', 0);
@@ -372,6 +368,50 @@ class UserWrapper
 
         $user->auth_date = Flight::datetime();
         $user->user_token = $user->create_token();
+        $this->em->persist($user);
+        $this->em->flush();
+
+        // -- End --
+        Flight::json([
+            'success' => 'true'
+        ]);
+    }
+
+
+
+    public function update(string $user_token, string $user_email, string $user_phone, string $user_name) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // --
+        $user_email = mb_strtolower($user_email);
+        $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
+
+        if($user->user_email != $user_email and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
+            throw new AppException('user_email is occupied', 2001);
+
+        } elseif(!empty($user_phone) and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
+            throw new AppException('user_phone is occupied', 0);
+        }
+
+        // --
+
+        if(!empty($user_email) and $user->user_email != $user_email) {
+            $user->user_email = $user_email;
+            $user->user_status = 'pending';
+        }
+
+        $user->auth_date = Flight::datetime();
+        $user->user_phone = $user_phone;
+        $user->user_name = $user_name;
         $this->em->persist($user);
         $this->em->flush();
 
