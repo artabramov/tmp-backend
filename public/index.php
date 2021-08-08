@@ -211,6 +211,15 @@ Flight::route('PUT /api/user', function() {
     );
 });
 
+// -- User query --
+Flight::route('GET /api/users', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
@@ -223,19 +232,31 @@ Flight::route('GET /api/cache', function() {
     $wrapper->read();
 });
 
+// -- GET cache --
+Flight::route('GET /api/test', function() {
 
+    /*
+    $stmt = Flight::get('em')->getConnection()->prepare("SELECT COUNT(id) FROM users WHERE create_date > CURRENT_TIMESTAMP - INTERVAL '60 SECONDS'");
+    $stmt->execute();
+    $tmp = $stmt->fetchOne();
+    */
 
-
-
-
-
-
-
-// -- User query --
-Flight::route('GET /api/users', function() {
-    $route = new \App\Routes\UserQuery();
-    $route->do();
+    $result1 = Flight::get('em')->createQuery("SELECT COUNT(user.id) FROM \App\Entities\User user")
+        ->setCacheable(true)
+        ->getResult();
+    
+    $a = 1;
 });
+
+
+
+
+
+
+
+
+
+
 
 // -- User search --
 Flight::route('GET /api/search/user/@user_search', function($user_search) {

@@ -32,6 +32,7 @@ class UserWrapper
     const USER_REMIND_BODY = 'One-time pass: ';
     const USER_RESET_EXPIRES = 60;
     const USER_SIGNIN_EXPIRES = 180;
+    const USER_LIST_LIMIT = 10;
     const VOLUME_DEFAULT_SIZE = 1000000;
     const VOLUME_DEFAULT_INTERVAL = 'P20Y';
     const REPO_DEFAULT_NAME = 'My first hub';
@@ -71,20 +72,12 @@ class UserWrapper
         }
 
         // -- Filter --
-        $di = new DateInterval('PT60S');
-        $di->invert = 1;
-        $dt = Flight::datetime()->add($di);
-        
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('count(user.id)')
-            ->from('App\Entities\User', 'user')
-            ->where('user.create_date > :last')
-            ->setParameter('last', $dt, Type::DATETIME);
+        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM users WHERE create_date > CURRENT_TIMESTAMP - INTERVAL '60 SECONDS'");
+        $stmt->execute();
+        $users_count = $stmt->fetchOne();
 
-        $qb1_result = $qb1->getQuery()->getResult();
-
-        if($qb1_result[0][1] > self::USER_REGISTER_LIMIT) {
-            throw new AppException('wait for 60 second', 0);
+        if($users_count > self::USER_REGISTER_LIMIT) {
+            throw new AppException('wait for 60 seconds', 0);
         }
 
         // -- Create user --
@@ -255,6 +248,52 @@ class UserWrapper
 
     }
 
+    public function update(string $user_token, string $user_email, string $user_phone, string $user_name) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // --
+        $user_email = mb_strtolower($user_email);
+        $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
+
+        if(!empty($user_email) and $user_email != $user->user_email and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
+            throw new AppException('user_email is occupied', 2001);
+
+        } elseif(!empty($user_phone) and $user_phone != $user->user_phone and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
+            throw new AppException('user_phone is occupied', 0);
+        }
+
+        if(!empty($user_email) and $user->user_email != $user_email) {
+            $user->user_email = $user_email;
+            $user->user_status = 'pending';
+        }
+
+        if(!empty($user_phone)) {
+            $user->user_phone = $user_phone;
+        }
+
+        if(!empty($user_name)) {
+            $user->user_name = $user_name;
+        }
+
+        $user->auth_date = Flight::datetime();
+        $this->em->persist($user);
+        $this->em->flush();
+
+        // -- End --
+        Flight::json([
+            'success' => 'true'
+        ]);
+    }
+
     public function signin(string $user_email, string $user_pass) {
 
         $user_email = mb_strtolower($user_email);
@@ -318,20 +357,12 @@ class UserWrapper
         }
 
         // -- Filter --
-        $di = new DateInterval('PT60S');
-        $di->invert = 1;
-        $dt = Flight::datetime()->add($di);
+        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM users WHERE create_date > CURRENT_TIMESTAMP - INTERVAL '60 SECONDS'");
+        $stmt->execute();
+        $users_count = $stmt->fetchOne();
 
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('count(user.id)')
-            ->from('App\Entities\User', 'user')
-            ->where('user.remind_date > :last')
-            ->setParameter('last', $dt, Type::DATETIME);
-
-        $qb1_result = $qb1->getQuery()->getResult();
-
-        if($qb1_result[0][1] > self::USER_REMIND_LIMIT) {
-            throw new AppException('wait for 60 second', 0);
+        if($users_count > self::USER_REMIND_LIMIT) {
+            throw new AppException('wait for 60 seconds', 0);
         }
 
         // -- Update user --
@@ -379,7 +410,8 @@ class UserWrapper
 
 
 
-    public function update(string $user_token, string $user_email, string $user_phone, string $user_name) {
+
+    public function list(string $user_token, int $offset) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -391,33 +423,42 @@ class UserWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        // --
-        $user_email = mb_strtolower($user_email);
-        $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
-
-        if($user->user_email != $user_email and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new AppException('user_email is occupied', 2001);
-
-        } elseif(!empty($user_phone) and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
-            throw new AppException('user_phone is occupied', 0);
-        }
-
-        // --
-
-        if(!empty($user_email) and $user->user_email != $user_email) {
-            $user->user_email = $user_email;
-            $user->user_status = 'pending';
-        }
-
         $user->auth_date = Flight::datetime();
-        $user->user_phone = $user_phone;
-        $user->user_name = $user_name;
         $this->em->persist($user);
         $this->em->flush();
 
+        // -- User relations --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('relate_id', 'relate_id');
+
+        $query = $this->em->createNativeQuery("SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('offset', $offset)
+            ->setParameter('limit', self::USER_LIST_LIMIT);
+        $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['relate_id']), $query->getResult());
+
         // -- End --
         Flight::json([
-            'success' => 'true'
+            'success' => 'true',
+
+            /*
+            'users_limit' => USER_QUERY_LIMIT,
+            'users_count' => (int) call_user_func( 
+                function($meta, $key, $default) {
+                    $tmp = $meta->filter(function($el) use ($key) {
+                        return $el->meta_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->meta_value;
+                }, $user->user_meta, 'relations_count', 0 ),
+            */
+
+            'users'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'auth_date' => $n->auth_date->format('Y-m-d H:i:s'),
+                'user_status' => $n->user_status,
+                'user_name' => $n->user_name
+            ], $users)
         ]);
     }
 
