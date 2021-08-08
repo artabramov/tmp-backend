@@ -166,12 +166,37 @@ Flight::route('POST /api/user', function() {
     );
 });
 
+// -- User remind --
+Flight::route('GET /api/pass', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->remind(
+        (string) Flight::request()->query['user_email']
+    );
+});
+
 // -- User signin --
 Flight::route('POST /api/pass', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->signin(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_pass']
+    );
+});
+
+// -- User signout --
+Flight::route('PUT /api/token', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->signout(
+        (string) Flight::request()->query['user_token']
+    );
+});
+
+// -- User select - 
+Flight::route('GET /api/user/@user_id', function($user_id) {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->read(
+        (string) Flight::request()->query['user_token'],
+        (int) $user_id
     );
 });
 
@@ -187,23 +212,11 @@ Flight::route('GET /api/cache', function() {
     $wrapper->read();
 });
 
-// -- User remind --
-Flight::route('GET /api/pass', function() {
-    $route = new \App\Routes\UserRemind();
-    $route->do();
-});
 
-// -- User signout --
-Flight::route('PUT /api/token', function() {
-    $route = new \App\Routes\UserSignout();
-    $route->do();
-});
 
-// -- User select - 
-Flight::route('GET /api/user/@user_id', function($user_id) {
-    $route = new \App\Routes\UserSelect();
-    $route->do($user_id);
-});
+
+
+
 
 // -- User update --
 Flight::route('PUT /api/user', function() {
