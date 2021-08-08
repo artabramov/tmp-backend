@@ -1,7 +1,6 @@
 -- drop all --
 
 DROP VIEW IF EXISTS vw_users_relations;
-DROP VIEW IF EXISTS vw_users_volumes;
 
 DROP TABLE IF EXISTS premiums;
 DROP TABLE IF EXISTS users_terms;
@@ -260,15 +259,6 @@ CREATE OR REPLACE VIEW vw_users_relations AS
     JOIN users ON users.id IN (SELECT users_roles.user_id FROM users_roles WHERE users_roles.repo_id = repos.id)
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
-
--- view: vw_users_volumes --
-
-CREATE OR REPLACE VIEW vw_users_volumes AS
-    SELECT users.id AS user_id, users_volumes.id AS volume_id FROM users
-    JOIN users_volumes ON users.id = users_volumes.user_id
-    WHERE users_volumes.expires_date >= NOW()
-    ORDER BY users_volumes.volume_size DESC
-    LIMIT 1;
 
 -- trigger: role insert --
 
@@ -731,10 +721,11 @@ CREATE FUNCTION volume_insert() RETURNS trigger AS $volume_insert$
         vol_expires VARCHAR;
     BEGIN
 
-        -- users terms: volume_expires
-        SELECT volume_size INTO vol_size FROM users_volumes 
-        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
-        WHERE vw_users_volumes.user_id = NEW.user_id;
+        -- users terms: volume_size
+        SELECT volume_size INTO vol_size FROM users_volumes
+        WHERE user_id = NEW.user_id AND expires_date >= NOW()
+        ORDER BY volume_size DESC
+        LIMIT 1;
 
         IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_size') THEN
             UPDATE users_terms SET term_value = vol_size WHERE user_id = NEW.user_id AND term_key = 'volume_size';
@@ -743,9 +734,10 @@ CREATE FUNCTION volume_insert() RETURNS trigger AS $volume_insert$
         END IF;
 
         -- users terms: volume_expires
-        SELECT expires_date INTO vol_expires FROM users_volumes 
-        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
-        WHERE vw_users_volumes.user_id = NEW.user_id;
+        SELECT expires_date INTO vol_expires FROM users_volumes
+        WHERE user_id = NEW.user_id AND expires_date >= NOW()
+        ORDER BY volume_size DESC
+        LIMIT 1;
 
         IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_expires') THEN
             UPDATE users_terms SET term_value = vol_expires WHERE user_id = NEW.user_id AND term_key = 'volume_expires';
@@ -769,9 +761,10 @@ CREATE FUNCTION volume_update() RETURNS trigger AS $volume_update$
     BEGIN
 
         -- users terms: volume_size
-        SELECT volume_size INTO vol_size FROM users_volumes 
-        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
-        WHERE vw_users_volumes.user_id = OLD.user_id;
+        SELECT volume_size INTO vol_size FROM users_volumes
+        WHERE user_id = OLD.user_id AND expires_date >= NOW()
+        ORDER BY volume_size DESC
+        LIMIT 1;
 
         IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_size') THEN
             UPDATE users_terms SET term_value = vol_size WHERE user_id = OLD.user_id AND term_key = 'volume_size';
@@ -780,9 +773,10 @@ CREATE FUNCTION volume_update() RETURNS trigger AS $volume_update$
         END IF;
 
         -- users terms: volume_expires
-        SELECT expires_date INTO vol_expires FROM users_volumes 
-        JOIN vw_users_volumes ON vw_users_volumes.volume_id = users_volumes.id
-        WHERE vw_users_volumes.user_id = OLD.user_id;
+        SELECT expires_date INTO vol_expires FROM users_volumes
+        WHERE user_id = OLD.user_id AND expires_date >= NOW()
+        ORDER BY volume_size DESC
+        LIMIT 1;
 
         IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_expires') THEN
             UPDATE users_terms SET term_value = vol_expires WHERE user_id = OLD.user_id AND term_key = 'volume_expires';
@@ -806,7 +800,6 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM posts_alerts; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
 SELECT * FROM vw_users_relations;
-SELECT * FROM vw_users_volumes;
 
 -- test data --
 

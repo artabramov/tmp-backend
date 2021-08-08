@@ -3,6 +3,7 @@ namespace App\Wrappers;
 use \Flight,
     \DateTime,
     \DateInterval,
+    \Doctrine\DBAL\Types\Type,
     \App\Exceptions\AppException,
     \App\Entities\User,       // 10..
     \App\Entities\UserTerm,   // 11..
@@ -22,8 +23,10 @@ class UserWrapper
 {
     protected $em;
 
+    const USER_REGISTER_LIMIT = 20; // maximum registers number per 1 minute
     const USER_REGISTER_SUBJECT = 'User register';
     const USER_REGISTER_BODY = 'One-time pass: ';
+    const USER_REMIND_LIMIT = 20; // maximum reminds number per 1 minute
     const USER_REMIND_EXPIRES = 30;
     const USER_REMIND_SUBJECT = 'User remind';
     const USER_REMIND_BODY = 'One-time pass: ';
@@ -67,7 +70,25 @@ class UserWrapper
             throw new AppException('user_phone is occupied', 2002);
         }
 
-        // -- User --
+        // -- Filter --
+        $di = new DateInterval('PT60S');
+        $di->invert = 1;
+        $dt = Flight::datetime()->add($di);
+        
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('count(user.id)')
+            ->from('App\Entities\User', 'user')
+            ->where('user.create_date > :last')
+            ->setParameter('last', $dt, Type::DATETIME);
+
+        $tmp = $qb1->getQuery();
+        $qb1_result = $qb1->getQuery()->getResult();
+
+        if($qb1_result[0][1] > self::USER_REGISTER_LIMIT) {
+            throw new AppException('wait for 60 second', 0);
+        }
+
+        // -- Create user --
         $user = new User();
         $user->create_date = Flight::datetime();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
@@ -146,19 +167,22 @@ class UserWrapper
         $this->em->persist($comment);
         $this->em->flush();
 
+        /*
         // -- Email --
         $phpmailer = Flight::get('phpmailer');
         $phpmailer->addAddress($user->user_email, $user->user_name);
         $phpmailer->Subject = self::USER_REGISTER_SUBJECT;
         $phpmailer->Body = self::USER_REGISTER_BODY . $user->user_pass;
         $phpmailer->send();
+        */
 
         // -- End --
         Flight::json([
             'success' => 'true',
             'user' => [
                 'id' => $user->id
-            ]
+            ],
+            'tmp' => $qb1_result[0][1]
         ]);
 
         /*
@@ -237,6 +261,8 @@ class UserWrapper
 
     public function signin(string $user_email, string $user_pass) {
 
+        $user_email = mb_strtolower($user_email);
+
         // -- User --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email, 'user_hash' => sha1($user_pass)]);
 
@@ -280,6 +306,8 @@ class UserWrapper
 
     public function remind(string $user_email) {
 
+        $user_email = mb_strtolower($user_email);
+
         // -- User --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
@@ -293,6 +321,24 @@ class UserWrapper
             throw new AppException('wait for ' . self::USER_REMIND_EXPIRES . ' seconds', 0);
         }
 
+        // -- Filter --
+        $di = new DateInterval('PT60S');
+        $di->invert = 1;
+        $dt = Flight::datetime()->add($di);
+
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('count(user.id)')
+            ->from('App\Entities\User', 'user')
+            ->where('user.remind_date > :last')
+            ->setParameter('last', $dt, Type::DATETIME);
+
+        $qb1_result = $qb1->getQuery()->getResult();
+
+        if($qb1_result[0][1] > self::USER_REMIND_LIMIT) {
+            throw new AppException('wait for 60 second', 0);
+        }
+
+        // -- Update user --
         $user->remind_date = Flight::datetime();
         $user->user_pass = $user->create_pass();
         $user->user_hash = sha1($user->user_pass);

@@ -1,1 +1,0 @@
-[2021-08-08T06:28:27.959938+00:00] app.DEBUG: Undefined variable $em {"method":"GET","url":"/api/user/1?user_token=35c57876a6497b18868bee151359ce98755f85b1601ee636de3446270a7b6c7de398ee28b6a41071","file":"/var/www/project.local/src/Wrappers/UserWrapper.php","line":289} []
