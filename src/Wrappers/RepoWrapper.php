@@ -23,8 +23,8 @@ class RepoWrapper
 {
     protected $em;
 
-    const REPO_CREATE_LIMIT = 20; // maximum repo creates per 1 minute
-    const REPO_LIST_LIMIT = 10;
+    const REPO_NUMBER_LIMIT = 20; // maximum repo number of one user
+    const REPO_LIST_LIMIT = 10; // number of results in list
 
     public function __construct($em) {
         $this->em = $em;
@@ -56,18 +56,14 @@ class RepoWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        $user->auth_date = Flight::datetime();
-        $this->em->persist($user);
-        $this->em->flush();
-
         // -- Filter: repo insert --
-        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM repos WHERE user_id = :user_id AND create_date > CURRENT_TIMESTAMP - INTERVAL '60 SECONDS'");
+        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM repos WHERE user_id = :user_id");
         $stmt->bindValue(':user_id', $user->id, Type::INTEGER);
         $stmt->execute();
-        $users_count = $stmt->fetchOne();
+        $repos_count = $stmt->fetchOne();
 
-        if($users_count > self::USER_REGISTER_LIMIT) {
-            throw new AppException('wait for 60 seconds', 0);
+        if($repos_count >= self::REPO_NUMBER_LIMIT) {
+            throw new AppException('repos limit exceeded', 0);
         }
 
         // -- Insert repo --
@@ -102,6 +98,53 @@ class RepoWrapper
             'repo' => [
                 'id' => $repo->id
             ]
+        ]);
+    }
+
+
+    public function update(string $user_token, int $repo_id, string $repo_name) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- User role --
+
+        $user_role = call_user_func( 
+            function($em, $user_roles, $repo_id) {
+                $tmp = $user_roles->filter(function($el) use ($repo_id) {
+                    return $el->repo_id == $repo_id;
+                })->first();
+                return empty($tmp) ? null : $em->find('App\Entities\UserRole', $tmp->id);
+            }, $this->em, $user->user_roles, $repo_id );
+
+        if(empty($user_role)) {
+            throw new AppException('user_role not found',0);
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('role_status must be admin', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $user_role->repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        $repo->repo_name = $repo_name;
+        $this->em->persist($repo);
+        $this->em->flush();
+
+        // -- End --
+        Flight::json([
+            'success' => 'true'
         ]);
     }
 

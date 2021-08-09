@@ -42,12 +42,6 @@ class User
      */
     protected $reset_date;
 
-    /**
-     * @Column(type="datetime")
-     * @var DateTime
-     */
-    protected $auth_date;
-
     /** 
      * @Column(type="string", columnDefinition="ENUM('pending', 'approved', 'trash')") 
      * @var string
@@ -163,12 +157,6 @@ class User
 
         } elseif(!$this->reset_date  instanceof \DateTime) {
             throw new AppException('reset_date is incorrect', 1008);
-
-        } elseif(empty($this->auth_date)) {
-            throw new AppException('auth_date is empty', 1009);
-
-        } elseif(!$this->auth_date  instanceof \DateTime) {
-            throw new AppException('auth_date is incorrect', 1010);
 
         } elseif(empty($this->user_status)) {
             throw new AppException('user_status is empty', 1011);

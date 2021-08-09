@@ -229,6 +229,16 @@ Flight::route('POST /api/repo', function() {
     );
 });
 
+// -- Repo update --
+Flight::route('PUT /api/repo/@repo_id', function($repo_id) {
+    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
+        (string) Flight::request()->query['repo_name'],
+    );
+});
+
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
@@ -276,12 +286,6 @@ Flight::route('GET /api/search/user/@user_search', function($user_search) {
 // -- Hub select - 
 Flight::route('GET /api/hub/@hub_id', function($hub_id) {
     $route = new \App\Routes\HubSelect();
-    $route->do($hub_id);
-});
-
-// -- Hub update --
-Flight::route('PUT /api/hub/@hub_id', function($hub_id) {
-    $route = new \App\Routes\HubUpdate();
     $route->do($hub_id);
 });
 

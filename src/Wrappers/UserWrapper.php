@@ -86,7 +86,6 @@ class UserWrapper
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = Flight::datetime();
         $user->reset_date = new DateTime('1970-01-01 00:00:00');
-        $user->auth_date = new DateTime('1970-01-01 00:00:00');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
         $user->user_email = $user_email;
@@ -198,10 +197,6 @@ class UserWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        $user->auth_date = Flight::datetime();
-        $this->em->persist($user);
-        $this->em->flush();
-
         // -- Member ---
         $member = $this->em->find('\App\Entities\User', $user_id);
 
@@ -282,7 +277,6 @@ class UserWrapper
             $user->user_name = $user_name;
         }
 
-        $user->auth_date = Flight::datetime();
         $this->em->persist($user);
         $this->em->flush();
 
@@ -303,10 +297,6 @@ class UserWrapper
         } elseif($user->user_status == 'trash') {
             throw new AppException('user_status is trash', 0);
         }
-
-        $user->auth_date = Flight::datetime();
-        $this->em->persist($user);
-        $this->em->flush();
 
         // -- User relations --
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
@@ -358,7 +348,6 @@ class UserWrapper
             throw new AppException('user_pass expired', 2005);
         }
 
-        $user->auth_date = Flight::datetime();
         $user->user_status = 'approved';
         $user->user_pass = null;
         $user->user_hash = null;
@@ -443,7 +432,6 @@ class UserWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        $user->auth_date = Flight::datetime();
         $user->user_token = $user->create_token();
         $this->em->persist($user);
         $this->em->flush();

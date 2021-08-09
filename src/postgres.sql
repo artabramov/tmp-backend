@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS users (
     update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     reset_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    auth_date   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
