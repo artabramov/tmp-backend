@@ -197,12 +197,10 @@ class CacheWrapper
         $post = Flight::get('em')->find('\App\Entities\Post', 1);
         $comment = Flight::get('em')->find('\App\Entities\Comment', 1);
         
-        /*
         // -- clear cache --
         if(Flight::get('em')->getCache()->containsCollection('\App\Entities\User', 'user_terms', 1)) {
             Flight::get('em')->getCache()->evictCollection('\App\Entities\User', 'user_terms', 1);
         }
-        */
 
         // -- json --
         Flight::json([

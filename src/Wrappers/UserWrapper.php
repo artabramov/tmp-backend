@@ -23,7 +23,7 @@ class UserWrapper
 {
     protected $em;
 
-    const USER_REGISTER_LIMIT = 20; // maximum registers number per 1 minute
+    const USER_REGISTER_LIMIT = 20; // maximum registers number per 1 minute (for all users)
     const USER_REGISTER_SUBJECT = 'User register';
     const USER_REGISTER_BODY = 'One-time pass: ';
     const USER_REMIND_LIMIT = 20; // maximum reminds number per 1 minute
@@ -217,7 +217,6 @@ class UserWrapper
                 'user' => [
                     'id' => $member->id, 
                     'create_date' => $member->create_date->format('Y-m-d H:i:s'),
-                    'update_date' => $member->update_date->format('Y-m-d H:i:s'),
                     'user_status' => $member->user_status,
                     'user_email' => $member->user_email,
                     'user_phone' => !empty($member->user_phone) ? $member->user_phone : '',
@@ -238,7 +237,6 @@ class UserWrapper
                 'user' => [
                     'id' => $member->id, 
                     'create_date' => $member->create_date->format('Y-m-d H:i:s'),
-                    'update_date' => $member->update_date->format('Y-m-d H:i:s'),
                     'user_status' => $member->user_status,
                     'user_name' => $member->user_name,
                 ],
@@ -294,6 +292,55 @@ class UserWrapper
         ]);
     }
 
+    public function list(string $user_token, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        $user->auth_date = Flight::datetime();
+        $this->em->persist($user);
+        $this->em->flush();
+
+        // -- User relations --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('relate_id', 'relate_id');
+
+        $query = $this->em->createNativeQuery("SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('offset', $offset)
+            ->setParameter('limit', self::USER_LIST_LIMIT);
+        $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['relate_id']), $query->getResult());
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'users_limit' => self::USER_LIST_LIMIT,
+            'users_count' => (int) call_user_func( 
+                function($terms, $key, $default) {
+                    $tmp = $terms->filter(function($el) use ($key) {
+                        return $el->term_key == $key;
+                    })->first();
+                    return empty($tmp) ? $default : $tmp->term_value;
+                }, $user->user_terms, 'relations_count', 0 ),
+
+            'users'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_email' => $n->user_email,
+                'user_status' => $n->user_status,
+                'user_name' => $n->user_name
+            ], $users)
+        ]);
+    }
+
     public function signin(string $user_email, string $user_pass) {
 
         $user_email = mb_strtolower($user_email);
@@ -323,7 +370,6 @@ class UserWrapper
             'user' => [
                 'id' => $user->id, 
                 'create_date' => $user->create_date->format('Y-m-d H:i:s'),
-                'update_date' => $user->update_date->format('Y-m-d H:i:s'),
                 'user_status' => $user->user_status,
                 'user_token' => $user->user_token,
                 'user_email' => $user->user_email,
@@ -405,60 +451,6 @@ class UserWrapper
         // -- End --
         Flight::json([
             'success' => 'true'
-        ]);
-    }
-
-
-
-
-    public function list(string $user_token, int $offset) {
-
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($user)) {
-            throw new AppException('user not found', 0);
-
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
-        }
-
-        $user->auth_date = Flight::datetime();
-        $this->em->persist($user);
-        $this->em->flush();
-
-        // -- User relations --
-        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-        $rsm->addScalarResult('relate_id', 'relate_id');
-
-        $query = $this->em->createNativeQuery("SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id LIMIT :limit OFFSET :offset", $rsm)
-            ->setParameter('user_id', $user->id)
-            ->setParameter('offset', $offset)
-            ->setParameter('limit', self::USER_LIST_LIMIT);
-        $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['relate_id']), $query->getResult());
-
-        // -- End --
-        Flight::json([
-            'success' => 'true',
-
-            /*
-            'users_limit' => USER_QUERY_LIMIT,
-            'users_count' => (int) call_user_func( 
-                function($meta, $key, $default) {
-                    $tmp = $meta->filter(function($el) use ($key) {
-                        return $el->meta_key == $key;
-                    })->first();
-                    return empty($tmp) ? $default : $tmp->meta_value;
-                }, $user->user_meta, 'relations_count', 0 ),
-            */
-
-            'users'=> array_map(fn($n) => [
-                'id' => $n->id,
-                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
-                'auth_date' => $n->auth_date->format('Y-m-d H:i:s'),
-                'user_status' => $n->user_status,
-                'user_name' => $n->user_name
-            ], $users)
         ]);
     }
 
