@@ -311,13 +311,6 @@ class RepoWrapper
         Flight::json([
             'success' => 'true',
 
-            'user_terms' => call_user_func( 
-                function($user_terms) {
-                    return array_combine(
-                        array_map(fn($n) => $n->term_key, $user_terms), 
-                        array_map(fn($n) => $n->term_value, $user_terms));
-                }, $user->user_terms->toArray()),
-
             'repos_limit' => self::REPO_LIST_LIMIT,
             'repos_count' => (int) call_user_func( 
                 function($terms, $key) {

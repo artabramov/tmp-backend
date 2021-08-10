@@ -1,12 +1,6 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 
-/*
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
-*/
-
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/config.php';
 
@@ -272,6 +266,17 @@ Flight::route('GET /api/repos', function() {
     );
 });
 
+// -- Role insert --
+Flight::route('POST /api/role', function() {
+    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper->insert(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_email'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['role_status'],
+    );
+});
+
 
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
@@ -315,12 +320,6 @@ Flight::route('GET /api/test', function() {
 Flight::route('GET /api/search/user/@user_search', function($user_search) {
     $route = new \App\Routes\UserSearch();
     $route->do($user_search);
-});
-
-// -- Role insert --
-Flight::route('POST /api/role', function() {
-    $route = new \App\Routes\RoleInsert();
-    $route->do();
 });
 
 // -- Role update --
