@@ -23,7 +23,7 @@ class PostWrapper
 {
     protected $em;
 
-    const POST_INSERT_LIMIT = 1024;
+    const POST_INSERT_LIMIT = 512; // maximum posts numbers per one repo
     const POST_LIST_LIMIT = 5;
 
     public function __construct($em) {
@@ -61,21 +61,21 @@ class PostWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        // -- Filter: user roles limit --
-        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM posts WHERE user_id = :user_id");
-        $stmt->bindValue(':user_id', $user->id, Type::INTEGER);
-        $stmt->execute();
-        $posts_count = $stmt->fetchOne();
-
-        if($posts_count >= self::POST_INSERT_LIMIT) {
-            throw new AppException('posts limit exceeded', 0);
-        }
-
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
         if(empty($repo)) {
             throw new AppException('repo not found', 0);
+        }
+
+        // -- Filter: posts number per repo --
+        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM posts WHERE repo_id = :repo_id");
+        $stmt->bindValue(':repo_id', $repo->id, Type::INTEGER);
+        $stmt->execute();
+        $posts_count = $stmt->fetchOne();
+
+        if($posts_count >= self::POST_INSERT_LIMIT) {
+            throw new AppException('posts limit exceeded', 0);
         }
 
         // -- User role --

@@ -69,23 +69,23 @@ class CommentDelete
         }
 
         // -- Uploads --
-        $qb1 = $em->createQueryBuilder();
+        $qb1 = $this->em->createQueryBuilder();
         $qb1->select('upload.id')
             ->from('App\Entities\Upload', 'upload')
             ->where($qb1->expr()->eq('upload.comment_id', $comment->id));
 
-        $uploads = array_map(fn($n) => $em->find('App\Entities\Upload', $n['id']), $qb1->getQuery()->getResult());
+        $uploads = array_map(fn($n) => $this->em->find('App\Entities\Upload', $n['id']), $qb1->getQuery()->getResult());
 
         // -- Files --
         foreach($uploads as $upload) {
-            if(file_exists($upload->upload_file)) {
-                unlink($upload->upload_file);
+            if(file_exists($upload->upload_path)) {
+                unlink($upload->upload_path);
             }
         }
 
         // -- Delete comment --
-        $em->remove($comment);
-        $em->flush();
+        $this->em->remove($comment);
+        $this->em->flush();
 
         // -- Postmeta cache --
         foreach($post->post_meta->getValues() as $meta) {

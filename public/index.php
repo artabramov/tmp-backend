@@ -350,7 +350,44 @@ Flight::route('DELETE /api/post/@post_id', function($post_id) {
     );
 });
 
+// -- Comment insert --
+Flight::route('POST /api/comment', function() {
+    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
+    $wrapper->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['post_id'],
+        (string) Flight::request()->query['comment_content'],
+    );
+});
 
+// -- Comment update --
+Flight::route('PUT /api/comment/@comment_id', function($comment_id) {
+    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $comment_id,
+        (string) Flight::request()->query['comment_content'],
+    );
+});
+
+// -- Comment delete --
+Flight::route('DELETE /api/comment/@comment_id', function($comment_id) {
+    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
+    $wrapper->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $comment_id,
+    );
+});
+
+// -- Upload insert --
+Flight::route('POST /api/upload', function() {
+    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
+    $wrapper->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['comment_id'],
+        Flight::request()->files->current() ? Flight::request()->files->current() : [],
+    );
+});
 
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
@@ -402,33 +439,9 @@ Flight::route('GET /api/posts', function() {
     $route->do();
 });
 
-// -- Comment insert --
-Flight::route('POST /api/comment', function() {
-    $route = new \App\Routes\CommentInsert();
-    $route->do();
-});
-
-// -- Comment update --
-Flight::route('PUT /api/comment/@comment_id', function($comment_id) {
-    $route = new \App\Routes\CommentUpdate();
-    $route->do($comment_id);
-});
-
-// -- Comment delete --
-Flight::route('DELETE /api/comment/@comment_id', function($comment_id) {
-    $route = new \App\Routes\CommentDelete();
-    $route->do($comment_id);
-});
-
 // -- Comment custom --
 Flight::route('GET /api/comments', function() {
     $route = new \App\Routes\CommentQuery();
-    $route->do();
-});
-
-// -- Upload insert --
-Flight::route('POST /api/upload', function() {
-    $route = new \App\Routes\UploadInsert();
     $route->do();
 });
 

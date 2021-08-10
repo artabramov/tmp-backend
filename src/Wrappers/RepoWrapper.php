@@ -23,7 +23,7 @@ class RepoWrapper
 {
     protected $em;
 
-    const REPO_INSERT_LIMIT = 20; // maximum repo insert number of one user
+    const REPO_INSERT_LIMIT = 20; // maximum repo number per user
     const REPO_LIST_LIMIT = 5; // number of results in list
 
     public function __construct($em) {
@@ -56,7 +56,7 @@ class RepoWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        // -- Filter: repo insert --
+        // -- Filter: repos number per user --
         $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM repos WHERE user_id = :user_id");
         $stmt->bindValue(':user_id', $user->id, Type::INTEGER);
         $stmt->execute();
