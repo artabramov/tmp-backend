@@ -147,4 +147,231 @@ class UserRoleWrapper
         ]);
     }
 
+    public function update(string $user_token, int $user_id, int $repo_id, string $role_status) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('role not found', 0);
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('role_status must be admin', 0);
+        }
+
+        // -- Member --
+        $member = $this->em->find('App\Entities\User', $user_id);
+
+        if(empty($member)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($member->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Member role --
+        $member_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $member->id]);
+
+        if(empty($member_role)) {
+            throw new AppException('role not found', 0);
+
+        } elseif($member_role->id == $user_role->id) {
+            throw new AppException('permission denied', 0);
+        }
+
+        // -- Member role update --
+        $member_role->role_status = $role_status;
+        $this->em->persist($member_role);
+        $this->em->flush();
+
+        // -- End --
+        Flight::json([ 
+            'success' => 'true'
+        ]);
+    }
+
+    public function delete(string $user_token, int $user_id, int $repo_id) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('role not found', 0);
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('role_status must be admin', 0);
+        }
+
+        // -- Member --
+        $member = $this->em->find('App\Entities\User', $user_id);
+
+        if(empty($member)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($member->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Member role --
+        $member_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $member->id]);
+
+        if(empty($member_role)) {
+            throw new AppException('role not found', 0);
+
+        } elseif($member_role->id == $user_role->id) {
+            throw new AppException('permission denied', 0);
+        }
+
+        // -- Member role delete --
+        $this->em->remove($member_role);
+        $this->em->flush();
+
+        // -- Clear cache: user terms --
+        foreach($member->user_terms->getValues() as $term) {
+            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
+                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
+            }
+        }
+
+        // -- Clear cache: repo terms --
+        foreach($repo->repo_terms->getValues() as $term) {
+            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
+                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
+            }
+        }
+
+        // -- End --
+        Flight::json([ 
+            'success' => 'true'
+        ]);
+    }
+
+    public function list(string $user_token, int $repo_id, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('role not found', 0);
+        }
+
+        // -- Roles --
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('role.id')->from('App\Entities\UserRole', 'role')
+            ->where($qb1->expr()->eq('role.repo_id', $repo->id))
+            ->orderBy('role.id', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::ROLE_LIST_LIMIT);
+
+        $roles = array_map(fn($n) => $this->em->find('App\Entities\UserRole', $n['id']), $qb1->getQuery()->getResult());
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'repo' => [
+                'id' => $repo->id, 
+                'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $repo->user_id,
+                'repo_name' => $repo->repo_name,
+    
+                'repo_terms' => call_user_func( 
+                    function($repo_terms) {
+                        return array_combine(
+                            array_map(fn($n) => $n->term_key, $repo_terms), 
+                            array_map(fn($n) => $n->term_value, $repo_terms));
+                    }, $repo->repo_terms->toArray()),
+
+                'user_role' => [
+                    'id' => $user_role->id,
+                    'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                    'user_id' => $user_role->user_id,
+                    'repo_id' => $user_role->repo_id,
+                    'role_status' => $user_role->role_status,
+                ]
+            ],
+
+            'roles_limit' => self::ROLE_LIST_LIMIT,
+            'roles_count' => (int) call_user_func( 
+                function($terms, $key) {
+                    $tmp = $terms->filter(function($el) use ($key) {
+                        return $el->term_key == $key;
+                    })->first();
+                    return empty($tmp) ? 0 : $tmp->term_value;
+                }, $repo->repo_terms, 'roles_count'),
+
+            'roles'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $n->user_id,
+                'repo_id' => $n->repo_id,
+                'role_status' => $n->role_status,
+
+                'user'=> call_user_func(
+                    function($user_id) {
+                        $member = $this->em->find('App\Entities\User', $user_id);
+                        return [
+                            'id' => $member->id,
+                            'create_date' => $member->create_date->format('Y-m-d H:i:s'),
+                            'user_status' => $member->user_status,
+                            'user_name' => $member->user_name
+                        ];
+                    }, $n->user_id
+                )
+                
+            ], $roles)
+        ]);
+    }
+
 }

@@ -277,6 +277,39 @@ Flight::route('POST /api/role', function() {
     );
 });
 
+// -- Role update --
+Flight::route('PUT /api/role', function() {
+    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['user_id'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['role_status'],
+    );
+});
+
+// -- Role delete --
+Flight::route('DELETE /api/role', function() {
+    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['user_id'],
+        (int) Flight::request()->query['repo_id'],
+    );
+});
+
+// -- Role query --
+Flight::route('GET /api/roles', function() {
+    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
+
+
 
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
@@ -320,24 +353,6 @@ Flight::route('GET /api/test', function() {
 Flight::route('GET /api/search/user/@user_search', function($user_search) {
     $route = new \App\Routes\UserSearch();
     $route->do($user_search);
-});
-
-// -- Role update --
-Flight::route('PUT /api/role', function() {
-    $route = new \App\Routes\RoleUpdate();
-    $route->do();
-});
-
-// -- Role delete --
-Flight::route('DELETE /api/role', function() {
-    $route = new \App\Routes\RoleDelete();
-    $route->do();
-});
-
-// -- Role query --
-Flight::route('GET /api/roles', function() {
-    $route = new \App\Routes\RoleQuery();
-    $route->do();
 });
 
 // -- Post insert --
