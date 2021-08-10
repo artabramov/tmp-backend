@@ -1,6 +1,12 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 
+/*
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+*/
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../src/config.php';
 
@@ -156,13 +162,42 @@ Flight::route('GET /', function() {
     require_once(__DIR__ . '/webapp/index.php');
 });
 
-// -- User register --
+// -- User insert --
 Flight::route('POST /api/user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->create(
+    $wrapper->insert(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_name'],
         (string) Flight::request()->query['user_phone']
+    );
+});
+
+// -- User select - 
+Flight::route('GET /api/user/@user_id', function($user_id) {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $user_id
+    );
+});
+
+// -- User update --
+Flight::route('PUT /api/user', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_email'],
+        (string) Flight::request()->query['user_phone'],
+        (string) Flight::request()->query['user_name'],
+    );
+});
+
+// -- User list --
+Flight::route('GET /api/users', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['offset'],
     );
 });
 
@@ -191,41 +226,21 @@ Flight::route('PUT /api/token', function() {
     );
 });
 
-// -- User select - 
-Flight::route('GET /api/user/@user_id', function($user_id) {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->read(
-        (string) Flight::request()->query['user_token'],
-        (int) $user_id
-    );
-});
-
-// -- User update --
-Flight::route('PUT /api/user', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->update(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_email'],
-        (string) Flight::request()->query['user_phone'],
-        (string) Flight::request()->query['user_name'],
-    );
-});
-
-// -- User query --
-Flight::route('GET /api/users', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
 // -- Repo insert --
 Flight::route('POST /api/repo', function() {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->create(
+    $wrapper->insert(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['repo_name'],
+    );
+});
+
+// -- Repo select - 
+Flight::route('GET /api/repo/@repo_id', function($repo_id) {
+    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
+    $wrapper->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
     );
 });
 
@@ -238,6 +253,25 @@ Flight::route('PUT /api/repo/@repo_id', function($repo_id) {
         (string) Flight::request()->query['repo_name'],
     );
 });
+
+// -- Repo delete --
+Flight::route('DELETE /api/repo/@repo_id', function($repo_id) {
+    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
+    $wrapper->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
+    );
+});
+
+// -- Repos list --
+Flight::route('GET /api/repos', function() {
+    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
 
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
@@ -281,24 +315,6 @@ Flight::route('GET /api/test', function() {
 Flight::route('GET /api/search/user/@user_search', function($user_search) {
     $route = new \App\Routes\UserSearch();
     $route->do($user_search);
-});
-
-// -- Hub select - 
-Flight::route('GET /api/hub/@hub_id', function($hub_id) {
-    $route = new \App\Routes\HubSelect();
-    $route->do($hub_id);
-});
-
-// -- Hub delete --
-Flight::route('DELETE /api/hub/@hub_id', function($hub_id) {
-    $route = new \App\Routes\HubDelete();
-    $route->do($hub_id);
-});
-
-// -- Hub query --
-Flight::route('GET /api/hubs', function() {
-    $route = new \App\Routes\HubQuery();
-    $route->do();
 });
 
 // -- Role insert --

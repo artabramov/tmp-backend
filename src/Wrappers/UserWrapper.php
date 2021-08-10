@@ -59,7 +59,7 @@ class UserWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function create(string $user_email, string $user_name, string $user_phone = '') {
+    public function insert(string $user_email, string $user_name, string $user_phone = '') {
 
         $user_email = mb_strtolower($user_email);
         $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
@@ -185,7 +185,7 @@ class UserWrapper
         */
     }
 
-    public function read(string $user_token, int $user_id) {
+    public function select(string $user_token, int $user_id) {
 
         // -- User --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);

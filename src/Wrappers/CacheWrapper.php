@@ -312,3 +312,14 @@ class CacheWrapper
         ]);
     }
 }
+
+/*
+// -- get user_role from user->user_roles --
+$user_role = call_user_func( 
+    function($em, $user_roles, $repo_id) {
+        $tmp = $user_roles->filter(function($el) use ($repo_id) {
+            return $el->repo_id == $repo_id;
+        })->first();
+        return empty($tmp) ? null : $em->find('App\Entities\UserRole', $tmp->id);
+    }, $this->em, $user->user_roles, $repo_id );
+*/

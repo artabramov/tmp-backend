@@ -23,8 +23,8 @@ class RepoWrapper
 {
     protected $em;
 
-    const REPO_NUMBER_LIMIT = 20; // maximum repo number of one user
-    const REPO_LIST_LIMIT = 10; // number of results in list
+    const REPO_INSERT_LIMIT = 20; // maximum repo insert number of one user
+    const REPO_LIST_LIMIT = 5; // number of results in list
 
     public function __construct($em) {
         $this->em = $em;
@@ -44,7 +44,7 @@ class RepoWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function create(string $user_token, string $repo_name) {
+    public function insert(string $user_token, string $repo_name) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -62,7 +62,7 @@ class RepoWrapper
         $stmt->execute();
         $repos_count = $stmt->fetchOne();
 
-        if($repos_count >= self::REPO_NUMBER_LIMIT) {
+        if($repos_count >= self::REPO_INSERT_LIMIT) {
             throw new AppException('repos limit exceeded', 0);
         }
 
@@ -88,8 +88,10 @@ class RepoWrapper
         $this->em->flush();
 
         // -- Clear cache: user terms --
-        if($this->em->getCache()->containsCollection('\App\Entities\User', 'user_terms', $user->id)) {
-            $this->em->getCache()->evictCollection('\App\Entities\User', 'user_terms', $user->id);
+        foreach($user->user_terms->getValues() as $term) {
+            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
+                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
+            }
         }
 
         // -- End --
@@ -101,6 +103,60 @@ class RepoWrapper
         ]);
     }
 
+    public function select(string $user_token, string $repo_id) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('user_role not found',0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $user_role->repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'repo' => [
+                'id' => $repo->id, 
+                'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $repo->user_id,
+                'repo_name' => $repo->repo_name,
+    
+                'repo_terms' => call_user_func( 
+                    function($repo_terms) {
+                        return array_combine(
+                            array_map(fn($n) => $n->term_key, $repo_terms), 
+                            array_map(fn($n) => $n->term_value, $repo_terms));
+                    }, $repo->repo_terms->toArray()),
+
+                'user_role' => [
+                    'id' => $user_role->id,
+                    'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                    'user_id' => $user_role->user_id,
+                    'repo_id' => $user_role->repo_id,
+                    'role_status' => $user_role->role_status,
+                ]
+            ],
+
+        ]);
+    }
 
     public function update(string $user_token, int $repo_id, string $repo_name) {
 
@@ -115,14 +171,7 @@ class RepoWrapper
         }
 
         // -- User role --
-
-        $user_role = call_user_func( 
-            function($em, $user_roles, $repo_id) {
-                $tmp = $user_roles->filter(function($el) use ($repo_id) {
-                    return $el->repo_id == $repo_id;
-                })->first();
-                return empty($tmp) ? null : $em->find('App\Entities\UserRole', $tmp->id);
-            }, $this->em, $user->user_roles, $repo_id );
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
             throw new AppException('user_role not found',0);
@@ -145,6 +194,166 @@ class RepoWrapper
         // -- End --
         Flight::json([
             'success' => 'true'
+        ]);
+    }
+
+    public function delete(string $user_token, string $repo_id) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('user_role not found',0);
+
+        } elseif($user_role->role_status != 'admin') {
+            throw new AppException('role_status must be admin', 0);
+        }
+
+        // -- Uploads --
+        $qb3 = $this->em->createQueryBuilder();
+        $qb3->select('post.id')
+            ->from('App\Entities\Post', 'post')
+            ->where($qb3->expr()->eq('post.repo_id', $repo->id));
+
+        $qb2 = $this->em->createQueryBuilder();
+        $qb2->select('comment.id')
+            ->from('App\Entities\Comment', 'comment')
+            ->where($qb2->expr()->in('comment.post_id', $qb3->getDQL()));
+
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('upload.id')
+            ->from('App\Entities\Upload', 'upload')
+            ->where($qb1->expr()->in('upload.comment_id', $qb2->getDQL()));
+
+        $uploads = array_map(fn($n) => $this->em->find('App\Entities\Upload', $n['id']), $qb1->getQuery()->getResult());
+
+        // -- Files --
+        foreach($uploads as $upload) {
+            if(file_exists($upload->upload_path)) {
+                unlink($upload->upload_path);
+            }
+        }
+
+        // -- Members --
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('role.user_id')
+            ->from('App\Entities\UserRole', 'role')
+            ->where($qb1->expr()->eq('role.repo_id', $repo->id));
+
+        $members = array_map(fn($n) => $this->em->find('App\Entities\User', $n['user_id']), $qb1->getQuery()->getResult());
+
+        // -- Delete repo --
+        $this->em->remove($repo);
+        $this->em->flush();
+
+        // -- Clear cache: user terms --
+        foreach($members as $member) {
+            foreach($member->user_terms->getValues() as $term) {
+                if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
+                    $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
+                }
+            }
+        }
+
+        // -- End --
+        Flight::json([
+            'success' => 'true'
+        ]);
+    }
+
+    public function list(string $user_token, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Repos --
+        $qb2 = $this->em->createQueryBuilder();
+
+        $qb2->select('role.repo_id')
+            ->from('App\Entities\UserRole', 'role')
+            ->where($qb2->expr()->eq('role.user_id', $user->id));
+
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select(['repo.id'])
+            ->from('App\Entities\Repo', 'repo')
+            ->where($qb1->expr()->in('repo.id', $qb2->getDQL()))
+            ->orderBy('repo.repo_name', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::REPO_LIST_LIMIT);
+
+        $repos = array_map(fn($n) => $this->em->find('App\Entities\Repo', $n['id']), $qb1->getQuery()->getResult());
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'user_terms' => call_user_func( 
+                function($user_terms) {
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $user_terms), 
+                        array_map(fn($n) => $n->term_value, $user_terms));
+                }, $user->user_terms->toArray()),
+
+            'repos_limit' => self::REPO_LIST_LIMIT,
+            'repos_count' => (int) call_user_func( 
+                function($terms, $key) {
+                    $tmp = $terms->filter(function($el) use ($key) {
+                        return $el->term_key == $key;
+                    })->first();
+                    return empty($tmp) ? 0 : $tmp->term_value;
+                }, $user->user_terms, 'roles_count' ),
+
+            'repos'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'repo_name' => $n->repo_name,
+                'user_id' => $n->user_id,
+
+                'repo_terms' => call_user_func( 
+                    function($repo_terms) {
+                        return array_combine(
+                            array_map(fn($m) => $m->term_key, $repo_terms), 
+                            array_map(fn($m) => $m->term_value, $repo_terms));
+                    }, $n->repo_terms->toArray()),
+
+                'user_role' => call_user_func(
+                    function($repo_id, $user_id) {
+                        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user_id]);
+                        return [
+                            'id' => $user_role->id,
+                            'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                            'user_id' =>$user_role->user_id,
+                            'repo_id' =>$user_role->repo_id,
+                            'role_status' => $user_role->role_status
+                        ];
+                    }, $n->id, $n->user_id
+                ),
+
+            ], $repos)
         ]);
     }
 
