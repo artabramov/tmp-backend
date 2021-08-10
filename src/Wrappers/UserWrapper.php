@@ -264,19 +264,13 @@ class UserWrapper
             throw new AppException('user_phone is occupied', 0);
         }
 
-        if(!empty($user_email) and $user->user_email != $user_email) {
-            $user->user_email = $user_email;
+        if($user->user_email != $user_email) {
             $user->user_status = 'pending';
         }
 
-        if(!empty($user_phone)) {
-            $user->user_phone = $user_phone;
-        }
-
-        if(!empty($user_name)) {
-            $user->user_name = $user_name;
-        }
-
+        $user->user_email = $user_email;
+        $user->user_phone = $user_phone;
+        $user->user_name = $user_name;
         $this->em->persist($user);
         $this->em->flush();
 

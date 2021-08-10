@@ -308,6 +308,47 @@ Flight::route('GET /api/roles', function() {
     );
 });
 
+// -- Post insert --
+Flight::route('POST /api/post', function() {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['post_status'],
+        (string) Flight::request()->query['post_title'],
+        (string) Flight::request()->query['post_tags'],
+    );
+});
+
+// -- Post select --
+Flight::route('GET /api/post/@post_id', function($post_id) {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+    );
+});
+
+// -- Post update --
+Flight::route('PUT /api/post/@post_id', function($post_id) {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+        (string) Flight::request()->query['post_status'],
+        (string) Flight::request()->query['post_title'],
+        (string) Flight::request()->query['post_tags'],
+    );
+});
+
+// -- Post delete --
+Flight::route('DELETE /api/post/@post_id', function($post_id) {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+    );
+});
 
 
 
@@ -353,30 +394,6 @@ Flight::route('GET /api/test', function() {
 Flight::route('GET /api/search/user/@user_search', function($user_search) {
     $route = new \App\Routes\UserSearch();
     $route->do($user_search);
-});
-
-// -- Post insert --
-Flight::route('POST /api/post', function() {
-    $route = new \App\Routes\PostInsert();
-    $route->do();
-});
-
-// -- Post select --
-Flight::route('GET /api/post/@post_id', function($post_id) {
-    $route = new \App\Routes\PostSelect();
-    $route->do($post_id);
-});
-
-// -- Post update --
-Flight::route('PUT /api/post/@post_id', function($post_id) {
-    $route = new \App\Routes\PostUpdate();
-    $route->do($post_id);
-});
-
-// -- Post delete --
-Flight::route('DELETE /api/post/@post_id', function($post_id) {
-    $route = new \App\Routes\PostDelete();
-    $route->do($post_id);
 });
 
 // -- Post query --

@@ -131,7 +131,7 @@ class UserRoleWrapper
             }
         }
 
-        // -- Clear cache: user terms --
+        // -- Clear cache: repo terms --
         foreach($repo->repo_terms->getValues() as $term) {
             if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
                 $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
