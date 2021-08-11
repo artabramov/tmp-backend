@@ -408,6 +408,15 @@ Flight::route('DELETE /api/upload/@upload_id', function($upload_id) {
     );
 });
 
+// -- Premium select --
+Flight::route('GET /api/premium', function() {
+    $wrapper = new \App\Wrappers\PremiumWrapper(Flight::get('em'));
+    $wrapper->select(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['premium_key'],
+    );
+});
+
 // -- POST cache --
 Flight::route('POST /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
@@ -419,27 +428,6 @@ Flight::route('GET /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
     $wrapper->read();
 });
-
-// -- Test --
-Flight::route('GET /api/test', function() {
-
-    /*
-    $stmt = Flight::get('em')->getConnection()->prepare("SELECT COUNT(id) FROM users WHERE create_date > CURRENT_TIMESTAMP - INTERVAL '60 SECONDS'");
-    $stmt->execute();
-    $tmp = $stmt->fetchOne();
-    */
-
-    $result1 = Flight::get('em')->createQuery("SELECT COUNT(user.id) FROM \App\Entities\User user")
-        ->setCacheable(true)
-        ->getResult();
-    
-    $a = 1;
-});
-
-
-
-
-
 
 
 
@@ -461,12 +449,6 @@ Flight::route('GET /api/posts', function() {
 // -- Comment custom --
 Flight::route('GET /api/comments', function() {
     $route = new \App\Routes\CommentQuery();
-    $route->do();
-});
-
-// -- Vol select --
-Flight::route('GET /api/vol', function() {
-    $route = new \App\Routes\VolSelect();
     $route->do();
 });
 
