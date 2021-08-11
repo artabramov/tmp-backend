@@ -297,4 +297,92 @@ class CommentWrapper
         ]);
     }
 
+    public function list(string $user_token, int $post_id, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Post --
+        $post = $this->em->find('App\Entities\Post', $post_id);
+
+        if(empty($post)) {
+            throw new AppException('post not found', 0);
+        }
+
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
+
+        if(empty($repo)) {
+            throw new AppException('repo not found', 0);
+        }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('role not found', 0);
+        }
+
+        // -- Comments --
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('comment.id')->from('App\Entities\Comment', 'comment')
+            ->where($qb1->expr()->eq('comment.post_id', $post->id))
+            ->orderBy('comment.id', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::COMMENT_LIST_LIMIT);
+        $comments = array_map(fn($n) => $this->em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
+
+        // -- Delete alert --
+        $post_alert = $this->em->getRepository('\App\Entities\PostAlert')->findOneBy(['user_id' => $user->id, 'post_id' => $post->id]);
+        if(!empty($post_alert)) {
+            $this->em->remove($post_alert);
+            $this->em->flush();
+        }
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'post' => [
+                'id' => $post->id, 
+                'create_date' => $post->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $post->user_id,
+                'repo_id' => $post->repo_id,
+                'post_status' => $post->post_status,
+                'post_title' => $post->post_title,
+            ],
+
+            'comments_limit' => self::COMMENT_LIST_LIMIT,
+            'comments_count' => (int) call_user_func( 
+                function($terms) {
+                    $tmp = $terms->filter(function($el) {
+                        return $el->term_key == 'comments_count';
+                    })->first();
+                    return empty($tmp) ? 0 : $tmp->term_value;
+                }, $post->post_terms),
+
+            'comments'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $n->user_id,
+                'comment_content' => $n->comment_content,
+
+                /*
+                'comment_uploads' => array_map(fn($m) => [
+                    'id' => $m->id,
+                    'create_date' => $m->create_date->format('Y-m-d H:i:s')
+                ], $n->comment_uploads->toArray())
+                */
+
+            ], $comments)
+        ]);
+    }
+
 }

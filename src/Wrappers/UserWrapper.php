@@ -426,7 +426,7 @@ class UserWrapper
         ]);
     }
 
-    public function find(string $user_token, string $search_text) {
+    public function find(string $user_token, string $like_text) {
 
         // -- User --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -442,9 +442,9 @@ class UserWrapper
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('id', 'id');
 
-        $query = $this->em->createNativeQuery("SELECT id FROM users WHERE (user_email LIKE :search_text OR user_name LIKE :search_text) AND id IN (SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id) LIMIT :limit", $rsm)
+        $query = $this->em->createNativeQuery("SELECT id FROM users WHERE (user_email LIKE :like_text OR user_name LIKE :like_text) AND id IN (SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id) LIMIT :limit", $rsm)
             ->setParameter('user_id', $user->id)
-            ->setParameter('search_text', '%' . $search_text . '%')
+            ->setParameter('like_text', '%' . $like_text . '%')
             ->setParameter('limit', self::USER_FIND_LIMIT);
 
         $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['id']), $query->getResult());

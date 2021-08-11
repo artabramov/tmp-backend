@@ -221,11 +221,11 @@ Flight::route('PUT /api/token', function() {
 });
 
 // -- User auto find --
-Flight::route('GET /api/user/search/@search_text', function($search_text) {
+Flight::route('GET /api/users/find/@like_text', function($like_text) {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->find(
         (string) Flight::request()->query['user_token'],
-        (string) $search_text
+        (string) $like_text
     );
 });
 
@@ -359,6 +359,19 @@ Flight::route('DELETE /api/post/@post_id', function($post_id) {
     );
 });
 
+// -- Posts list --
+Flight::route('GET /api/posts', function() {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['post_status'],
+        (string) Flight::request()->query['post_title'],
+        (string) Flight::request()->query['post_tag'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
 // -- Comment insert --
 Flight::route('POST /api/comment', function() {
     $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
@@ -385,6 +398,16 @@ Flight::route('DELETE /api/comment/@comment_id', function($comment_id) {
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
         (int) $comment_id,
+    );
+});
+
+// -- Comment list --
+Flight::route('GET /api/comments', function() {
+    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
+    $wrapper->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['post_id'],
+        (int) Flight::request()->query['offset'],
     );
 });
 
@@ -436,24 +459,6 @@ Flight::route('POST /api/cache', function() {
 Flight::route('GET /api/cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
     $wrapper->read();
-});
-
-
-
-
-
-
-
-// -- Post query --
-Flight::route('GET /api/posts', function() {
-    $route = new \App\Routes\PostQuery();
-    $route->do();
-});
-
-// -- Comment custom --
-Flight::route('GET /api/comments', function() {
-    $route = new \App\Routes\CommentQuery();
-    $route->do();
 });
 
 // -- Go! --
