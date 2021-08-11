@@ -385,7 +385,26 @@ Flight::route('POST /api/upload', function() {
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['comment_id'],
-        Flight::request()->files->current() ? Flight::request()->files->current() : [],
+        Flight::request()->files->getData()
+    );
+});
+
+// -- Upload update --
+Flight::route('PUT /api/upload/@upload_id', function($upload_id) {
+    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $upload_id,
+        (string) Flight::request()->query['upload_name'],
+    );
+});
+
+// -- Upload delete --
+Flight::route('DELETE /api/upload/@upload_id', function($upload_id) {
+    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
+    $wrapper->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $upload_id
     );
 });
 
@@ -443,12 +462,6 @@ Flight::route('GET /api/posts', function() {
 Flight::route('GET /api/comments', function() {
     $route = new \App\Routes\CommentQuery();
     $route->do();
-});
-
-// -- Upload delete --
-Flight::route('DELETE /api/upload/@upload_id', function($upload_id) {
-    $route = new \App\Routes\UploadDelete();
-    $route->do($upload_id);
 });
 
 // -- Vol select --

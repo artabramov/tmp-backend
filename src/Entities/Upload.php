@@ -147,10 +147,7 @@ class Upload
         } elseif(!is_int($this->upload_size)) {
             throw new AppException('upload_size is incorrect', 2016);
 
-        } elseif(empty($this->thumb_path)) {
-            throw new AppException('thumb_path is empty', 2017);
-
-        } elseif(!is_string($this->thumb_path) or mb_strlen($this->thumb_path) > 255) {
+        } elseif(!empty($this->thumb_path) and (!is_string($this->thumb_path) or mb_strlen($this->thumb_path) > 255)) {
             throw new AppException('thumb_path is incorrect', 2018);
         }
     }

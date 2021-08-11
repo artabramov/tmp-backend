@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS uploads (
     upload_path VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size INT NOT NULL,
-    thumb_path  VARCHAR(255) NOT NULL UNIQUE
+    thumb_path  VARCHAR(255) NULL
 );
 
 -- table: premiums --

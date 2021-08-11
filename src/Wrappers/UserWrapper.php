@@ -172,17 +172,6 @@ class UserWrapper
                 'id' => $user->id
             ],
         ]);
-
-        /*
-        // -- Dir --
-        if(!file_exists(UPLOAD_PATH . $user->id)) {
-            try {
-                mkdir(UPLOAD_PATH . $user->id, 0777, true);
-            } catch (\Exception $e) {
-                throw new AppException('Upload error: make dir error.');
-            }
-        }
-        */
     }
 
     public function select(string $user_token, int $user_id) {
