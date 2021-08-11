@@ -220,6 +220,15 @@ Flight::route('PUT /api/token', function() {
     );
 });
 
+// -- User auto find --
+Flight::route('GET /api/user/search/@search_text', function($search_text) {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->find(
+        (string) Flight::request()->query['user_token'],
+        (string) $search_text
+    );
+});
+
 // -- Repo insert --
 Flight::route('POST /api/repo', function() {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
@@ -434,11 +443,6 @@ Flight::route('GET /api/cache', function() {
 
 
 
-// -- User search --
-Flight::route('GET /api/search/user/@user_search', function($user_search) {
-    $route = new \App\Routes\UserSearch();
-    $route->do($user_search);
-});
 
 // -- Post query --
 Flight::route('GET /api/posts', function() {

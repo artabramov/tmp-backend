@@ -33,6 +33,7 @@ class UserWrapper
     const USER_RESET_EXPIRES = 60;
     const USER_SIGNIN_EXPIRES = 180;
     const USER_LIST_LIMIT = 10;
+    const USER_FIND_LIMIT = 5; // autofind
     const VOLUME_DEFAULT_SIZE = 1000000;
     const VOLUME_DEFAULT_INTERVAL = 'P20Y';
     const REPO_DEFAULT_NAME = 'My first hub';
@@ -422,6 +423,43 @@ class UserWrapper
         // -- End --
         Flight::json([
             'success' => 'true'
+        ]);
+    }
+
+    public function find(string $user_token, string $search_text) {
+
+        // -- User --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('user not found', 0);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('user_status is trash', 0);
+        }
+
+        // -- Search --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('id', 'id');
+
+        $query = $this->em->createNativeQuery("SELECT id FROM users WHERE (user_email LIKE :search_text OR user_name LIKE :search_text) AND id IN (SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id) LIMIT :limit", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('search_text', '%' . $search_text . '%')
+            ->setParameter('limit', self::USER_FIND_LIMIT);
+
+        $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['id']), $query->getResult());
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'users'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_status' => $n->user_status,
+                'user_email' => $n->user_email,
+                'user_name' => $n->user_name
+            ], $users)
         ]);
     }
 
