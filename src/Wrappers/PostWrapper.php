@@ -331,8 +331,25 @@ class PostWrapper
 
         // -- Files --
         foreach($uploads as $upload) {
-            if(file_exists($upload->upload_file)) {
-                unlink($upload->upload_file);
+            
+            // -- Original file --
+            if(file_exists($upload->upload_path)) {
+                try {
+                    unlink($upload->upload_path);
+
+                } catch (\Exception $e) {
+                    throw new AppException('file delete error', 0);
+                }
+            }
+
+            // -- Thumb file --
+            if(!empty($upload->thumb_path) and file_exists($upload->thumb_path)) {
+                try {
+                    unlink($upload->thumb_path);
+
+                } catch (\Exception $e) {
+                    throw new AppException('thumb delete error', 0);
+                }
             }
         }
 

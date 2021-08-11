@@ -267,21 +267,28 @@ class UploadWrapper
             throw new AppException('permission denied', 0);
         }
 
-        // -- File --
+        // -- Original file --
         if(file_exists($upload->upload_path)) {
-
             try {
                 unlink($upload->upload_path);
-                if(!empty($upload->thumb_path)) {
-                    unlink($upload->thumb_path);
-                }
-                $this->em->remove($upload);
-                $this->em->flush();
 
             } catch (\Exception $e) {
                 throw new AppException('file delete error', 0);
             }
         }
+
+        // -- Thumb file --
+        if(!empty($upload->thumb_path) and file_exists($upload->thumb_path)) {
+            try {
+                unlink($upload->thumb_path);
+
+            } catch (\Exception $e) {
+                throw new AppException('thumb delete error', 0);
+            }
+        }
+
+        $this->em->remove($upload);
+        $this->em->flush();
 
         // -- Clear cache: post terms --
         foreach($post->post_terms->getValues() as $term) {

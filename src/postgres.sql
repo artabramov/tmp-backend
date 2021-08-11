@@ -225,7 +225,7 @@ CREATE TABLE IF NOT EXISTS uploads (
     create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    comment_id  BIGINT REFERENCES comments(id) ON DELETE SET NULL,
+    comment_id  BIGINT REFERENCES comments(id) ON DELETE CASCADE NOT NULL,
     upload_name VARCHAR(255) NOT NULL,
     upload_path VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
