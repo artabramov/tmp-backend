@@ -245,9 +245,10 @@ CREATE TABLE IF NOT EXISTS premiums (
     trash_date       TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
     premium_status   premium_status NOT NULL,
-    premium_key      VARCHAR(20) NOT NULL,
+    premium_pin      VARCHAR(40) NOT NULL UNIQUE,
     premium_size     INT NOT NULL,
-    premium_interval VARCHAR(20) NOT NULL -- P2Y
+    premium_interval VARCHAR(20) NOT NULL, -- P2Y
+    premium_comment  VARCHAR(255) NULL
 );
 
 -- view: vw_users_relations --
@@ -802,7 +803,7 @@ SELECT * FROM vw_users_relations;
 
 -- test data --
 
---insert into premiums (premium_status, premium_key, premium_size, premium_interval) values ('hold', 'ABCDEF', 5000000, 'P1Y');
+--insert into premiums (premium_status, premium_pin, premium_size, premium_interval, premium_comment) values ('hold', 'ABCDEF', 5000000, 'P1Y', 'no comment');
 
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');

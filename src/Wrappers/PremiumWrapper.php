@@ -41,7 +41,7 @@ class PremiumWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function select(string $user_token, string $premium_key) {
+    public function select(string $user_token, string $premium_pin) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -54,7 +54,7 @@ class PremiumWrapper
         }
 
         // -- Premium --
-        $premium = $this->em->getRepository('\App\Entities\Premium')->findOneBy(['premium_key' => $premium_key]);
+        $premium = $this->em->getRepository('\App\Entities\Premium')->findOneBy(['premium_pin' => $premium_pin]);
 
         if(empty($premium)) {
             throw new AppException('premium not found', 0);
@@ -63,6 +63,7 @@ class PremiumWrapper
             throw new AppException('premium_status is trash', 0);
         }
 
+        $premium->user_id = $user->id;
         $premium->premium_status = 'trash';
         $this->em->persist($premium);
         $this->em->flush();
