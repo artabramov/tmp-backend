@@ -4,6 +4,7 @@
 vendor/
 public/monolog/
 public/uploads/
+public/thumbs/
 public/webapp/
 gb/
 composer.phar
