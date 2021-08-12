@@ -357,6 +357,18 @@ class CommentWrapper
                 'repo_id' => $post->repo_id,
                 'post_status' => $post->post_status,
                 'post_title' => $post->post_title,
+
+                'post_terms' => call_user_func( 
+                    function($post_terms) {
+                        return array_combine(
+                            array_map(fn($n) => $n->term_key, $post_terms), 
+                            array_map(fn($n) => $n->term_value, $post_terms));
+                    }, $post->post_terms->toArray()),
+    
+                'post_tags' => call_user_func( 
+                    function($post_tags) {
+                        return array_map(fn($n) => $n->tag_value, $post_tags);
+                    }, $post->post_tags->toArray()),
             ],
 
             'comments_limit' => self::COMMENT_LIST_LIMIT,
@@ -374,12 +386,17 @@ class CommentWrapper
                 'user_id' => $n->user_id,
                 'comment_content' => $n->comment_content,
 
-                /*
                 'comment_uploads' => array_map(fn($m) => [
                     'id' => $m->id,
-                    'create_date' => $m->create_date->format('Y-m-d H:i:s')
+                    'create_date' => $m->create_date->format('Y-m-d H:i:s'),
+                    'user_id' => $m->user_id,
+                    'comment_id' => $m->comment_id,
+                    'upload_name' => $m->upload_name,
+                    'upload_mime' => $m->upload_mime,
+                    'upload_path' => $m->upload_path,
+                    'upload_size' => $m->upload_size,
+                    'thumb_path' => $m->thumb_path
                 ], $n->comment_uploads->toArray())
-                */
 
             ], $comments)
         ]);

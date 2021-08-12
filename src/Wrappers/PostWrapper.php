@@ -382,7 +382,7 @@ class PostWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        // -- Posts --
+        // -- Posts by repo_id + post_status --
         if(!empty($repo_id) and !empty($post_status)) {
 
             // -- Repo --
@@ -400,7 +400,6 @@ class PostWrapper
             }
 
             $qb1 = $this->em->createQueryBuilder();
-            $qc1 = $this->em->createQueryBuilder();
 
             $qb1->select('post.id')->from('App\Entities\Post', 'post')
                 ->where($qb1->expr()->eq('post.repo_id', $repo->id))
@@ -409,10 +408,18 @@ class PostWrapper
                 ->setFirstResult($offset)
                 ->setMaxResults(self::POST_LIST_LIMIT);
 
-            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.repo_id', $repo->id))
-                ->andWhere($qb1->expr()->eq('post.post_status', $this->em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)));
+            $posts_count = call_user_func(
+                function($terms, $post_status) {
 
+                    $tmp = $terms->filter(function($el) use ($post_status) {
+                        return $el->term_key == $post_status . '_count';
+                    })->first();
+                    return empty($tmp) ? 0 : $tmp->term_value;
+
+                }, $repo->repo_terms, $post_status
+            );
+
+        // -- Posts by %post_title%
         } elseif(!empty($post_title)) {
 
             $qb2 = $this->em->createQueryBuilder();
@@ -434,6 +441,10 @@ class PostWrapper
                 ->where($qb1->expr()->in('post.repo_id', $qb2->getDQL()))
                 ->andWhere($qb1->expr()->like('post.post_title', "'%" . $post_title . "%'", $this->em->getConnection()->quote($post_title, \Doctrine\DBAL\ParameterType::STRING)));
 
+            $qc1_result = $qc1->getQuery()->getResult();
+            $posts_count = $qc1_result[0][1];
+
+        // -- Posts by post_tag --
         } elseif(!empty($post_tag)) {
 
             $qb3 = $this->em->createQueryBuilder();
@@ -460,19 +471,43 @@ class PostWrapper
                 ->where($qc1->expr()->in('post.repo_id', $qb3->getDQL()))
                 ->andWhere($qc1->expr()->in('post.id', $qb2->getDQL()));
 
+            $qc1_result = $qc1->getQuery()->getResult();
+            $posts_count = $qc1_result[0][1];
+
         } else {
             throw new AppException('posts not found', 0);
         }
 
         $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
-        $posts_count = $qc1->getQuery()->getResult();
 
         // -- End --
         Flight::json([
             'success' => 'true',
 
+            'repo' => [
+                'id' => $repo->id, 
+                'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $repo->user_id,
+                'repo_name' => $repo->repo_name,
+    
+                'repo_terms' => call_user_func( 
+                    function($repo_terms) {
+                        return array_combine(
+                            array_map(fn($n) => $n->term_key, $repo_terms), 
+                            array_map(fn($n) => $n->term_value, $repo_terms));
+                    }, $repo->repo_terms->toArray()),
+
+                'user_role' => [
+                    'id' => $user_role->id,
+                    'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                    'user_id' => $user_role->user_id,
+                    'repo_id' => $user_role->repo_id,
+                    'role_status' => $user_role->role_status,
+                ]
+            ],
+
             'posts_limit' => self::POST_LIST_LIMIT,
-            'posts_count' => $posts_count[0][1],
+            'posts_count' => $posts_count,
 
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
