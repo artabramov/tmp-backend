@@ -1,0 +1,1 @@
+[2021-08-13T12:18:21.820840+00:00] app.DEBUG: Property App\Entities\User::$user_phone does not exist {"method":"POST","url":"/api/user?user_email=14november%40mail.ru&user_name=art%20abramov","file":"/var/www/project.local/vendor/doctrine/persistence/lib/Doctrine/Persistence/Mapping/RuntimeReflectionService.php","line":88} []

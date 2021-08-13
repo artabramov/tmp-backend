@@ -60,16 +60,12 @@ class UserWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function insert(string $user_email, string $user_name, string $user_phone = '') {
+    public function insert(string $user_email, string $user_name) {
 
         $user_email = mb_strtolower($user_email);
-        $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
 
         if($this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
             throw new AppException('user_email is occupied', 2001);
-
-        } elseif(!empty($user_phone) and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
-            throw new AppException('user_phone is occupied', 2002);
         }
 
         // -- Filter --
@@ -90,7 +86,6 @@ class UserWrapper
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
         $user->user_email = $user_email;
-        $user->user_phone = $user_phone;
         $user->user_pass = $user->create_pass();
         $user->user_hash = sha1($user->user_pass);
         $user->user_name = $user_name;
@@ -204,7 +199,6 @@ class UserWrapper
                     'create_date' => $member->create_date->format('Y-m-d H:i:s'),
                     'user_status' => $member->user_status,
                     'user_email' => $member->user_email,
-                    'user_phone' => !empty($member->user_phone) ? $member->user_phone : '',
                     'user_name' => $member->user_name,
                     'user_terms' => call_user_func( 
                         function($user_terms) {
@@ -231,7 +225,7 @@ class UserWrapper
 
     }
 
-    public function update(string $user_token, string $user_email, string $user_phone, string $user_name) {
+    public function update(string $user_token, string $user_name) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -243,23 +237,6 @@ class UserWrapper
             throw new AppException('user_status is trash', 0);
         }
 
-        // --
-        $user_email = mb_strtolower($user_email);
-        $user_phone = empty($user_phone) ? null : preg_replace('/[^0-9]/', '', $user_phone);
-
-        if(!empty($user_email) and $user_email != $user->user_email and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new AppException('user_email is occupied', 2001);
-
-        } elseif(!empty($user_phone) and $user_phone != $user->user_phone and $this->em->getRepository('\App\Entities\User')->findOneBy(['user_phone' => $user_phone])) {
-            throw new AppException('user_phone is occupied', 0);
-        }
-
-        if($user->user_email != $user_email) {
-            $user->user_status = 'pending';
-        }
-
-        $user->user_email = $user_email;
-        $user->user_phone = $user_phone;
         $user->user_name = $user_name;
         $this->em->persist($user);
         $this->em->flush();
@@ -346,7 +323,6 @@ class UserWrapper
                 'user_status' => $user->user_status,
                 'user_token' => $user->user_token,
                 'user_email' => $user->user_email,
-                'user_phone' => !empty($user->user_phone) ? $user->user_phone : '',
                 'user_name' => $user->user_name,
                 'user_terms' => call_user_func( 
                     function($user_terms) {

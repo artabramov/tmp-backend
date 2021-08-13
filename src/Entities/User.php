@@ -60,12 +60,6 @@ class User
      */
     private $user_email;
 
-    /** 
-     * @Column(type="string", length="20", nullable="true")
-     * @var string
-     */
-    private $user_phone;
-
     private $user_pass;
 
     /** 
@@ -179,14 +173,11 @@ class User
         } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
             throw new AppException('user_email is incorrect', 1017);
 
-        } elseif(!empty($this->user_phone) and (!is_string($this->user_phone) or !preg_match("/^[0-9]{10,40}$/", $this->user_phone))) {
-            throw new AppException('user_phone is incorrect', 1018);
-
         } elseif(empty($this->user_name)) {
-            throw new AppException('user_name is empty', 1019);
+            throw new AppException('user_name is empty', 1018);
 
         } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 2 or mb_strlen($this->user_name) > 128) {
-            throw new AppException('user_name is incorrect', 1020);
+            throw new AppException('user_name is incorrect', 1019);
         }
     }
     

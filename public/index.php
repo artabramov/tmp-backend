@@ -161,8 +161,7 @@ Flight::route('POST /api/user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_email'],
-        (string) Flight::request()->query['user_name'],
-        (string) Flight::request()->query['user_phone']
+        (string) Flight::request()->query['user_name']
     );
 });
 
@@ -180,8 +179,6 @@ Flight::route('PUT /api/user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_email'],
-        (string) Flight::request()->query['user_phone'],
         (string) Flight::request()->query['user_name'],
     );
 });

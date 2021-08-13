@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS users (
     user_status user_status,
     user_token  CHAR(80) NOT NULL UNIQUE,
     user_email  VARCHAR(255) NOT NULL UNIQUE,
-    user_phone  VARCHAR(40) NULL UNIQUE,
     user_hash   VARCHAR(40) NULL,
     user_name   VARCHAR(128) NOT NULL
 );
