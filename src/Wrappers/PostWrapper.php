@@ -419,6 +419,8 @@ class PostWrapper
                 }, $repo->repo_terms, $post_status
             );
 
+            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+
         // -- Posts by %post_title%
         } elseif(!empty($post_title)) {
 
@@ -443,6 +445,7 @@ class PostWrapper
 
             $qc1_result = $qc1->getQuery()->getResult();
             $posts_count = $qc1_result[0][1];
+            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
 
         // -- Posts by post_tag --
         } elseif(!empty($post_tag)) {
@@ -473,12 +476,12 @@ class PostWrapper
 
             $qc1_result = $qc1->getQuery()->getResult();
             $posts_count = $qc1_result[0][1];
+            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
 
         } else {
-            throw new AppException('posts not found', 0);
+            $posts_count = 0;
+            $posts = [];
         }
-
-        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
 
         // -- End --
         Flight::json([

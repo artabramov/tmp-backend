@@ -65,7 +65,7 @@ class UserWrapper
         $user_email = mb_strtolower($user_email);
 
         if($this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new AppException('user_email is occupied', 2001);
+            throw new AppException('Email Is Occupied', 203);
         }
 
         // -- Filter --
@@ -74,7 +74,7 @@ class UserWrapper
         $users_count = $stmt->fetchOne();
 
         if($users_count > self::USER_REGISTER_LIMIT) {
-            throw new AppException('wait for 60 seconds', 0);
+            throw new AppException('Wait a Bit', 205);
         }
 
         // -- Create user --
@@ -159,7 +159,10 @@ class UserWrapper
         $phpmailer->addAddress($user->user_email, $user->user_name);
         $phpmailer->Subject = self::USER_REGISTER_SUBJECT;
         $phpmailer->Body = self::USER_REGISTER_BODY . $user->user_pass;
-        $phpmailer->send();
+
+        if(!$phpmailer->send()) {
+            throw new AppException('Email Sent Failed', 204);
+        }
 
         // -- End --
         Flight::json([
@@ -176,17 +179,17 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
         }
 
         // -- Member ---
         $member = $this->em->find('\App\Entities\User', $user_id);
 
         if(empty($member)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
         }
 
         // -- End --
@@ -231,10 +234,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
         }
 
         $user->user_name = $user_name;
@@ -253,10 +256,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
         }
 
         // -- User relations --
@@ -300,13 +303,13 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email, 'user_hash' => sha1($user_pass)]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 2003);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 2004);
+            throw new AppException('User Deleted', 202);
 
         } elseif(Flight::datetime()->getTimestamp() - $user->remind_date->getTimestamp() > self::USER_SIGNIN_EXPIRES) {
-            throw new AppException('user_pass expired', 2005);
+            throw new AppException('Password Expired', 206);
         }
 
         $user->user_status = 'approved';
@@ -342,13 +345,13 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
 
         } elseif(Flight::datetime()->getTimestamp() - $user->remind_date->getTimestamp() < self::USER_REMIND_EXPIRES) {
-            throw new AppException('wait for ' . self::USER_REMIND_EXPIRES . ' seconds', 0);
+            throw new AppException('Wait a Bit', 205);
         }
 
         // -- Filter --
@@ -357,7 +360,7 @@ class UserWrapper
         $users_count = $stmt->fetchOne();
 
         if($users_count > self::USER_REMIND_LIMIT) {
-            throw new AppException('wait for 60 seconds', 0);
+            throw new AppException('Wait a Bit', 205);
         }
 
         // -- Update user --
@@ -372,7 +375,10 @@ class UserWrapper
         $phpmailer->addAddress($user->user_email, $user->user_name);
         $phpmailer->Subject = self::USER_REMIND_SUBJECT;
         $phpmailer->Body = self::USER_REMIND_BODY . $user->user_pass;
-        $phpmailer->send();
+
+        if(!$phpmailer->send()) {
+            throw new AppException('Email Sent Failed', 204);
+        }
 
         // -- End --
         Flight::json([
@@ -386,10 +392,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
         }
 
         $user->user_token = $user->create_token();
@@ -408,10 +414,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User Not Found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User Deleted', 202);
         }
 
         // -- Search --
