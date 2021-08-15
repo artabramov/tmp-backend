@@ -36,12 +36,6 @@ class User
      */
     protected $remind_date;
 
-    /**
-     * @Column(type="datetime")
-     * @var DateTime
-     */
-    protected $reset_date;
-
     /** 
      * @Column(type="string", columnDefinition="ENUM('pending', 'approved', 'trash')") 
      * @var string
@@ -145,12 +139,6 @@ class User
 
         } elseif(!$this->remind_date  instanceof \DateTime) {
             throw new AppException('remind_date is incorrect', 1006);
-
-        } elseif(empty($this->reset_date)) {
-            throw new AppException('reset_date is empty', 1007);
-
-        } elseif(!$this->reset_date  instanceof \DateTime) {
-            throw new AppException('reset_date is incorrect', 1008);
 
         } elseif(empty($this->user_status)) {
             throw new AppException('user_status is empty', 1011);

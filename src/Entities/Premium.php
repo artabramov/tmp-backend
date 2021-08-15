@@ -51,7 +51,7 @@ class Premium
      * @Column(type="string", length="40", unique="true")
      * @var int
      */
-    private $premium_pin;
+    private $premium_code;
 
     /**
      * @Column(type="integer")
@@ -66,10 +66,10 @@ class Premium
     private $premium_interval;
 
     /**
-     * @Column(type="string", length="255")
+     * @Column(type="string", length="20")
      * @var int
      */
-    private $premium_comment;
+    private $referrer_key;
 
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
@@ -118,11 +118,11 @@ class Premium
         } elseif(!in_array($this->premium_status, ['hold', 'trash'])) {
             throw new AppException('premium_status is incorrect', 2209);
 
-        } elseif(empty($this->premium_pin)) {
-            throw new AppException('premium_pin is empty', 2210);
+        } elseif(empty($this->premium_code)) {
+            throw new AppException('premium_code is empty', 2210);
 
-        } elseif(!is_string($this->premium_pin) or mb_strlen($this->premium_pin) < 2 or mb_strlen($this->premium_pin) > 40) {
-            throw new AppException('premium_pin is incorrect', 2211);
+        } elseif(!is_string($this->premium_code) or mb_strlen($this->premium_code) < 2 or mb_strlen($this->premium_code) > 40) {
+            throw new AppException('premium_code is incorrect', 2211);
 
         } elseif(empty($this->premium_size)) {
             throw new AppException('premium_size is empty', 2212);
@@ -136,8 +136,8 @@ class Premium
         } elseif(!is_string($this->premium_interval) or mb_strlen($this->premium_interval) < 2 or mb_strlen($this->premium_interval) > 20) {
             throw new AppException('premium_interval is incorrect', 2215);
 
-        } elseif(!empty($this->premium_comment) and (!is_string($this->premium_comment) or mb_strlen($this->premium_comment) < 2 or mb_strlen($this->premium_comment) > 255)) {
-            throw new AppException('premium_comment is incorrect', 2216);
+        } elseif(!empty($this->referrer_key) and (!is_string($this->referrer_key) or mb_strlen($this->referrer_key) < 2 or mb_strlen($this->referrer_key) > 20)) {
+            throw new AppException('referrer_key is incorrect', 2216);
         }
     }
 }

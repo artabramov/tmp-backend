@@ -82,7 +82,6 @@ class UserWrapper
         $user->create_date = Flight::datetime();
         $user->update_date = new DateTime('1970-01-01 00:00:00');
         $user->remind_date = Flight::datetime();
-        $user->reset_date = new DateTime('1970-01-01 00:00:00');
         $user->user_status = 'pending';
         $user->user_token = $user->create_token();
         $user->user_email = $user_email;

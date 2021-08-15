@@ -442,7 +442,7 @@ Flight::route('GET /api/premium', function() {
     $wrapper = new \App\Wrappers\PremiumWrapper(Flight::get('em'));
     $wrapper->select(
         (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['premium_pin'],
+        (string) Flight::request()->query['premium_code'],
     );
 });
 
