@@ -1,13 +1,13 @@
 100 Core error
 101 Wait a bit
-102 Permission denied
+102 Action prohibited
 103 Directory make failed
 104 Directory delete failed
 105 File missing
 106 File write failed
 107 File delete failed
 108 File type not allowed
-109 SMTP failed
+109 SMTP error
 
 200 Wrapper error
 201 User not found
@@ -17,7 +17,7 @@
 205 Repository not found
 206 Repository limit exceeded
 207 Role not found
-208 Role not enough
+208 Role rights are not enough
 209 Role is occupied
 210 Role limit exceeded
 211 Post not found

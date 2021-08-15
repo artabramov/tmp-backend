@@ -81,28 +81,28 @@ class Repo
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1201);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1202);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1203);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1204);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1205);
+            throw new AppException('User ID is empty', 311);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1206);
+            throw new AppException('User ID is incorrect', 312);
 
         } elseif(empty($this->repo_name)) {
-            throw new AppException('repo_name is empty', 1207);
+            throw new AppException('Repository name is empty', 324);
 
         } elseif(!is_string($this->repo_name) or mb_strlen($this->repo_name) < 2 or mb_strlen($this->repo_name) > 128) {
-            throw new AppException('repo_name is incorrect', 1208);
+            throw new AppException('Repository name is incorrect', 325);
         }
     }
 }

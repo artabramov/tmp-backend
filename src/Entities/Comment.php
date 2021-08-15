@@ -81,34 +81,34 @@ class Comment
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1901);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1902);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1903);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1904);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1905);
+            throw new AppException('User ID is empty', 311);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1906);
+            throw new AppException('User ID is incorrect', 312);
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('post_id is empty', 1907);
+            throw new AppException('Post ID is empty', 328);
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('post_id is incorrect', 1908);
+            throw new AppException('Post ID is incorrect', 329);
 
         } elseif(empty($this->comment_content)) {
-            throw new AppException('comment_content is empty', 1909);
+            throw new AppException('Comment content is empty', 336);
 
         } elseif(!is_string($this->comment_content) or mb_strlen($this->comment_content) < 2 or mb_strlen($this->comment_content) > 65535) {
-            throw new AppException('comment content is incorrect', 1910);
+            throw new AppException('Comment content is incorrect', 337);
         }
     }
     

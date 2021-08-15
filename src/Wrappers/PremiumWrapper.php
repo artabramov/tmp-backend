@@ -5,19 +5,19 @@ use \Flight,
     \DateInterval,
     \Doctrine\DBAL\Types\Type,
     \App\Exceptions\AppException,
-    \App\Entities\User,       // 10..
-    \App\Entities\UserTerm,   // 11..
-    \App\Entities\Repo,       // 12..
-    \App\Entities\RepoTerm,   // 13..
-    \App\Entities\UserRole,   // 14..
-    \App\Entities\Post,       // 15..
-    \App\Entities\PostTerm,   // 16..
-    \App\Entities\PostTag,    // 17..
-    \App\Entities\PostAlert,  // 18..
-    \App\Entities\Comment,    // 19..
-    \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume, // 21..
-    \App\Entities\Premium;    // 22..
+    \App\Entities\User,
+    \App\Entities\UserTerm,
+    \App\Entities\Repo,
+    \App\Entities\RepoTerm,
+    \App\Entities\UserRole,
+    \App\Entities\Post,
+    \App\Entities\PostTerm,
+    \App\Entities\PostTag,
+    \App\Entities\PostAlert,
+    \App\Entities\Comment,
+    \App\Entities\Upload,
+    \App\Entities\UserVolume,
+    \App\Entities\Premium;
 
 class PremiumWrapper
 {
@@ -47,20 +47,20 @@ class PremiumWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Premium --
         $premium = $this->em->getRepository('\App\Entities\Premium')->findOneBy(['premium_code' => $premium_code]);
 
         if(empty($premium)) {
-            throw new AppException('premium not found', 0);
+            throw new AppException('Premium not found', 217);
 
         } elseif($premium->premium_status == 'trash') {
-            throw new AppException('premium_status is trash', 0);
+            throw new AppException('Premium deleted', 218);
         }
 
         $premium->user_id = $user->id;

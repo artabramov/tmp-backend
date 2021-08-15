@@ -76,34 +76,34 @@ class RepoTerm
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1301);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1302);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1303);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1304);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 1305);
+            throw new AppException('Repository ID is empty', 322);
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 1306);
+            throw new AppException('Repository ID is incorrect', 323);
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 1307);
+            throw new AppException('Term key is empty', 347);
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 1308);
+            throw new AppException('Term key is incorrect', 348);
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 1309);
+            throw new AppException('Term value is empty', 349);
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 1310);
+            throw new AppException('Term value is incorrect', 350);
         }
     }
 }

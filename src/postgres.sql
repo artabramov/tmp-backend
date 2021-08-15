@@ -801,7 +801,7 @@ SELECT * FROM vw_users_relations;
 
 -- test data --
 
---insert into premiums (premium_status, premium_code, premium_size, premium_interval, premium_comment) values ('hold', 'ABCDEF', 5000000, 'P1Y', 'no comment');
+--insert into premiums (premium_status, premium_code, premium_size, premium_interval, referrer_key) values ('hold', 'ABCDEF', 5000000, 'P1Y', 'no_key');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '31234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply3@noreply.no', '', 'user 3');

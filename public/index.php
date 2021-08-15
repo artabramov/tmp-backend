@@ -28,7 +28,7 @@ Flight::map('error', function(Throwable $e) {
             'line' => $e->getLine()
         ]);
 
-        Flight::halt(500, 'Internal Server Error!');  
+        Flight::halt(500, 'Internal Server Error');  
     }
 });
 

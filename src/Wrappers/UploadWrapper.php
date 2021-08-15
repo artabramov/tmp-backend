@@ -5,19 +5,19 @@ use \Flight,
     \DateInterval,
     \Doctrine\DBAL\Types\Type,
     \App\Exceptions\AppException,
-    \App\Entities\User,       // 10..
-    \App\Entities\UserTerm,   // 11..
-    \App\Entities\Repo,       // 12..
-    \App\Entities\RepoTerm,   // 13..
-    \App\Entities\UserRole,   // 14..
-    \App\Entities\Post,       // 15..
-    \App\Entities\PostTerm,   // 16..
-    \App\Entities\PostTag,    // 17..
-    \App\Entities\PostAlert,  // 18..
-    \App\Entities\Comment,    // 19..
-    \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume, // 21..
-    \App\Entities\Premium;    // 22..
+    \App\Entities\User,
+    \App\Entities\UserTerm,
+    \App\Entities\Repo,
+    \App\Entities\RepoTerm,
+    \App\Entities\UserRole,
+    \App\Entities\Post,
+    \App\Entities\PostTerm,
+    \App\Entities\PostTag,
+    \App\Entities\PostAlert,
+    \App\Entities\Comment,
+    \App\Entities\Upload,
+    \App\Entities\UserVolume,
+    \App\Entities\Premium;
 
 class UploadWrapper
 {
@@ -53,48 +53,48 @@ class UploadWrapper
     public function insert(string $user_token, int $comment_id, array $files) {
 
         if(empty($files)) {
-            throw new AppException('file are empty', 0);
+            throw new AppException('File missing', 105);
         }
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Comment --
         $comment = $this->em->find('App\Entities\Comment', $comment_id);
 
         if(empty($comment)) {
-            throw new AppException('comment not found', 0);
+            throw new AppException('Comment not found', 213);
         }
 
         // -- Post --
         $post = $this->em->find('App\Entities\Post', $comment->post_id);
 
         if(empty($post)) {
-            throw new AppException('post not found', 0);
+            throw new AppException('Post not found', 211);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
 
         if(empty($repo)) {
-            throw new AppException('repo not found', 0);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin' and !($comment->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('permission denied', 0);
+            throw new AppException('Action prohibited', 102);
         }
 
         // -- Filter: user volume --
@@ -115,7 +115,7 @@ class UploadWrapper
             }, $user->user_terms);
 
         if($uploads_sum >= $volume_size) {
-            throw new AppException('uploads limit exceeded', 0);
+            throw new AppException('Upload limit exceeded', 216);
         }
 
         // -- Original file --
@@ -125,7 +125,7 @@ class UploadWrapper
                 mkdir($upload_dir, 0777, true);
 
             } catch (\Exception $e) {
-                throw new AppException('make directory error', 0);
+                throw new AppException('Directory make failed', 103);
             }
         }
 
@@ -152,7 +152,7 @@ class UploadWrapper
                     mkdir($thumb_dir, 0777, true);
 
                 } catch (\Exception $e) {
-                    throw new AppException('make thumb dir error', 0);
+                    throw new AppException('Directory make failed', 103);
                 }
             }
 
@@ -184,7 +184,7 @@ class UploadWrapper
             $this->em->flush();
 
         } catch (\Exception $e) {
-            throw new AppException('file upload error', 0);
+            throw new AppException('File write failed', 106);
         }
 
         // -- Clear cache: post terms --
@@ -223,48 +223,48 @@ class UploadWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Upload --
         $upload = $this->em->find('\App\Entities\Upload', $upload_id);
 
         if(empty($upload)) {
-            throw new AppException('upload not found', 0);
+            throw new AppException('Upload not found', 215);
         }
 
         // -- Comment --
         $comment = $this->em->find('App\Entities\Comment', $upload->comment_id);
 
         if(empty($comment)) {
-            throw new AppException('comment not found', 0);
+            throw new AppException('Comment not found', 213);
         }
 
         // -- Post --
         $post = $this->em->find('App\Entities\Post', $comment->post_id);
 
         if(empty($post)) {
-            throw new AppException('post not found', 0);
+            throw new AppException('Post not found', 211);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
 
         if(empty($repo)) {
-            throw new AppException('repo not found', 0);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin' and !($upload->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('permission denied', 0);
+            throw new AppException('Action prohibited', 102);
         }
 
         // -- Original file --
@@ -273,7 +273,7 @@ class UploadWrapper
                 unlink($upload->upload_path);
 
             } catch (\Exception $e) {
-                throw new AppException('file delete error', 0);
+                throw new AppException('File delete failed', 107);
             }
         }
 
@@ -283,7 +283,7 @@ class UploadWrapper
                 unlink($upload->thumb_path);
 
             } catch (\Exception $e) {
-                throw new AppException('thumb delete error', 0);
+                throw new AppException('File delete failed', 107);
             }
         }
 
@@ -323,48 +323,48 @@ class UploadWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Upload --
         $upload = $this->em->find('\App\Entities\Upload', $upload_id);
 
         if(empty($upload)) {
-            throw new AppException('upload not found', 0);
+            throw new AppException('Upload not found', 215);
         }
 
         // -- Comment --
         $comment = $this->em->find('App\Entities\Comment', $upload->comment_id);
 
         if(empty($comment)) {
-            throw new AppException('comment not found', 0);
+            throw new AppException('Comment not found', 213);
         }
 
         // -- Post --
         $post = $this->em->find('App\Entities\Post', $comment->post_id);
 
         if(empty($post)) {
-            throw new AppException('post not found', 0);
+            throw new AppException('Post not found', 211);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
 
         if(empty($repo)) {
-            throw new AppException('repo not found', 0);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin' and !($upload->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('permission denied', 0);
+            throw new AppException('Action prohibited', 102);
         }
 
         //$upload->update_date = Flight::datetime();

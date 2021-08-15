@@ -5,19 +5,19 @@ use \Flight,
     \DateInterval,
     \Doctrine\DBAL\Types\Type,
     \App\Exceptions\AppException,
-    \App\Entities\User,       // 10..
-    \App\Entities\UserTerm,   // 11..
-    \App\Entities\Repo,       // 12..
-    \App\Entities\RepoTerm,   // 13..
-    \App\Entities\UserRole,   // 14..
-    \App\Entities\Post,       // 15..
-    \App\Entities\PostTerm,   // 16..
-    \App\Entities\PostTag,    // 17..
-    \App\Entities\PostAlert,  // 18..
-    \App\Entities\Comment,    // 19..
-    \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume, // 21..
-    \App\Entities\Premium;    // 22..
+    \App\Entities\User,
+    \App\Entities\UserTerm,
+    \App\Entities\Repo,
+    \App\Entities\RepoTerm,
+    \App\Entities\UserRole,
+    \App\Entities\Post,
+    \App\Entities\PostTerm,
+    \App\Entities\PostTag,
+    \App\Entities\PostAlert,
+    \App\Entities\Comment,
+    \App\Entities\Upload,
+    \App\Entities\UserVolume,
+    \App\Entities\Premium;
 
 class UserWrapper
 {
@@ -65,7 +65,7 @@ class UserWrapper
         $user_email = mb_strtolower($user_email);
 
         if($this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new AppException('Email Is Occupied', 203);
+            throw new AppException('User email is occupied', 203);
         }
 
         // -- Filter --
@@ -74,7 +74,7 @@ class UserWrapper
         $users_count = $stmt->fetchOne();
 
         if($users_count > self::USER_REGISTER_LIMIT) {
-            throw new AppException('Wait a Bit', 205);
+            throw new AppException('Wait a bit', 101);
         }
 
         // -- Create user --
@@ -160,7 +160,7 @@ class UserWrapper
         $phpmailer->Body = self::USER_REGISTER_BODY . $user->user_pass;
 
         if(!$phpmailer->send()) {
-            throw new AppException('Email Sent Failed', 204);
+            throw new AppException('SMTP error', 109);
         }
 
         // -- End --
@@ -178,17 +178,17 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Member ---
         $member = $this->em->find('\App\Entities\User', $user_id);
 
         if(empty($member)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
         }
 
         // -- End --
@@ -233,10 +233,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         $user->user_name = $user_name;
@@ -255,10 +255,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- User relations --
@@ -302,13 +302,13 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email, 'user_hash' => sha1($user_pass)]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
 
         } elseif(Flight::datetime()->getTimestamp() - $user->remind_date->getTimestamp() > self::USER_SIGNIN_EXPIRES) {
-            throw new AppException('Password Expired', 206);
+            throw new AppException('User password expired', 204);
         }
 
         $user->user_status = 'approved';
@@ -344,13 +344,13 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
 
         } elseif(Flight::datetime()->getTimestamp() - $user->remind_date->getTimestamp() < self::USER_REMIND_EXPIRES) {
-            throw new AppException('Wait a Bit', 205);
+            throw new AppException('Wait a bit', 101);
         }
 
         // -- Filter --
@@ -359,7 +359,7 @@ class UserWrapper
         $users_count = $stmt->fetchOne();
 
         if($users_count > self::USER_REMIND_LIMIT) {
-            throw new AppException('Wait a Bit', 205);
+            throw new AppException('Wait a bit', 101);
         }
 
         // -- Update user --
@@ -376,7 +376,7 @@ class UserWrapper
         $phpmailer->Body = self::USER_REMIND_BODY . $user->user_pass;
 
         if(!$phpmailer->send()) {
-            throw new AppException('Email Sent Failed', 204);
+            throw new AppException('SMTP error', 109);
         }
 
         // -- End --
@@ -391,10 +391,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         $user->user_token = $user->create_token();
@@ -413,10 +413,10 @@ class UserWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Search --

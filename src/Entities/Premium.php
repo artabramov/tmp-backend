@@ -92,52 +92,52 @@ class Premium
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 2201);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 2202);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 2203);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 2204);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->trash_date)) {
-            throw new AppException('trash_date is empty', 2205);
+            throw new AppException('Trash date is empty', 305);
 
         } elseif(!$this->trash_date  instanceof \DateTime) {
-            throw new AppException('trash_date is incorrect', 2206);
+            throw new AppException('Trash date is incorrect', 306);
 
         } elseif(!empty($this->user_id) and !is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 2207);
+            throw new AppException('User ID is incorrect', 312);
 
         } elseif(empty($this->premium_status)) {
-            throw new AppException('premium_status is empty', 2208);
+            throw new AppException('Premium status is empty', 355);
 
         } elseif(!in_array($this->premium_status, ['hold', 'trash'])) {
-            throw new AppException('premium_status is incorrect', 2209);
+            throw new AppException('Premium status is incorrect', 356);
 
         } elseif(empty($this->premium_code)) {
-            throw new AppException('premium_code is empty', 2210);
+            throw new AppException('Premium code is empty', 357);
 
         } elseif(!is_string($this->premium_code) or mb_strlen($this->premium_code) < 2 or mb_strlen($this->premium_code) > 40) {
-            throw new AppException('premium_code is incorrect', 2211);
+            throw new AppException('Premium code is incorrect', 358);
 
         } elseif(empty($this->premium_size)) {
-            throw new AppException('premium_size is empty', 2212);
+            throw new AppException('Premium size is empty', 359);
 
         } elseif(!is_int($this->premium_size)) {
-            throw new AppException('premium_size is incorrect', 2213);
+            throw new AppException('Premium size is incorrect', 360);
 
         } elseif(empty($this->premium_interval)) {
-            throw new AppException('premium_interval is empty', 2214);
+            throw new AppException('Premium interval is empty', 361);
 
         } elseif(!is_string($this->premium_interval) or mb_strlen($this->premium_interval) < 2 or mb_strlen($this->premium_interval) > 20) {
-            throw new AppException('premium_interval is incorrect', 2215);
+            throw new AppException('Premium interval is incorrect', 362);
 
         } elseif(!empty($this->referrer_key) and (!is_string($this->referrer_key) or mb_strlen($this->referrer_key) < 2 or mb_strlen($this->referrer_key) > 20)) {
-            throw new AppException('referrer_key is incorrect', 2216);
+            throw new AppException('Referrer key is incorrect', 363);
         }
     }
 }

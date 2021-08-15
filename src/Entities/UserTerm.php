@@ -76,34 +76,34 @@ class UserTerm
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1101);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1102);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1103);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1104);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1105);
+            throw new AppException('User ID is empty', 311);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1106);
+            throw new AppException('User ID is incorrect', 312);
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 1107);
+            throw new AppException('Term key is empty', 347);
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 1108);
+            throw new AppException('Term key is incorrect', 348);
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 1109);
+            throw new AppException('Term value is empty', 349);
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 1110);
+            throw new AppException('Term value is incorrect', 350);
         }
     }
 }

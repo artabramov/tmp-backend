@@ -5,19 +5,19 @@ use \Flight,
     \DateInterval,
     \Doctrine\DBAL\Types\Type,
     \App\Exceptions\AppException,
-    \App\Entities\User,       // 10..
-    \App\Entities\UserTerm,   // 11..
-    \App\Entities\Repo,       // 12..
-    \App\Entities\RepoTerm,   // 13..
-    \App\Entities\UserRole,   // 14..
-    \App\Entities\Post,       // 15..
-    \App\Entities\PostTerm,   // 16..
-    \App\Entities\PostTag,    // 17..
-    \App\Entities\PostAlert,  // 18..
-    \App\Entities\Comment,    // 19..
-    \App\Entities\Upload,     // 20..
-    \App\Entities\UserVolume, // 21..
-    \App\Entities\Premium;    // 22..
+    \App\Entities\User,
+    \App\Entities\UserTerm,
+    \App\Entities\Repo,
+    \App\Entities\RepoTerm,
+    \App\Entities\UserRole,
+    \App\Entities\Post,
+    \App\Entities\PostTerm,
+    \App\Entities\PostTag,
+    \App\Entities\PostAlert,
+    \App\Entities\Comment,
+    \App\Entities\Upload,
+    \App\Entities\UserVolume,
+    \App\Entities\Premium;
 
 class UserRoleWrapper
 {
@@ -53,10 +53,10 @@ class UserRoleWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Filter: user roles limit --
@@ -66,14 +66,14 @@ class UserRoleWrapper
         $roles_count = $stmt->fetchOne();
 
         if($roles_count >= self::ROLE_USER_LIMIT) {
-            throw new AppException('Role Limit Exceeded', 207);
+            throw new AppException('Role limit exceeded', 210);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
         if(empty($repo)) {
-            throw new AppException('Repo Not Found', 208);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- Filter: repo roles limit --
@@ -83,34 +83,34 @@ class UserRoleWrapper
         $roles_count = $stmt->fetchOne();
 
         if($roles_count >= self::ROLE_REPO_LIMIT) {
-            throw new AppException('Role Limit Exceeded', 207);
+            throw new AppException('Role limit exceeded', 210);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('Role Not Found', 209);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin') {
-            throw new AppException('Role Not Enough', 210);
+            throw new AppException('Role rights are not enough', 208);
         }
 
         // -- Member --
         $member = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
         if(empty($member)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($member->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Member role --
         $member_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $member->id]);
 
         if(!empty($member_role)) {
-            throw new AppException('Role Is Occupied', 211);
+            throw new AppException('Role is occupied', 209);
         }
 
         $member_role = new UserRole();
@@ -153,47 +153,47 @@ class UserRoleWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('User Not Found', 201);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('User Deleted', 202);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
         if(empty($repo)) {
-            throw new AppException('Repo Not Found', 208);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('Role Not Found', 209);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin') {
-            throw new AppException('Role Not Enough', 210);
+            throw new AppException('Role rights are not enough', 208);
         }
 
         // -- Member --
         $member = $this->em->find('App\Entities\User', $user_id);
 
         if(empty($member)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($member->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Member role --
         $member_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $member->id]);
 
         if(empty($member_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($member_role->id == $user_role->id) {
-            throw new AppException('permission denied', 0);
+            throw new AppException('Action prohibited', 102);
         }
 
         // -- Member role update --
@@ -213,47 +213,47 @@ class UserRoleWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
         if(empty($repo)) {
-            throw new AppException('repo not found', 0);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($user_role->role_status != 'admin') {
-            throw new AppException('role_status must be admin', 0);
+            throw new AppException('Role rights are not enough', 208);
         }
 
         // -- Member --
         $member = $this->em->find('App\Entities\User', $user_id);
 
         if(empty($member)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($member->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Member role --
         $member_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $member->id]);
 
         if(empty($member_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
 
         } elseif($member_role->id == $user_role->id) {
-            throw new AppException('permission denied', 0);
+            throw new AppException('Action prohibited', 102);
         }
 
         // -- Member role delete --
@@ -286,24 +286,24 @@ class UserRoleWrapper
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
 
         if(empty($user)) {
-            throw new AppException('user not found', 0);
+            throw new AppException('User not found', 201);
 
         } elseif($user->user_status == 'trash') {
-            throw new AppException('user_status is trash', 0);
+            throw new AppException('User deleted', 202);
         }
 
         // -- Repo --
         $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
         if(empty($repo)) {
-            throw new AppException('repo not found', 0);
+            throw new AppException('Repository not found', 205);
         }
 
         // -- User role --
         $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
 
         if(empty($user_role)) {
-            throw new AppException('role not found', 0);
+            throw new AppException('Role not found', 207);
         }
 
         // -- Roles --

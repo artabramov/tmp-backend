@@ -123,49 +123,49 @@ class User
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1001);
+            throw new AppException('Create date is empty', 301);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1002);
+            throw new AppException('Create date is incorrect', 302);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1003);
+            throw new AppException('Update date is empty', 303);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1004);
+            throw new AppException('Update date is incorrect', 304);
 
         } elseif(empty($this->remind_date)) {
-            throw new AppException('remind_date is empty', 1005);
+            throw new AppException('Remind date is empty', 309);
 
         } elseif(!$this->remind_date  instanceof \DateTime) {
-            throw new AppException('remind_date is incorrect', 1006);
+            throw new AppException('Remind date is incorrect', 310);
 
         } elseif(empty($this->user_status)) {
-            throw new AppException('user_status is empty', 1011);
+            throw new AppException('User status is empty', 313);
 
         } elseif(!in_array($this->user_status, ['pending', 'approved', 'trash'])) {
-            throw new AppException('user_status is incorrect', 1012);
+            throw new AppException('User status is incorrect', 314);
 
         } elseif(empty($this->user_token)) {
-            throw new AppException('user_token is empty', 1013);
+            throw new AppException('User token is empty', 315);
 
         } elseif(!is_string($this->user_token) or !preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
-            throw new AppException('user_token is incorrect', 1014);
+            throw new AppException('User token is incorrect', 316);
 
         } elseif(!empty($this->user_hash) and !preg_match("/^[0-9a-f]{40}$/", $this->user_hash)) {
-            throw new AppException('user_hash is incorrect', 1015);
+            throw new AppException('User hash is incorrect', 317);
 
         } elseif(empty($this->user_email)) {
-            throw new AppException('user_email is empty', 1016);
+            throw new AppException('User email is empty', 318);
 
         } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            throw new AppException('user_email is incorrect', 1017);
+            throw new AppException('User email is incorrect', 319);
 
         } elseif(empty($this->user_name)) {
-            throw new AppException('user_name is empty', 1018);
+            throw new AppException('User name is empty', 320);
 
         } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 2 or mb_strlen($this->user_name) > 128) {
-            throw new AppException('user_name is incorrect', 1019);
+            throw new AppException('User name is incorrect', 321);
         }
     }
     
