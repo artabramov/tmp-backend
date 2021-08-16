@@ -192,38 +192,15 @@ class UserWrapper
         }
 
         // -- End --
-        if($user->id == $member->id) {
-
-            Flight::json([
-                'success' => 'true',
-                'user' => [
-                    'id' => $member->id, 
-                    'create_date' => $member->create_date->format('Y-m-d H:i:s'),
-                    'user_status' => $member->user_status,
-                    'user_email' => $member->user_email,
-                    'user_name' => $member->user_name,
-                    'user_terms' => call_user_func( 
-                        function($user_terms) {
-                            return array_combine(
-                                array_map(fn($n) => $n->term_key, $user_terms), 
-                                array_map(fn($n) => $n->term_value, $user_terms));
-                        }, $member->user_terms->toArray()),
-                ],
-            ]);
-
-        } else {
-
-            Flight::json([
-                'success' => 'true',
-                'user' => [
-                    'id' => $member->id, 
-                    'create_date' => $member->create_date->format('Y-m-d H:i:s'),
-                    'user_status' => $member->user_status,
-                    'user_name' => $member->user_name,
-                ],
-            ]);
-
-        }
+        Flight::json([
+            'success' => 'true',
+            'user' => [
+                'id' => $member->id, 
+                'create_date' => $member->create_date->format('Y-m-d H:i:s'),
+                'user_status' => $member->user_status,
+                'user_name' => $member->user_name,
+            ],
+        ]);
 
     }
 
@@ -442,6 +419,39 @@ class UserWrapper
                 'user_name' => $n->user_name
             ], $users)
         ]);
+    }
+
+    public function auth(string $user_token) {
+
+        // -- User --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('User not found', 201);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User deleted', 202);
+        }
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+            'user' => [
+                'id' => $user->id, 
+                'create_date' => $user->create_date->format('Y-m-d H:i:s'),
+                'user_status' => $user->user_status,
+                'user_email' => $user->user_email,
+                'user_name' => $user->user_name,
+                'user_terms' => call_user_func( 
+                    function($user_terms) {
+                        return array_combine(
+                            array_map(fn($n) => $n->term_key, $user_terms), 
+                            array_map(fn($n) => $n->term_value, $user_terms));
+                    }, $user->user_terms->toArray()),
+            ],
+        ]);
+
+
     }
 
 }

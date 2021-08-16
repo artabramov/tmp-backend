@@ -217,6 +217,14 @@ Flight::route('PUT /api/token', function() {
     );
 });
 
+// -- User auth --
+Flight::route('POST /api/token', function() {
+    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
+    $wrapper->auth(
+        (string) Flight::request()->query['user_token']
+    );
+});
+
 // -- User auto find --
 Flight::route('GET /api/users/find/@like_text', function($like_text) {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
