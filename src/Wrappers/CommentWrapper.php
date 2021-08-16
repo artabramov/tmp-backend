@@ -178,6 +178,7 @@ class CommentWrapper
         }
 
         // -- Update comment --
+        $comment->update_date = Flight::datetime();
         $comment->comment_content = $comment_content;
         $this->em->persist($comment);
         $this->em->flush();

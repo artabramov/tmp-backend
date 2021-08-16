@@ -160,7 +160,7 @@ class UserWrapper
         $phpmailer->Body = self::USER_REGISTER_BODY . $user->user_pass;
 
         if(!$phpmailer->send()) {
-            throw new AppException('SMTP error', 109);
+            throw new AppException('SMTP error', 110);
         }
 
         // -- End --
@@ -216,6 +216,7 @@ class UserWrapper
             throw new AppException('User deleted', 202);
         }
 
+        $user->update_date = Flight::datetime();
         $user->user_name = $user_name;
         $this->em->persist($user);
         $this->em->flush();
@@ -353,7 +354,7 @@ class UserWrapper
         $phpmailer->Body = self::USER_REMIND_BODY . $user->user_pass;
 
         if(!$phpmailer->send()) {
-            throw new AppException('SMTP error', 109);
+            throw new AppException('SMTP error', 110);
         }
 
         // -- End --

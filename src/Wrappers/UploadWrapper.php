@@ -367,7 +367,7 @@ class UploadWrapper
             throw new AppException('Action prohibited', 102);
         }
 
-        //$upload->update_date = Flight::datetime();
+        $upload->update_date = Flight::datetime();
         $upload->upload_name = $upload_name;
         $this->em->persist($upload);
         $this->em->flush();

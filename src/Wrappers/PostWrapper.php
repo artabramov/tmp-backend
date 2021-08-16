@@ -241,6 +241,7 @@ class PostWrapper
         }
 
         // -- Post --
+        $post->update_date = Flight::datetime();
         $post->post_status = $post_status;
         $post->post_title = $post_title;
         $this->em->persist($post);

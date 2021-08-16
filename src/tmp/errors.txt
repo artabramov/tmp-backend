@@ -7,7 +7,8 @@
 106 File write failed
 107 File delete failed
 108 File type not allowed
-109 SMTP error
+109 File is too large
+110 SMTP error
 
 200 Wrapper error
 201 User not found

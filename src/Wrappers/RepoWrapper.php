@@ -187,6 +187,7 @@ class RepoWrapper
             throw new AppException('Repository not found', 205);
         }
 
+        $repo->update_date = Flight::datetime();
         $repo->repo_name = $repo_name;
         $this->em->persist($repo);
         $this->em->flush();

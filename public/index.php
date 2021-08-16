@@ -234,6 +234,15 @@ Flight::route('GET /api/users/find/@like_text', function($like_text) {
     );
 });
 
+// -- Userpic --
+Flight::route('POST /api/userpic', function() {
+    $wrapper = new \App\Wrappers\UserpicWrapper(Flight::get('em'));
+    $wrapper->insert(
+        (string) Flight::request()->query['user_token'],
+        Flight::request()->files->getData()
+    );
+});
+
 // -- Repo insert --
 Flight::route('POST /api/repo', function() {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));

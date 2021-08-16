@@ -197,6 +197,7 @@ class UserRoleWrapper
         }
 
         // -- Member role update --
+        $member_role->update_date = Flight::datetime();
         $member_role->role_status = $role_status;
         $this->em->persist($member_role);
         $this->em->flush();
