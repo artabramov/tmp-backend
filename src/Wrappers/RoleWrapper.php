@@ -19,7 +19,7 @@ use \Flight,
     \App\Entities\UserVolume,
     \App\Entities\Premium;
 
-class UserRoleWrapper
+class RoleWrapper
 {
     protected $em;
 

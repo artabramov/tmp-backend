@@ -179,7 +179,7 @@ Flight::route('PUT /api/user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_name'],
+        (string) Flight::request()->query['user_name']
     );
 });
 
@@ -234,12 +234,24 @@ Flight::route('GET /api/users/find/@like_text', function($like_text) {
     );
 });
 
-// -- Userpic --
-Flight::route('POST /api/userpic', function() {
-    $wrapper = new \App\Wrappers\UserpicWrapper(Flight::get('em'));
+// -- Thumb --
+Flight::route('POST /api/thumb', function() {
+    $files = Flight::request()->files->getData();
+    $file = array_shift($files);
+
+    $wrapper = new \App\Wrappers\ThumbWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
-        Flight::request()->files->getData()
+        !empty($file) ? $file : []
+    );
+});
+
+// -- Timezone --
+Flight::route('PUT /api/timezone', function() {
+    $wrapper = new \App\Wrappers\TimezoneWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_timezone']
     );
 });
 
@@ -291,7 +303,7 @@ Flight::route('GET /api/repos', function() {
 
 // -- Role insert --
 Flight::route('POST /api/role', function() {
-    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_email'],
@@ -302,7 +314,7 @@ Flight::route('POST /api/role', function() {
 
 // -- Role update --
 Flight::route('PUT /api/role', function() {
-    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['user_id'],
@@ -313,7 +325,7 @@ Flight::route('PUT /api/role', function() {
 
 // -- Role delete --
 Flight::route('DELETE /api/role', function() {
-    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['user_id'],
@@ -323,7 +335,7 @@ Flight::route('DELETE /api/role', function() {
 
 // -- Role query --
 Flight::route('GET /api/roles', function() {
-    $wrapper = new \App\Wrappers\UserRoleWrapper(Flight::get('em'));
+    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['repo_id'],

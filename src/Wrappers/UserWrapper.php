@@ -23,6 +23,7 @@ class UserWrapper
 {
     protected $em;
 
+    const USER_DEFAULT_TIMEZONE = 'Europe/Moscow';
     const USER_REGISTER_LIMIT = 20; // maximum registers number per 1 minute (for all users)
     const USER_REGISTER_SUBJECT = 'User register';
     const USER_REGISTER_BODY = 'One-time pass: ';
@@ -89,6 +90,17 @@ class UserWrapper
         $user->user_hash = sha1($user->user_pass);
         $user->user_name = $user_name;
         $this->em->persist($user);
+        $this->em->flush();
+
+        // -- User timezone --
+        $user_term = new UserTerm();
+        $user_term->create_date = Flight::datetime();
+        $user_term->update_date = new DateTime('1970-01-01 00:00:00');
+        $user_term->user_id = $user->id;
+        $user_term->term_key = 'user_timezone';
+        $user_term->term_value = self::USER_DEFAULT_TIMEZONE;
+        $user_term->user = $user;
+        $this->em->persist($user_term);
         $this->em->flush();
 
         // -- User volume --

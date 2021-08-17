@@ -29,6 +29,8 @@
 216 Upload limit exceeded
 217 Premium not found
 218 Premium deleted
+219 Timezone is empty
+220 Timezone is incorrect
 
 300 Entity error
 301 Create date is empty

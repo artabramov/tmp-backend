@@ -19,16 +19,16 @@ use \Flight,
     \App\Entities\UserVolume,
     \App\Entities\Premium;
 
-class UserpicWrapper
+class ThumbWrapper
 {
     protected $em;
 
-    const USERPIC_DIR = 'thumbs/';
-    const USERPIC_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff'];
-    const USERPIC_FILESIZE = 10000000; // max size in bytes
-    const USERPIC_WIDTH = 160;
-    const USERPIC_HEIGHT = 160;
-    const USERPIC_FORMAT = 'jpeg';
+    const THUMB_DIR = 'thumbs/';
+    const THUMB_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff'];
+    const THUMB_FILESIZE = 10000000; // max size in bytes
+    const THUMB_WIDTH = 367;
+    const THUMB_HEIGHT = 173;
+    const THUMB_FORMAT = 'jpeg';
 
     public function __construct($em) {
         $this->em = $em;
@@ -48,7 +48,7 @@ class UserpicWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function insert(string $user_token, array $files) {
+    public function insert(string $user_token, array $file) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -61,25 +61,27 @@ class UserpicWrapper
         }
 
         // -- Original file --
-        $tmp = $files[array_key_first($files)];
-        if(!in_array($tmp['type'], self::USERPIC_MIMES)) {
+        if(empty($file)) {
+            throw new AppException('File missing', 105);
+
+        } elseif(!in_array($file['type'], self::THUMB_MIMES)) {
             throw new AppException('File type not allowed', 108);
 
-        } elseif($tmp['size'] > self::USERPIC_FILESIZE) {
+        } elseif($file['size'] > self::THUMB_FILESIZE) {
             throw new AppException('File is too large', 109);
         }
 
         // -- User thumb --
         $thumb = new \phpThumb();
-        $thumb->setSourceFilename($tmp['tmp_name']);
-        $thumb->setParameter('w', self::USERPIC_WIDTH);
-        $thumb->setParameter('h', self::USERPIC_HEIGHT);
+        $thumb->setSourceFilename($file['tmp_name']);
+        $thumb->setParameter('w', self::THUMB_WIDTH);
+        $thumb->setParameter('h', self::THUMB_HEIGHT);
         $thumb->setParameter('zc', 1);
-        $thumb->setParameter('config_output_format', self::USERPIC_FORMAT);
+        $thumb->setParameter('config_output_format', self::THUMB_FORMAT);
         $thumb->setParameter('config_allow_src_above_docroot', true);
 
         $thumb_file = uniqid() . '.' . $thumb->config_output_format;
-        $thumb_dir = self::USERPIC_DIR . date('Y-m-d');
+        $thumb_dir = self::THUMB_DIR . date('Y-m-d');
         $thumb_path = $thumb_dir . '/' . $thumb_file;
 
         if(!file_exists($thumb_dir)) {
@@ -126,6 +128,13 @@ class UserpicWrapper
             $user_term->user = $user;
             $this->em->persist($user_term);
             $this->em->flush();
+        }
+
+        // -- Clear cache: user terms --
+        foreach($user->user_terms->getValues() as $term) {
+            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
+                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
+            }
         }
 
         // -- End --
