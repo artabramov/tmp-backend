@@ -104,6 +104,9 @@ Flight::set('phpmailer', $phpmailer);
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
     Flight::set('microtime', microtime(true));
+
+    $stmt = Flight::get('em')->getConnection()->prepare("SET TIME ZONE 'Etc/UTC'");
+    $stmt->execute();
 });
 
 Flight::after('error', function( &$params, &$output ) {
@@ -116,7 +119,6 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    //header('Content-Type: application/json');
     $params[0]['datetime']['date'] = Flight::datetime()->format('Y-m-d H:i:s');
     $params[0]['datetime']['timezone'] = Flight::datetime()->getTimezone()->getName();
     $params[0]['debug']['microtime'] = microtime(true) - Flight::get('microtime');

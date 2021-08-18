@@ -1,5 +1,7 @@
 -- drop all --
 
+SET TIME ZONE 'Etc/UTC';
+
 DROP VIEW IF EXISTS vw_users_relations;
 
 DROP TABLE IF EXISTS premiums;
