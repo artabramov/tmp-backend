@@ -511,7 +511,7 @@ class PostWrapper
             ],
 
             'posts_limit' => self::POST_LIST_LIMIT,
-            'posts_count' => $posts_count,
+            'posts_count' => (int) $posts_count,
 
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
