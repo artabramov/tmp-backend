@@ -159,7 +159,7 @@ Flight::route('GET /', function() {
 });
 
 // -- User insert --
-Flight::route('POST /api/user', function() {
+Flight::route('POST /user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_email'],
@@ -168,7 +168,7 @@ Flight::route('POST /api/user', function() {
 });
 
 // -- User select - 
-Flight::route('GET /api/user/@user_id', function($user_id) {
+Flight::route('GET /user/@user_id', function($user_id) {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->select(
         (string) Flight::request()->query['user_token'],
@@ -177,7 +177,7 @@ Flight::route('GET /api/user/@user_id', function($user_id) {
 });
 
 // -- User update --
-Flight::route('PUT /api/user', function() {
+Flight::route('PUT /user', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -186,7 +186,7 @@ Flight::route('PUT /api/user', function() {
 });
 
 // -- User list --
-Flight::route('GET /api/users', function() {
+Flight::route('GET /users', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
@@ -195,7 +195,7 @@ Flight::route('GET /api/users', function() {
 });
 
 // -- User remind --
-Flight::route('GET /api/pass', function() {
+Flight::route('GET /pass', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->remind(
         (string) Flight::request()->query['user_email']
@@ -203,7 +203,7 @@ Flight::route('GET /api/pass', function() {
 });
 
 // -- User signin --
-Flight::route('POST /api/pass', function() {
+Flight::route('POST /pass', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->signin(
         (string) Flight::request()->query['user_email'],
@@ -212,7 +212,7 @@ Flight::route('POST /api/pass', function() {
 });
 
 // -- User signout --
-Flight::route('PUT /api/token', function() {
+Flight::route('PUT /token', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->signout(
         (string) Flight::request()->query['user_token']
@@ -220,7 +220,7 @@ Flight::route('PUT /api/token', function() {
 });
 
 // -- User auth --
-Flight::route('POST /api/token', function() {
+Flight::route('POST /token', function() {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->auth(
         (string) Flight::request()->query['user_token']
@@ -228,7 +228,7 @@ Flight::route('POST /api/token', function() {
 });
 
 // -- User auto find --
-Flight::route('GET /api/users/find/@like_text', function($like_text) {
+Flight::route('GET /users/find/@like_text', function($like_text) {
     $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
     $wrapper->find(
         (string) Flight::request()->query['user_token'],
@@ -237,7 +237,7 @@ Flight::route('GET /api/users/find/@like_text', function($like_text) {
 });
 
 // -- Thumb --
-Flight::route('POST /api/thumb', function() {
+Flight::route('POST /thumb', function() {
     $files = Flight::request()->files->getData();
     $file = array_shift($files);
 
@@ -249,7 +249,7 @@ Flight::route('POST /api/thumb', function() {
 });
 
 // -- Timezone --
-Flight::route('PUT /api/timezone', function() {
+Flight::route('PUT /timezone', function() {
     $wrapper = new \App\Wrappers\TimezoneWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -258,7 +258,7 @@ Flight::route('PUT /api/timezone', function() {
 });
 
 // -- Repo insert --
-Flight::route('POST /api/repo', function() {
+Flight::route('POST /repo', function() {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
@@ -267,7 +267,7 @@ Flight::route('POST /api/repo', function() {
 });
 
 // -- Repo select - 
-Flight::route('GET /api/repo/@repo_id', function($repo_id) {
+Flight::route('GET /repo/@repo_id', function($repo_id) {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
     $wrapper->select(
         (string) Flight::request()->query['user_token'],
@@ -276,7 +276,7 @@ Flight::route('GET /api/repo/@repo_id', function($repo_id) {
 });
 
 // -- Repo update --
-Flight::route('PUT /api/repo/@repo_id', function($repo_id) {
+Flight::route('PUT /repo/@repo_id', function($repo_id) {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -286,7 +286,7 @@ Flight::route('PUT /api/repo/@repo_id', function($repo_id) {
 });
 
 // -- Repo delete --
-Flight::route('DELETE /api/repo/@repo_id', function($repo_id) {
+Flight::route('DELETE /repo/@repo_id', function($repo_id) {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
@@ -295,7 +295,7 @@ Flight::route('DELETE /api/repo/@repo_id', function($repo_id) {
 });
 
 // -- Repos list --
-Flight::route('GET /api/repos', function() {
+Flight::route('GET /repos', function() {
     $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
@@ -304,7 +304,7 @@ Flight::route('GET /api/repos', function() {
 });
 
 // -- Role insert --
-Flight::route('POST /api/role', function() {
+Flight::route('POST /role', function() {
     $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
@@ -315,7 +315,7 @@ Flight::route('POST /api/role', function() {
 });
 
 // -- Role update --
-Flight::route('PUT /api/role', function() {
+Flight::route('PUT /role', function() {
     $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -326,7 +326,7 @@ Flight::route('PUT /api/role', function() {
 });
 
 // -- Role delete --
-Flight::route('DELETE /api/role', function() {
+Flight::route('DELETE /role', function() {
     $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
@@ -336,7 +336,7 @@ Flight::route('DELETE /api/role', function() {
 });
 
 // -- Role query --
-Flight::route('GET /api/roles', function() {
+Flight::route('GET /roles', function() {
     $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
@@ -346,7 +346,7 @@ Flight::route('GET /api/roles', function() {
 });
 
 // -- Post insert --
-Flight::route('POST /api/post', function() {
+Flight::route('POST /post', function() {
     $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
@@ -358,7 +358,7 @@ Flight::route('POST /api/post', function() {
 });
 
 // -- Post select --
-Flight::route('GET /api/post/@post_id', function($post_id) {
+Flight::route('GET /post/@post_id', function($post_id) {
     $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
     $wrapper->select(
         (string) Flight::request()->query['user_token'],
@@ -367,7 +367,7 @@ Flight::route('GET /api/post/@post_id', function($post_id) {
 });
 
 // -- Post update --
-Flight::route('PUT /api/post/@post_id', function($post_id) {
+Flight::route('PUT /post/@post_id', function($post_id) {
     $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -379,7 +379,7 @@ Flight::route('PUT /api/post/@post_id', function($post_id) {
 });
 
 // -- Post delete --
-Flight::route('DELETE /api/post/@post_id', function($post_id) {
+Flight::route('DELETE /post/@post_id', function($post_id) {
     $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
@@ -388,7 +388,7 @@ Flight::route('DELETE /api/post/@post_id', function($post_id) {
 });
 
 // -- Posts list --
-Flight::route('GET /api/posts', function() {
+Flight::route('GET /posts', function() {
     $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
@@ -401,7 +401,7 @@ Flight::route('GET /api/posts', function() {
 });
 
 // -- Comment insert --
-Flight::route('POST /api/comment', function() {
+Flight::route('POST /comment', function() {
     $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
@@ -411,7 +411,7 @@ Flight::route('POST /api/comment', function() {
 });
 
 // -- Comment update --
-Flight::route('PUT /api/comment/@comment_id', function($comment_id) {
+Flight::route('PUT /comment/@comment_id', function($comment_id) {
     $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -421,7 +421,7 @@ Flight::route('PUT /api/comment/@comment_id', function($comment_id) {
 });
 
 // -- Comment delete --
-Flight::route('DELETE /api/comment/@comment_id', function($comment_id) {
+Flight::route('DELETE /comment/@comment_id', function($comment_id) {
     $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
@@ -430,7 +430,7 @@ Flight::route('DELETE /api/comment/@comment_id', function($comment_id) {
 });
 
 // -- Comment list --
-Flight::route('GET /api/comments', function() {
+Flight::route('GET /comments', function() {
     $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],
@@ -440,7 +440,7 @@ Flight::route('GET /api/comments', function() {
 });
 
 // -- Upload insert --
-Flight::route('POST /api/upload', function() {
+Flight::route('POST /upload', function() {
     $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
     $wrapper->insert(
         (string) Flight::request()->query['user_token'],
@@ -450,7 +450,7 @@ Flight::route('POST /api/upload', function() {
 });
 
 // -- Upload update --
-Flight::route('PUT /api/upload/@upload_id', function($upload_id) {
+Flight::route('PUT /upload/@upload_id', function($upload_id) {
     $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
@@ -460,7 +460,7 @@ Flight::route('PUT /api/upload/@upload_id', function($upload_id) {
 });
 
 // -- Upload delete --
-Flight::route('DELETE /api/upload/@upload_id', function($upload_id) {
+Flight::route('DELETE /upload/@upload_id', function($upload_id) {
     $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
     $wrapper->delete(
         (string) Flight::request()->query['user_token'],
@@ -469,7 +469,7 @@ Flight::route('DELETE /api/upload/@upload_id', function($upload_id) {
 });
 
 // -- Premium select --
-Flight::route('GET /api/premium', function() {
+Flight::route('GET /premium', function() {
     $wrapper = new \App\Wrappers\PremiumWrapper(Flight::get('em'));
     $wrapper->select(
         (string) Flight::request()->query['user_token'],
@@ -478,13 +478,13 @@ Flight::route('GET /api/premium', function() {
 });
 
 // -- POST cache --
-Flight::route('POST /api/cache', function() {
+Flight::route('POST /cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
     $wrapper->create();
 });
 
 // -- GET cache --
-Flight::route('GET /api/cache', function() {
+Flight::route('GET /cache', function() {
     $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
     $wrapper->read();
 });
