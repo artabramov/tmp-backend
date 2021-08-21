@@ -2,7 +2,7 @@
 .vscode/
 .xdebug/
 vendor/
-public/monolog/
+monolog/
 public/uploads/
 public/thumbs/
 public/webapp/

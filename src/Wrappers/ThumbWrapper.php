@@ -139,7 +139,10 @@ class ThumbWrapper
 
         // -- End --
         Flight::json([
-            'success' => 'true'
+            'success' => 'true',
+            'user_term' => [
+                'thumb_path' =>$thumb_path
+            ]
         ]);
     }
 

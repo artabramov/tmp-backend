@@ -248,12 +248,21 @@ Flight::route('POST /thumb', function() {
     );
 });
 
-// -- Timezone --
+// -- User timezone --
 Flight::route('PUT /timezone', function() {
     $wrapper = new \App\Wrappers\TimezoneWrapper(Flight::get('em'));
     $wrapper->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_timezone']
+    );
+});
+
+// -- User bio --
+Flight::route('PUT /bio', function() {
+    $wrapper = new \App\Wrappers\BioWrapper(Flight::get('em'));
+    $wrapper->update(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_bio']
     );
 });
 

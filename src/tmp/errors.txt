@@ -31,6 +31,7 @@
 218 Premium deleted
 219 Timezone is empty
 220 Timezone is incorrect
+221 User bio is incorrect
 
 300 Entity error
 301 Create date is empty
