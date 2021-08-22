@@ -66,6 +66,18 @@ class Premium
     private $premium_interval;
 
     /**
+     * @Column(type="integer", nullable="true")
+     * @var int
+     */
+    private $premium_sum;
+
+    /** 
+     * @Column(type="string", columnDefinition="ENUM('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY')") 
+     * @var string
+     */
+    private $premium_currency;
+
+    /**
      * @Column(type="string", length="20")
      * @var int
      */
@@ -136,8 +148,14 @@ class Premium
         } elseif(!is_string($this->premium_interval) or mb_strlen($this->premium_interval) < 2 or mb_strlen($this->premium_interval) > 20) {
             throw new AppException('Premium interval is incorrect', 362);
 
+        } elseif(!empty($this->premium_sum) and !is_int($this->premium_sum)) {
+            throw new AppException('Premium sum is incorrect', 363);
+
+        } elseif(!empty($this->premium_currency) and !in_array($this->premium_currency, ['RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY'])) {
+            throw new AppException('Premium currency is incorrect', 364);
+
         } elseif(!empty($this->referrer_key) and (!is_string($this->referrer_key) or mb_strlen($this->referrer_key) < 2 or mb_strlen($this->referrer_key) > 20)) {
-            throw new AppException('Referrer key is incorrect', 363);
+            throw new AppException('Referrer key is incorrect', 365);
         }
     }
 }

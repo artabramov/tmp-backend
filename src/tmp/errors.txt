@@ -96,6 +96,8 @@
 360 Premium size is incorrect
 361 Premium interval is empty
 362 Premium interval is incorrect
-363 Referrer key is incorrect
-364 Alerts count is empty
-365 Alerts count is incorrect
+363 Premium sum is incorrect
+364 Premium currency is incorrect
+365 Referrer key is incorrect
+366 Alerts count is empty
+367 Alerts count is incorrect

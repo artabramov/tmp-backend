@@ -100,10 +100,10 @@ class PostAlert
             throw new AppException('Post ID is incorrect', 329);
 
         } elseif(empty($this->alerts_count)) {
-            throw new AppException('Alerts count is empty', 364);
+            throw new AppException('Alerts count is empty', 366);
 
         } elseif(!is_int($this->alerts_count)) {
-            throw new AppException('Alerts count is incorrect', 365);
+            throw new AppException('Alerts count is incorrect', 367);
         }
     }
 }
