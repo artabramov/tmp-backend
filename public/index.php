@@ -403,8 +403,26 @@ Flight::route('GET /posts', function() {
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['repo_id'],
         (string) Flight::request()->query['post_status'],
-        (string) Flight::request()->query['post_title'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
+// -- Posts by tag --
+Flight::route('GET /bytag', function() {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->bytag(
+        (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['post_tag'],
+        (int) Flight::request()->query['offset'],
+    );
+});
+
+// -- Posts by title --
+Flight::route('GET /bytitle', function() {
+    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
+    $wrapper->bytitle(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['post_title'],
         (int) Flight::request()->query['offset'],
     );
 });

@@ -3,6 +3,10 @@
 SET TIME ZONE 'Etc/UTC';
 
 DROP VIEW IF EXISTS vw_users_relations;
+DROP VIEW IF EXISTS vw_users_alerts;
+DROP VIEW IF EXISTS vw_repos_alerts;
+DROP VIEW IF EXISTS vw_posts_alerts;
+DROP VIEW IF EXISTS vw_comments_alerts;
 
 DROP TABLE IF EXISTS premiums;
 DROP TABLE IF EXISTS users_terms;
@@ -478,12 +482,8 @@ CREATE TRIGGER post_update AFTER UPDATE ON posts FOR EACH ROW EXECUTE PROCEDURE 
 CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
     DECLARE
         com_count INTEGER;
-        --ale_count INTEGER;
-        --rep_id INTEGER;
         i INTEGER;
     BEGIN
-        --SELECT posts.repo_id INTO rep_id FROM posts WHERE posts.id = NEW.post_id LIMIT 1;
-
         -- users alerts
         FOR i IN 
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN
@@ -496,49 +496,6 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
                 NEW.id
             );
         END LOOP;
-
-        -- posts alerts
-
-        -- posts alerts
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    SELECT COUNT(id) INTO ale_count FROM comments_alerts WHERE user_id = i AND comment_id IN 
-        --        (SELECT id FROM comments WHERE comments.post_id = NEW.post_id);
-        --
-        --    IF EXISTS (SELECT id FROM posts_alerts WHERE user_id = i AND post_id = NEW.post_id) THEN
-        --        UPDATE posts_alerts SET alerts_count = ale_count WHERE user_id = i AND post_id = NEW.post_id;
-        --    ELSE
-        --        INSERT INTO posts_alerts (user_id, post_id, alerts_count) VALUES (i, NEW.post_id, 1);
-        --    END IF;
-        --END LOOP;
-
-        -- repos alerts
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    SELECT COALESCE(SUM(alerts_count), 0) INTO ale_count FROM posts_alerts WHERE user_id = i AND post_id = NEW.post_id;
-        --
-        --    IF EXISTS (SELECT id FROM repos_alerts WHERE user_id = i AND repo_id = rep_id)
-        --    THEN
-        --        UPDATE repos_alerts SET alerts_count = ale_count WHERE user_id = i AND repo_id = rep_id;
-        --    ELSE
-        --        INSERT INTO repos_alerts (user_id, repo_id, alerts_count) VALUES (i, rep_id, 1);
-        --    END IF;
-        --END LOOP;
-
-        -- users terms: alerts_count
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    SELECT COALESCE(SUM(alerts_count), 0) INTO ale_count FROM repos_alerts WHERE user_id = i;
-        --
-        --    IF EXISTS (SELECT id FROM users_terms WHERE user_id = i AND term_key = 'alerts_count') THEN
-        --        UPDATE users_terms SET term_value = ale_count WHERE user_id = i AND term_key = 'alerts_count';
-        --    ELSE
-        --        INSERT INTO users_terms (user_id, term_key, term_value) VALUES (i, 'alerts_count', ale_count);
-        --    END IF;
-        --END LOOP;
 
         -- post terms: comments_count
         SELECT COUNT(id) INTO com_count FROM comments WHERE post_id = NEW.post_id;
@@ -560,13 +517,8 @@ CREATE TRIGGER comment_insert AFTER INSERT ON comments FOR EACH ROW EXECUTE PROC
 CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
     DECLARE
         com_count INTEGER;
-        --ale_count INTEGER;
-        --rep_id INTEGER;
         i INTEGER;
     BEGIN
-        --SELECT posts.repo_id INTO rep_id FROM posts WHERE posts.id = OLD.post_id LIMIT 1;
-        --INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'rep_id', rep_id);
-
         -- users alerts
         FOR i IN 
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN
@@ -574,47 +526,6 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
         LOOP
             DELETE FROM alerts WHERE user_id = i AND comment_id = OLD.id;
         END LOOP;
-
-        -- posts alerts
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    SELECT COUNT(id) INTO ale_count FROM comments_alerts WHERE user_id = i AND comment_id IN 
-        --        (SELECT id FROM comments WHERE comments.post_id = OLD.post_id);
-        --
-        --    IF ale_count = 0 THEN
-        --        DELETE FROM posts_alerts WHERE user_id = i AND post_id = OLD.post_id;
-        --    ELSE
-        --        UPDATE posts_alerts SET alerts_count = ale_count WHERE user_id = i AND post_id = OLD.post_id;
-        --    END IF;
-        --END LOOP;
-
-        -- repos alerts
-        
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    INSERT INTO users_terms (user_id, term_key, term_value) VALUES (id, 'wtf2', 'wtf2');
-            --SELECT COALESCE(SUM(alerts_count), 0) INTO ale_count FROM posts_alerts WHERE user_id = i AND post_id = OLD.post_id;
-            --IF ale_count = 0 THEN
-            --    DELETE FROM repos_alerts WHERE user_id = i AND repo_id = rep_id;
-            --ELSE
-            --    UPDATE repos_alerts SET alerts_count = ale_count WHERE user_id = i AND repo_id = rep_id;
-            --END IF;
-        --END LOOP;
-
-        -- users terms: alerts_count
-        --FOR i IN 
-        --    SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> OLD.user_id AND users_roles.repo_id = rep_id
-        --LOOP
-        --    SELECT COALESCE(SUM(alerts_count), 0) INTO ale_count FROM repos_alerts WHERE user_id = i;
-        --
-        --    IF ale_count = 0 THEN
-        --        DELETE FROM users_terms WHERE user_id = i AND term_key = 'alerts_count';
-        --    ELSE
-        --        UPDATE users_terms SET term_value = ale_count WHERE user_id = i AND term_key = 'alerts_count';
-        --    END IF;
-        --END LOOP;
 
         -- posts terms: comments_count
         SELECT COUNT(id) INTO com_count FROM comments WHERE post_id = OLD.post_id;

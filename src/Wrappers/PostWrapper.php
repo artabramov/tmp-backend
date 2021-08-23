@@ -386,7 +386,7 @@ class PostWrapper
         ]);
     }
 
-    public function list(string $user_token, int $repo_id, string $post_status, string $post_title, string $post_tag, int $offset) {
+    public function list(string $user_token, int $repo_id, string $post_status, int $offset) {
 
         // -- User auth --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
@@ -398,112 +398,48 @@ class PostWrapper
             throw new AppException('User deleted', 202);
         }
 
-        // -- Posts by repo_id + post_status --
-        if(!empty($repo_id) and !empty($post_status)) {
+        // -- Repo --
+        $repo = $this->em->find('App\Entities\Repo', $repo_id);
 
-            // -- Repo --
-            $repo = $this->em->find('App\Entities\Repo', $repo_id);
-
-            if(empty($repo)) {
-                throw new AppException('Repository not found', 205);
-            }
-
-            // -- User role --
-            $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-            if(empty($user_role)) {
-                throw new AppException('Role not found', 207);
-            }
-
-            $qb1 = $this->em->createQueryBuilder();
-
-            $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->eq('post.repo_id', $repo->id))
-                ->andWhere($qb1->expr()->eq('post.post_status', $this->em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)))
-                ->orderBy('post.id', 'DESC')
-                ->setFirstResult($offset)
-                ->setMaxResults(self::POST_LIST_LIMIT);
-
-            $posts_count = call_user_func(
-                function($terms, $post_status) {
-
-                    $tmp = $terms->filter(function($el) use ($post_status) {
-                        return $el->term_key == $post_status . '_count';
-                    })->first();
-                    return empty($tmp) ? 0 : $tmp->term_value;
-
-                }, $repo->repo_terms, $post_status
-            );
-
-            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
-
-        // -- Posts by %post_title%
-        } elseif(!empty($post_title)) {
-
-            $qb2 = $this->em->createQueryBuilder();
-            $qb1 = $this->em->createQueryBuilder();
-            $qc1 = $this->em->createQueryBuilder();
-
-            $qb2->select('role.repo_id')
-                ->from('App\Entities\UserRole', 'role')
-                ->where($qb2->expr()->eq('role.user_id', $user->id));
-
-            $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->in('post.repo_id', $qb2->getDQL()))
-                ->andWhere($qb1->expr()->like('post.post_title', "'%" . $post_title . "%'", $this->em->getConnection()->quote($post_title, \Doctrine\DBAL\ParameterType::STRING)))
-                ->orderBy('post.id', 'DESC')
-                ->setFirstResult($offset)
-                ->setMaxResults(self::POST_LIST_LIMIT);
-
-            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->in('post.repo_id', $qb2->getDQL()))
-                ->andWhere($qb1->expr()->like('post.post_title', "'%" . $post_title . "%'", $this->em->getConnection()->quote($post_title, \Doctrine\DBAL\ParameterType::STRING)));
-
-            $qc1_result = $qc1->getQuery()->getResult();
-            $posts_count = $qc1_result[0][1];
-            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
-
-        // -- Posts by post_tag --
-        } elseif(!empty($post_tag)) {
-
-            $qb3 = $this->em->createQueryBuilder();
-            $qb2 = $this->em->createQueryBuilder();
-            $qb1 = $this->em->createQueryBuilder();
-            $qc1 = $this->em->createQueryBuilder();
-
-            $qb3->select('role.repo_id')
-                ->from('App\Entities\UserRole', 'role')
-                ->where($qb2->expr()->eq('role.user_id', $user->id));
-
-            $qb2->select('tag.post_id')
-                ->from('App\Entities\PostTag', 'tag')
-                ->where($qb2->expr()->eq('tag.tag_value', "'" . $post_tag . "'", $this->em->getConnection()->quote($post_tag, \Doctrine\DBAL\ParameterType::STRING)));
-    
-            $qb1->select('post.id')->from('App\Entities\Post', 'post')
-                ->where($qb1->expr()->in('post.repo_id', $qb3->getDQL()))
-                ->andWhere($qb1->expr()->in('post.id', $qb2->getDQL()))
-                ->orderBy('post.id', 'DESC')
-                ->setFirstResult($offset)
-                ->setMaxResults(self::POST_LIST_LIMIT);
-
-            $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
-                ->where($qc1->expr()->in('post.repo_id', $qb3->getDQL()))
-                ->andWhere($qc1->expr()->in('post.id', $qb2->getDQL()));
-
-            $qc1_result = $qc1->getQuery()->getResult();
-            $posts_count = $qc1_result[0][1];
-            $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
-
-        } else {
-            $posts_count = 0;
-            $posts = [];
+        if(empty($repo)) {
+            throw new AppException('Repository not found', 205);
         }
+
+        // -- User role --
+        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
+
+        if(empty($user_role)) {
+            throw new AppException('Role not found', 207);
+        }
+
+        $qb1 = $this->em->createQueryBuilder();
+
+        $qb1->select('post.id')->from('App\Entities\Post', 'post')
+            ->where($qb1->expr()->eq('post.repo_id', $repo->id))
+            ->andWhere($qb1->expr()->eq('post.post_status', $this->em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)))
+            ->orderBy('post.id', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::POST_LIST_LIMIT);
+
+        $posts_count = call_user_func(
+            function($terms, $post_status) {
+
+                $tmp = $terms->filter(function($el) use ($post_status) {
+                    return $el->term_key == $post_status . '_count';
+                })->first();
+                return empty($tmp) ? 0 : $tmp->term_value;
+
+            }, $repo->repo_terms, $post_status
+        );
+
+        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+
+
 
         // -- End --
         Flight::json([
             'success' => 'true',
 
-            /*
             'repo' => [
                 'id' => $repo->id, 
                 'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
@@ -525,7 +461,6 @@ class PostWrapper
                     'role_status' => $user_role->role_status,
                 ]
             ],
-            */
 
             'posts_limit' => self::POST_LIST_LIMIT,
             'posts_count' => (int) $posts_count,
@@ -564,14 +499,201 @@ class PostWrapper
                         return array_map(fn($m) => $m->tag_value, $post_tags);
                     }, $n->post_tags->toArray()),
 
-                /*
-                'post_alerts' => call_user_func( 
-                    function($post_alerts) {
+            ], $posts)
+        ]);
+    }
+
+    public function bytag(string $user_token, string $post_tag, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('User not found', 201);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User deleted', 202);
+        }
+
+
+
+        $qb3 = $this->em->createQueryBuilder();
+        $qb2 = $this->em->createQueryBuilder();
+        $qb1 = $this->em->createQueryBuilder();
+        $qc1 = $this->em->createQueryBuilder();
+
+        $qb3->select('role.repo_id')
+            ->from('App\Entities\UserRole', 'role')
+            ->where($qb2->expr()->eq('role.user_id', $user->id));
+
+        $qb2->select('tag.post_id')
+            ->from('App\Entities\PostTag', 'tag')
+            ->where($qb2->expr()->eq('tag.tag_value', "'" . $post_tag . "'", $this->em->getConnection()->quote($post_tag, \Doctrine\DBAL\ParameterType::STRING)));
+
+        $qb1->select('post.id')->from('App\Entities\Post', 'post')
+            ->where($qb1->expr()->in('post.repo_id', $qb3->getDQL()))
+            ->andWhere($qb1->expr()->in('post.id', $qb2->getDQL()))
+            ->orderBy('post.id', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::POST_LIST_LIMIT);
+
+        $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
+            ->where($qc1->expr()->in('post.repo_id', $qb3->getDQL()))
+            ->andWhere($qc1->expr()->in('post.id', $qb2->getDQL()));
+
+        $qc1_result = $qc1->getQuery()->getResult();
+        $posts_count = $qc1_result[0][1];
+        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'posts_limit' => self::POST_LIST_LIMIT,
+            'posts_count' => (int) $posts_count,
+
+            'posts'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $n->user_id,
+                'repo_id' => $n->repo_id,
+                'post_status' => $n->post_status,
+                'post_title' => $n->post_title,
+
+                'post_alerts' => [
+                    'alerts_count' => (int) call_user_func(
+                        function($user_id, $post_id) {
+                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+                            $rsm->addScalarResult('alerts_count', 'alerts_count');
+                            $query = $this->em
+                                ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
+                                ->setParameter('user_id', $user_id)
+                                ->setParameter('post_id', $post_id);
+                            $query_result = $query->getResult();
+                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+                    }, $user->id, $n->id)
+                ],
+
+                'post_terms' => call_user_func( 
+                    function($post_terms) {
                         return array_combine(
-                            array_map(fn($m) => $m->user_id, $post_alerts), 
-                            array_map(fn($m) => $m->alerts_count, $post_alerts));
-                    }, $n->post_alerts->toArray()),
-                */
+                            array_map(fn($m) => $m->term_key, $post_terms), 
+                            array_map(fn($m) => $m->term_value, $post_terms));
+                    }, $n->post_terms->toArray()),
+    
+                'post_tags' => call_user_func( 
+                    function($post_tags) {
+                        return array_map(fn($m) => $m->tag_value, $post_tags);
+                    }, $n->post_tags->toArray()),
+
+                'repo' => call_user_func(
+                    function($repo_id) {
+                        $repo = $this->em->find('\App\Entities\Repo', $repo_id);
+                        return [
+                            'id' => $repo->id, 
+                            'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                            'user_id' => $repo->user_id,
+                            'repo_name' => $repo->repo_name
+                        ];
+                    }, $n->repo_id
+                ),
+
+            ], $posts)
+        ]);
+    }
+
+
+
+
+    public function bytitle(string $user_token, string $post_title, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('User not found', 201);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User deleted', 202);
+        }
+
+        $qb2 = $this->em->createQueryBuilder();
+        $qb1 = $this->em->createQueryBuilder();
+        $qc1 = $this->em->createQueryBuilder();
+
+        $qb2->select('role.repo_id')
+            ->from('App\Entities\UserRole', 'role')
+            ->where($qb2->expr()->eq('role.user_id', $user->id));
+
+        $qb1->select('post.id')->from('App\Entities\Post', 'post')
+            ->where($qb1->expr()->in('post.repo_id', $qb2->getDQL()))
+            ->andWhere($qb1->expr()->like('post.post_title', "'%" . $post_title . "%'", $this->em->getConnection()->quote($post_title, \Doctrine\DBAL\ParameterType::STRING)))
+            ->orderBy('post.id', 'DESC')
+            ->setFirstResult($offset)
+            ->setMaxResults(self::POST_LIST_LIMIT);
+
+        $qc1->select('count(post.id)')->from('App\Entities\Post', 'post')
+            ->where($qb1->expr()->in('post.repo_id', $qb2->getDQL()))
+            ->andWhere($qb1->expr()->like('post.post_title', "'%" . $post_title . "%'", $this->em->getConnection()->quote($post_title, \Doctrine\DBAL\ParameterType::STRING)));
+
+        $qc1_result = $qc1->getQuery()->getResult();
+        $posts_count = $qc1_result[0][1];
+        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'posts_limit' => self::POST_LIST_LIMIT,
+            'posts_count' => (int) $posts_count,
+
+            'posts'=> array_map(fn($n) => [
+                'id' => $n->id,
+                'create_date' => $n->create_date->format('Y-m-d H:i:s'),
+                'user_id' => $n->user_id,
+                'repo_id' => $n->repo_id,
+                'post_status' => $n->post_status,
+                'post_title' => $n->post_title,
+
+                'post_alerts' => [
+                    'alerts_count' => (int) call_user_func(
+                        function($user_id, $post_id) {
+                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+                            $rsm->addScalarResult('alerts_count', 'alerts_count');
+                            $query = $this->em
+                                ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
+                                ->setParameter('user_id', $user_id)
+                                ->setParameter('post_id', $post_id);
+                            $query_result = $query->getResult();
+                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+                    }, $user->id, $n->id)
+                ],
+
+                'post_terms' => call_user_func( 
+                    function($post_terms) {
+                        return array_combine(
+                            array_map(fn($m) => $m->term_key, $post_terms), 
+                            array_map(fn($m) => $m->term_value, $post_terms));
+                    }, $n->post_terms->toArray()),
+    
+                'post_tags' => call_user_func( 
+                    function($post_tags) {
+                        return array_map(fn($m) => $m->tag_value, $post_tags);
+                    }, $n->post_tags->toArray()),
+
+                'repo' => call_user_func(
+                    function($repo_id) {
+                        $repo = $this->em->find('\App\Entities\Repo', $repo_id);
+                        return [
+                            'id' => $repo->id, 
+                            'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                            'user_id' => $repo->user_id,
+                            'repo_name' => $repo->repo_name
+                        ];
+                    }, $n->repo_id
+                ),
 
             ], $posts)
         ]);
