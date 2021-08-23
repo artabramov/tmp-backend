@@ -160,6 +160,17 @@ class PostWrapper
             throw new AppException('Role not found', 207);
         }
 
+        // -- Post alerts --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('alerts_count', 'alerts_count');
+
+        $query = $this->em
+            ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('post_id', $post->id);
+        $query_result = $query->getResult();
+        $alerts_count = !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+
         // -- End --
         Flight::json([
             'success' => 'true',
@@ -171,6 +182,10 @@ class PostWrapper
                 'repo_id' => $post->repo_id,
                 'post_status' => $post->post_status,
                 'post_title' => $post->post_title,
+
+                'post_alerts' => [
+                    'alerts_count' => $alerts_count
+                ],
 
                 'post_terms' => call_user_func( 
                     function($post_terms) {
@@ -488,6 +503,7 @@ class PostWrapper
         Flight::json([
             'success' => 'true',
 
+            /*
             'repo' => [
                 'id' => $repo->id, 
                 'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
@@ -509,6 +525,7 @@ class PostWrapper
                     'role_status' => $user_role->role_status,
                 ]
             ],
+            */
 
             'posts_limit' => self::POST_LIST_LIMIT,
             'posts_count' => (int) $posts_count,
@@ -520,6 +537,20 @@ class PostWrapper
                 'repo_id' => $n->repo_id,
                 'post_status' => $n->post_status,
                 'post_title' => $n->post_title,
+
+                'post_alerts' => [
+                    'alerts_count' => (int) call_user_func(
+                        function($user_id, $post_id) {
+                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+                            $rsm->addScalarResult('alerts_count', 'alerts_count');
+                            $query = $this->em
+                                ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
+                                ->setParameter('user_id', $user_id)
+                                ->setParameter('post_id', $post_id);
+                            $query_result = $query->getResult();
+                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+                    }, $user->id, $n->id)
+                ],
 
                 'post_terms' => call_user_func( 
                     function($post_terms) {
@@ -533,12 +564,14 @@ class PostWrapper
                         return array_map(fn($m) => $m->tag_value, $post_tags);
                     }, $n->post_tags->toArray()),
 
+                /*
                 'post_alerts' => call_user_func( 
                     function($post_alerts) {
                         return array_combine(
                             array_map(fn($m) => $m->user_id, $post_alerts), 
                             array_map(fn($m) => $m->alerts_count, $post_alerts));
                     }, $n->post_alerts->toArray()),
+                */
 
             ], $posts)
         ]);

@@ -71,7 +71,7 @@ class Post
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\PostAlert", mappedBy="post", fetch="EXTRA_LAZY")
+     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="post", fetch="EXTRA_LAZY")
      * @JoinColumn(name="post_id", referencedColumnName="id")
      */
     private $post_alerts;

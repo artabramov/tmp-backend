@@ -56,6 +56,13 @@ class Repo
      */
     private $repo_roles;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="repo", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="repo_id", referencedColumnName="id")
+     */
+    private $repo_alerts;
+
     public function __construct() {
         $this->repo_terms = new \Doctrine\Common\Collections\ArrayCollection();
     }

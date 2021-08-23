@@ -129,6 +129,17 @@ class RepoWrapper
             throw new AppException('Repository not found', 205);
         }
 
+        // -- Repo alerts --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('alerts_count', 'alerts_count');
+
+        $query = $this->em
+            ->createNativeQuery("SELECT alerts_count FROM vw_repos_alerts WHERE user_id = :user_id AND repo_id = :repo_id", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('repo_id', $repo->id);
+        $query_result = $query->getResult();
+        $alerts_count = !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+
         // -- End --
         Flight::json([
             'success' => 'true',
@@ -138,6 +149,10 @@ class RepoWrapper
                 'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
                 'user_id' => $repo->user_id,
                 'repo_name' => $repo->repo_name,
+
+                'repo_alerts' => [
+                    'alerts_count' => $alerts_count
+                ],
     
                 'repo_terms' => call_user_func( 
                     function($repo_terms) {
@@ -343,6 +358,20 @@ class RepoWrapper
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
                 'repo_name' => $n->repo_name,
                 'user_id' => $n->user_id,
+
+                'repo_alerts' => [
+                    'alerts_count' => (int) call_user_func(
+                        function($user_id, $repo_id) {
+                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+                            $rsm->addScalarResult('alerts_count', 'alerts_count');
+                            $query = $this->em
+                                ->createNativeQuery("SELECT alerts_count FROM vw_repos_alerts WHERE user_id = :user_id AND repo_id = :repo_id", $rsm)
+                                ->setParameter('user_id', $user_id)
+                                ->setParameter('repo_id', $repo_id);
+                            $query_result = $query->getResult();
+                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+                    }, $user->id, $n->id)
+                ],
 
                 'repo_terms' => call_user_func( 
                     function($repo_terms) {

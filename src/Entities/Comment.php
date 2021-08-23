@@ -56,6 +56,13 @@ class Comment
      */
     private $comment_uploads;
 
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="comment", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="comment_id", referencedColumnName="id")
+     */
+    private $comment_alerts;
+
     public function __construct() {
         $this->comment_uploads = new \Doctrine\Common\Collections\ArrayCollection();
     }

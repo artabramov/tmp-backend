@@ -99,5 +99,3 @@
 363 Premium sum is incorrect
 364 Premium currency is incorrect
 365 Referrer key is incorrect
-366 Alerts count is empty
-367 Alerts count is incorrect

@@ -446,6 +446,16 @@ class UserWrapper
             throw new AppException('User deleted', 202);
         }
 
+        // -- User alerts --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('alerts_count', 'alerts_count');
+
+        $query = $this->em
+            ->createNativeQuery("SELECT alerts_count FROM vw_users_alerts WHERE user_id = :user_id", $rsm)
+            ->setParameter('user_id', $user->id);
+        $query_result = $query->getResult();
+        $alerts_count = !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
+
         // -- End --
         Flight::json([
             'success' => 'true',
@@ -455,6 +465,11 @@ class UserWrapper
                 'user_status' => $user->user_status,
                 'user_email' => $user->user_email,
                 'user_name' => $user->user_name,
+
+                'users_alerts' => [
+                    'alerts_count' => $alerts_count
+                ],
+                
                 'user_terms' => call_user_func( 
                     function($user_terms) {
                         return array_combine(

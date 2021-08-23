@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS premiums;
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS users_volumes;
-DROP TABLE IF EXISTS users_alerts;
+DROP TABLE IF EXISTS alerts;
 DROP TABLE IF EXISTS repos_terms;
 DROP TABLE IF EXISTS posts_terms;
 DROP TABLE IF EXISTS posts_tags;
@@ -28,7 +28,7 @@ DROP SEQUENCE IF EXISTS premiums_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_volumes_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_alerts_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS alerts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS repos_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_tags_id_seq CASCADE;
@@ -203,19 +203,19 @@ CREATE TABLE IF NOT EXISTS comments (
     comment_content TEXT NOT NULL
 );
 
--- table: users_alerts --
+-- table: alerts --
 
-CREATE SEQUENCE users_alerts_id_seq START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE alerts_id_seq START WITH 1 INCREMENT BY 1;
 
-CREATE TABLE IF NOT EXISTS users_alerts (
-    id           BIGINT DEFAULT NEXTVAL('users_alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS alerts (
+    id           BIGINT DEFAULT NEXTVAL('alerts_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     repo_id      BIGINT REFERENCES repos(id) ON DELETE CASCADE NOT NULL,
     post_id      BIGINT REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
     comment_id   BIGINT REFERENCES comments(id) ON DELETE CASCADE NOT NULL,
-    CONSTRAINT user_alert_uid UNIQUE(user_id, repo_id, post_id, comment_id)
+    CONSTRAINT alert_uid UNIQUE(user_id, repo_id, post_id, comment_id)
 );
 
 -- table: uploads --
@@ -264,6 +264,41 @@ CREATE OR REPLACE VIEW vw_users_relations AS
     JOIN users ON users.id IN (SELECT users_roles.user_id FROM users_roles WHERE users_roles.repo_id = repos.id)
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
+
+-- view: vw_users_alerts --
+
+CREATE OR REPLACE VIEW vw_users_alerts AS
+    SELECT users.id AS user_id, COUNT(alerts.id) AS alerts_count FROM users
+    JOIN alerts ON users.id = alerts.user_id
+    WHERE alerts.user_id = users.id
+    GROUP BY users.id;
+
+-- view: vw_repos_alerts --
+
+CREATE OR REPLACE VIEW vw_repos_alerts AS
+    SELECT users.id AS user_id, repos.id AS repo_id, COUNT(alerts.id) AS alerts_count FROM users
+    JOIN alerts ON users.id = alerts.user_id
+    JOIN repos ON repos.id = alerts.repo_id
+    WHERE alerts.user_id = users.id AND alerts.repo_id = repos.id
+    GROUP BY users.id, repos.id;
+
+-- view: vw_posts_alerts --
+
+CREATE OR REPLACE VIEW vw_posts_alerts AS
+    SELECT users.id AS user_id, posts.id AS post_id, COUNT(alerts.id) AS alerts_count FROM users
+    JOIN alerts ON users.id = alerts.user_id
+    JOIN posts ON posts.id = alerts.post_id
+    WHERE alerts.user_id = users.id AND alerts.post_id = posts.id
+    GROUP BY users.id, posts.id;
+
+-- view: vw_comments_alerts --
+
+CREATE OR REPLACE VIEW vw_comments_alerts AS
+    SELECT users.id AS user_id, comments.id AS comment_id, COUNT(alerts.id) AS alerts_count FROM users
+    JOIN alerts ON users.id = alerts.user_id
+    JOIN comments ON comments.id = alerts.comment_id
+    WHERE alerts.user_id = users.id AND alerts.comment_id = comments.id
+    GROUP BY users.id, comments.id;
 
 -- trigger: role insert --
 
@@ -449,12 +484,12 @@ CREATE FUNCTION comment_insert() RETURNS trigger AS $comment_insert$
     BEGIN
         --SELECT posts.repo_id INTO rep_id FROM posts WHERE posts.id = NEW.post_id LIMIT 1;
 
-        -- comments alerts
+        -- users alerts
         FOR i IN 
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN
                 (SELECT posts.repo_id FROM posts WHERE posts.id = NEW.post_id LIMIT 1)
         LOOP
-            INSERT INTO users_alerts (user_id, repo_id, post_id, comment_id) VALUES (
+            INSERT INTO alerts (user_id, repo_id, post_id, comment_id) VALUES (
                 i, 
                 (SELECT posts.repo_id FROM posts WHERE posts.id = NEW.post_id LIMIT 1), 
                 NEW.post_id,
@@ -524,7 +559,7 @@ CREATE TRIGGER comment_insert AFTER INSERT ON comments FOR EACH ROW EXECUTE PROC
 
 CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
     DECLARE
-        --com_count INTEGER;
+        com_count INTEGER;
         --ale_count INTEGER;
         --rep_id INTEGER;
         i INTEGER;
@@ -532,12 +567,12 @@ CREATE FUNCTION comment_delete() RETURNS trigger AS $comment_delete$
         --SELECT posts.repo_id INTO rep_id FROM posts WHERE posts.id = OLD.post_id LIMIT 1;
         --INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'rep_id', rep_id);
 
-        -- comments alerts
+        -- users alerts
         FOR i IN 
             SELECT users_roles.user_id FROM users_roles WHERE users_roles.user_id <> NEW.user_id AND users_roles.repo_id IN
                 (SELECT posts.repo_id FROM posts WHERE posts.id = OLD.post_id LIMIT 1)
         LOOP
-            DELETE FROM users_alerts WHERE user_id = i AND comment_id = OLD.id;
+            DELETE FROM alerts WHERE user_id = i AND comment_id = OLD.id;
         END LOOP;
 
         -- posts alerts
@@ -860,15 +895,15 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM users_alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
 SELECT * FROM vw_users_relations;
 
 -- test data --
 
-INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF1', 5000000, 'P2Y', 100, 'USD', 'no_key');
-INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF2', 6000000, 'P2Y', 100, 'USD', 'no_key');
-INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF3', 7000000, 'P1M', 100, 'USD', 'no_key');
-INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF4', 8000000, 'P1M', 100, 'USD', 'no_key');
+--INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF1', 5000000, 'P2Y', 100, 'USD', 'no_key');
+--INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF2', 6000000, 'P2Y', 100, 'USD', 'no_key');
+--INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF3', 7000000, 'P1M', 100, 'USD', 'no_key');
+--INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF4', 8000000, 'P1M', 100, 'USD', 'no_key');
 
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');

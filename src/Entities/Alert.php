@@ -5,10 +5,10 @@ use \App\Exceptions\AppException;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="posts_alerts")
+ * @Table(name="alerts")
  * @Cache("NONSTRICT_READ_WRITE")
  */
-class PostAlert
+class Alert
 {
     /**
      * @Id
@@ -40,13 +40,33 @@ class PostAlert
      * @Column(type="integer")
      * @var int
      */
+    private $repo_id;
+
+    /**
+     * @Column(type="integer")
+     * @var int
+     */
     private $post_id;
 
     /**
      * @Column(type="integer")
      * @var int
      */
-    private $alerts_count;
+    private $comment_id;
+
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_alerts", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="user_id", referencedColumnName="id")
+     */
+    private $user;
+
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @ManyToOne(targetEntity="\App\Entities\Repo", inversedBy="repo_alerts", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="repo_id", referencedColumnName="id")
+     */
+    private $repo;
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
@@ -54,6 +74,13 @@ class PostAlert
      * @JoinColumn(name="post_id", referencedColumnName="id")
      */
     private $post;
+
+    /**
+     * @Cache("NONSTRICT_READ_WRITE")
+     * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_alerts", fetch="EXTRA_LAZY")
+     * @JoinColumn(name="comment_id", referencedColumnName="id")
+     */
+    private $comment;
 
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
@@ -93,17 +120,23 @@ class PostAlert
         } elseif(!is_int($this->user_id)) {
             throw new AppException('User ID is incorrect', 312);
 
+        } elseif(empty($this->repo_id)) {
+            throw new AppException('Repository ID is empty', 322);
+
+        } elseif(!is_int($this->repo_id)) {
+            throw new AppException('Repository ID is incorrect', 323);
+
         } elseif(empty($this->post_id)) {
             throw new AppException('Post ID is empty', 328);
 
         } elseif(!is_int($this->post_id)) {
             throw new AppException('Post ID is incorrect', 329);
 
-        } elseif(empty($this->alerts_count)) {
-            throw new AppException('Alerts count is empty', 366);
+        } elseif(empty($this->comment_id)) {
+            throw new AppException('Comment ID is empty', 334);
 
-        } elseif(!is_int($this->alerts_count)) {
-            throw new AppException('Alerts count is incorrect', 367);
+        } elseif(!is_int($this->comment_id)) {
+            throw new AppException('Comment ID is incorrect', 335);
         }
     }
 }
