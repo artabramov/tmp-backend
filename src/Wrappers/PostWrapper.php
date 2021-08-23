@@ -515,8 +515,6 @@ class PostWrapper
             throw new AppException('User deleted', 202);
         }
 
-
-
         $qb3 = $this->em->createQueryBuilder();
         $qb2 = $this->em->createQueryBuilder();
         $qb1 = $this->em->createQueryBuilder();
@@ -602,9 +600,6 @@ class PostWrapper
             ], $posts)
         ]);
     }
-
-
-
 
     public function bytitle(string $user_token, string $post_title, int $offset) {
 

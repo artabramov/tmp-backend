@@ -6,7 +6,6 @@ DROP VIEW IF EXISTS vw_users_relations;
 DROP VIEW IF EXISTS vw_users_alerts;
 DROP VIEW IF EXISTS vw_repos_alerts;
 DROP VIEW IF EXISTS vw_posts_alerts;
-DROP VIEW IF EXISTS vw_comments_alerts;
 
 DROP TABLE IF EXISTS premiums;
 DROP TABLE IF EXISTS users_terms;
@@ -294,15 +293,6 @@ CREATE OR REPLACE VIEW vw_posts_alerts AS
     JOIN posts ON posts.id = alerts.post_id
     WHERE alerts.user_id = users.id AND alerts.post_id = posts.id
     GROUP BY users.id, posts.id;
-
--- view: vw_comments_alerts --
-
-CREATE OR REPLACE VIEW vw_comments_alerts AS
-    SELECT users.id AS user_id, comments.id AS comment_id, COUNT(alerts.id) AS alerts_count FROM users
-    JOIN alerts ON users.id = alerts.user_id
-    JOIN comments ON comments.id = alerts.comment_id
-    WHERE alerts.user_id = users.id AND alerts.comment_id = comments.id
-    GROUP BY users.id, comments.id;
 
 -- trigger: role insert --
 
