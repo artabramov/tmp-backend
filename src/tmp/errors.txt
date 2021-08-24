@@ -73,13 +73,13 @@
 337 Comment content is incorrect
 338 Upload name is empty
 339 Upload name is incorrect
-340 Upload path is empty
-341 Upload path is incorrect
+340 Upload file is empty
+341 Upload file is incorrect
 342 Upload MIME type is empty
 343 Upload MIME type is incorrect
 344 Upload size is empty
 345 Upload size is incorrect
-346 Thumb path is incorrect
+346 Thumb file is incorrect
 347 Term key is empty
 348 Term key is incorrect
 349 Term value is empty

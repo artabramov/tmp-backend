@@ -25,7 +25,7 @@ class UploadWrapper
 
     const UPLOAD_INSERT_LIMIT = 128; // maximum uploads number per one comment
     const UPLOAD_LIST_LIMIT = 5;
-    const UPLOAD_DIR = 'uploads/';
+    const UPLOAD_DIR = 'files/';
     const UPLOAD_FILESIZE = '10M'; // max size of one file
     const UPLOAD_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff', 'image/webp', 'application/pdf']; // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
     const UPLOAD_THUMB_DIR = 'thumbs/';
@@ -144,9 +144,8 @@ class UploadWrapper
             $thumb->setParameter('config_output_format', self::UPLOAD_THUMB_FORMAT);
             $thumb->setParameter('config_allow_src_above_docroot', true);
 
-            $thumb_file = uniqid() . '.' . $thumb->config_output_format;
             $thumb_dir = self::UPLOAD_THUMB_DIR . date('Y-m-d');
-            $thumb_path = $thumb_dir . '/' . $thumb_file;
+            $thumb_file = $thumb_dir . '/' . uniqid() . '.' . $thumb->config_output_format;
 
             if(!file_exists($thumb_dir)) {
                 try {
@@ -158,11 +157,11 @@ class UploadWrapper
             }
 
             if ($thumb->GenerateThumbnail()) { 
-                if (!$thumb->RenderToFile(__DIR__ . '/../../public/' . $thumb_path)) {
-                    $thumb_path = null;
+                if (!$thumb->RenderToFile(__DIR__ . '/../../public/' . $thumb_file)) {
+                    $thumb_file = null;
                 }
             } else {
-                $thumb_path = null;
+                $thumb_file = null;
             }
         }
 
@@ -173,10 +172,10 @@ class UploadWrapper
         $upload->user_id = $user->id;
         $upload->comment_id = $comment->id;
         $upload->upload_name = $files[$file_key]['name'];
-        $upload->upload_path = $upload_dir . '/' . $file->getNameWithExtension();
+        $upload->upload_file = $upload_dir . '/' . $file->getNameWithExtension();
         $upload->upload_mime = $file->getMimetype();
         $upload->upload_size = $file->getSize();
-        $upload->thumb_path = !empty($thumb_path) ? $thumb_path : null;
+        $upload->thumb_file = !empty($thumb_file) ? $thumb_file : null;
         $upload->comment = $comment;
 
         try {
@@ -269,9 +268,9 @@ class UploadWrapper
         }
 
         // -- Original file --
-        if(file_exists($upload->upload_path)) {
+        if(file_exists($upload->upload_file)) {
             try {
-                unlink($upload->upload_path);
+                unlink($upload->upload_file);
 
             } catch (\Exception $e) {
                 throw new AppException('File delete failed', 107);
@@ -279,9 +278,9 @@ class UploadWrapper
         }
 
         // -- Thumb file --
-        if(!empty($upload->thumb_path) and file_exists($upload->thumb_path)) {
+        if(!empty($upload->thumb_file) and file_exists($upload->thumb_file)) {
             try {
-                unlink($upload->thumb_path);
+                unlink($upload->thumb_file);
 
             } catch (\Exception $e) {
                 throw new AppException('File delete failed', 107);
@@ -391,30 +390,49 @@ class UploadWrapper
             throw new AppException('User deleted', 202);
         }
 
-        // -- Post alerts --
+        // -- Uploads --
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('post_id', 'post_id');
         $rsm->addScalarResult('repo_id', 'repo_id');
         $rsm->addScalarResult('upload_id', 'upload_id');
-        $rsm->addScalarResult('uploads_count', 'uploads_count');
 
         $query = $this->em
             ->createNativeQuery("SELECT post_id, repo_id, upload_id FROM vw_users_uploads WHERE user_id = :user_id OFFSET :offset LIMIT :limit", $rsm)
             ->setParameter('user_id', $user->id)
             ->setParameter('offset', $offset)
             ->setParameter('limit', self::UPLOAD_LIST_LIMIT);
-        $uploads = $query->getResult();
+        $query_result = $query->getResult();
+        $uploads = !empty($query_result) ? $query_result : [];
+
+        // -- Uploads count --
+        $uploads_count = call_user_func(
+            function($terms) {
+
+                $tmp = $terms->filter(function($el) {
+                    return $el->term_key == 'uploads_count';
+                })->first();
+                return empty($tmp) ? 0 : $tmp->term_value;
+
+            }, $user->user_terms
+        );
         
+        /*
+        // -- Uploads count --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('uploads_count', 'uploads_count');
+
         $query = $this->em
             ->createNativeQuery("SELECT COUNT(upload_id) AS uploads_count FROM vw_users_uploads WHERE user_id = :user_id", $rsm)
             ->setParameter('user_id', $user->id);
-        $uploads_count = $query->getResult();
+        $query_result = $query->getResult();
+        $uploads_count = !empty($query_result) ? $query_result[0]['uploads_count'] : 0;
+        */
 
         // -- End --
         Flight::json([
             'success' => 'true',
 
-            'uploads_count' => $uploads_count[0]['uploads_count'],
+            'uploads_count' => $uploads_count,
             'uploads_limit' => self::UPLOAD_LIST_LIMIT,
 
             'uploads' => array_map(fn($n) => 
@@ -428,10 +446,10 @@ class UploadWrapper
                         'user_id' => $upload->user_id,
                         'comment_id' => $upload->comment_id,
                         'upload_name' => $upload->upload_name,
-                        'upload_path' => $upload->upload_path,
+                        'upload_file' => $upload->upload_file,
                         'upload_mime' => $upload->upload_mime,
                         'upload_size' => $upload->upload_size,
-                        'thumb_path' => $upload->thumb_path,
+                        'thumb_file' => $upload->thumb_file,
 
                         'repo' => [
                             'id' => $repo->id, 
@@ -452,7 +470,6 @@ class UploadWrapper
                 }, $n),
             $uploads)
         ]);
-
 
     }
 

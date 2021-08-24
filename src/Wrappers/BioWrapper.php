@@ -54,7 +54,7 @@ class BioWrapper
         }
 
         // -- User bio --
-        if(mb_strlen($user_bio) < 2 or mb_strlen($user_bio) > 128) {
+        if(!empty($user_bio) and (mb_strlen($user_bio) < 2 or mb_strlen($user_bio) > 128)) {
             throw new AppException('User bio is incorrect', 221);
         }
 

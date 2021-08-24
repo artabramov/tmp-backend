@@ -7,6 +7,7 @@ DROP VIEW IF EXISTS vw_users_uploads;
 DROP VIEW IF EXISTS vw_users_alerts;
 DROP VIEW IF EXISTS vw_repos_alerts;
 DROP VIEW IF EXISTS vw_posts_alerts;
+--DROP VIEW IF EXISTS vw_posts_tags;
 
 DROP TABLE IF EXISTS premiums;
 DROP TABLE IF EXISTS users_terms;
@@ -233,10 +234,10 @@ CREATE TABLE IF NOT EXISTS uploads (
     user_id     BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
     comment_id  BIGINT REFERENCES comments(id) ON DELETE CASCADE NOT NULL,
     upload_name VARCHAR(255) NOT NULL,
-    upload_path VARCHAR(255) NOT NULL UNIQUE,
+    upload_file VARCHAR(255) NOT NULL UNIQUE,
     upload_mime VARCHAR(255) NOT NULL,
     upload_size INT NOT NULL,
-    thumb_path  VARCHAR(255) NULL
+    thumb_file  VARCHAR(255) NULL
 );
 
 -- table: premiums --
@@ -277,6 +278,7 @@ CREATE OR REPLACE VIEW vw_users_uploads AS
     JOIN posts ON posts.repo_id = repos.id
     JOIN comments ON comments.post_id = posts.id
     JOIN uploads ON uploads.comment_id = comments.id
+    WHERE uploads.user_id = users_roles.user_id
     ORDER BY uploads.id DESC;
 
 -- view: vw_users_alerts --
@@ -304,6 +306,15 @@ CREATE OR REPLACE VIEW vw_posts_alerts AS
     JOIN posts ON posts.id = alerts.post_id
     WHERE alerts.user_id = users.id AND alerts.post_id = posts.id
     GROUP BY users.id, posts.id;
+
+-- view: vw_posts_tags --
+
+--CREATE OR REPLACE VIEW vw_posts_tags AS
+--    SELECT posts.id AS post_id, users_roles.user_id AS user_id, posts_tags.tag_value AS tag_value FROM posts
+--    JOIN repos ON repos.id = posts.repo_id
+--    JOIN users_roles ON users_roles.repo_id = repos.id
+--    JOIN posts_tags ON posts_tags.post_id = posts.id
+--    ORDER BY posts.id DESC;
 
 -- trigger: role insert --
 

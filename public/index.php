@@ -496,7 +496,7 @@ Flight::route('DELETE /upload/@upload_id', function($upload_id) {
 });
 
 // -- Upload list --
-Flight::route('GET /uploads_list', function() {
+Flight::route('GET /uploads', function() {
     $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
     $wrapper->list(
         (string) Flight::request()->query['user_token'],

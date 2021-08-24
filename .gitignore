@@ -3,7 +3,7 @@
 .xdebug/
 vendor/
 monolog/
-public/uploads/
+public/files/
 public/thumbs/
 public/webapp/
 gb/

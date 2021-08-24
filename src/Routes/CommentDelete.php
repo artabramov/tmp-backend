@@ -78,8 +78,8 @@ class CommentDelete
 
         // -- Files --
         foreach($uploads as $upload) {
-            if(file_exists($upload->upload_path)) {
-                unlink($upload->upload_path);
+            if(file_exists($upload->upload_file)) {
+                unlink($upload->upload_file);
             }
         }
 

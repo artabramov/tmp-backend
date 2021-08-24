@@ -264,9 +264,9 @@ class RepoWrapper
         foreach($uploads as $upload) {
             
             // -- Original file --
-            if(file_exists($upload->upload_path)) {
+            if(file_exists($upload->upload_file)) {
                 try {
-                    unlink($upload->upload_path);
+                    unlink($upload->upload_file);
 
                 } catch (\Exception $e) {
                     throw new AppException('File delete failed', 107);
@@ -274,9 +274,9 @@ class RepoWrapper
             }
 
             // -- Thumb file --
-            if(!empty($upload->thumb_path) and file_exists($upload->thumb_path)) {
+            if(!empty($upload->thumb_file) and file_exists($upload->thumb_file)) {
                 try {
-                    unlink($upload->thumb_path);
+                    unlink($upload->thumb_file);
 
                 } catch (\Exception $e) {
                     throw new AppException('File delete failed', 107);

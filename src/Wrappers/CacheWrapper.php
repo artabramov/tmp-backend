@@ -149,10 +149,10 @@ class CacheWrapper
         $upload->user_id = $user->id;
         $upload->comment_id = $comment->id;
         $upload->upload_name = 'upload name';
-        $upload->upload_path = 'upload path';
+        $upload->upload_file = 'upload path';
         $upload->upload_mime = 'upload mime';
         $upload->upload_size = 100;
-        $upload->thumb_path = 'thumb path';
+        $upload->thumb_file = 'thumb file';
         $upload->comment = $comment;
         $this->em->persist($upload);
         $this->em->flush();
@@ -301,10 +301,10 @@ class CacheWrapper
                             'user_id' => $n->user_id,
                             'comment_id' => $n->comment_id,
                             'upload_name' => $n->upload_name,
-                            'upload_path' => $n->upload_path,
+                            'upload_file' => $n->upload_file,
                             'upload_mime' => $n->upload_mime,
                             'upload_size' => $n->upload_size,
-                            'thumb_path' => $n->thumb_path,
+                            'thumb_file' => $n->thumb_file,
                         ], $comment_uploads);
                     }, $comment->comment_uploads->toArray()),
             ],

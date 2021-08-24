@@ -349,9 +349,9 @@ class PostWrapper
         foreach($uploads as $upload) {
             
             // -- Original file --
-            if(file_exists($upload->upload_path)) {
+            if(file_exists($upload->upload_file)) {
                 try {
-                    unlink($upload->upload_path);
+                    unlink($upload->upload_file);
 
                 } catch (\Exception $e) {
                     throw new AppException('File delete failed', 107);
@@ -359,9 +359,9 @@ class PostWrapper
             }
 
             // -- Thumb file --
-            if(!empty($upload->thumb_path) and file_exists($upload->thumb_path)) {
+            if(!empty($upload->thumb_file) and file_exists($upload->thumb_file)) {
                 try {
-                    unlink($upload->thumb_path);
+                    unlink($upload->thumb_file);
 
                 } catch (\Exception $e) {
                     throw new AppException('File delete failed', 107);
@@ -611,6 +611,35 @@ class PostWrapper
             throw new AppException('User deleted', 202);
         }
 
+        // -- Posts --
+
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('post_id', 'post_id');
+        $rsm->addScalarResult('repo_id', 'repo_id');
+        $rsm->addScalarResult('upload_id', 'upload_id');
+
+        $query = $this->em
+            ->createNativeQuery("SELECT post_id, repo_id, upload_id FROM vw_users_uploads WHERE user_id = :user_id OFFSET :offset LIMIT :limit", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('offset', $offset)
+            ->setParameter('limit', self::UPLOAD_LIST_LIMIT);
+        $query_result = $query->getResult();
+        $uploads = !empty($query_result) ? $query_result : [];
+
+        // -- Uploads count --
+        $uploads_count = call_user_func(
+            function($terms) {
+
+                $tmp = $terms->filter(function($el) {
+                    return $el->term_key == 'uploads_count';
+                })->first();
+                return empty($tmp) ? 0 : $tmp->term_value;
+
+            }, $user->user_terms
+        );
+
+
+        /*
         $qb2 = $this->em->createQueryBuilder();
         $qb1 = $this->em->createQueryBuilder();
         $qc1 = $this->em->createQueryBuilder();
@@ -633,6 +662,7 @@ class PostWrapper
         $qc1_result = $qc1->getQuery()->getResult();
         $posts_count = $qc1_result[0][1];
         $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+        */
 
 
         // -- End --

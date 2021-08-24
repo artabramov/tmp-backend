@@ -80,9 +80,8 @@ class ThumbWrapper
         $thumb->setParameter('config_output_format', self::THUMB_FORMAT);
         $thumb->setParameter('config_allow_src_above_docroot', true);
 
-        $thumb_file = uniqid() . '.' . $thumb->config_output_format;
         $thumb_dir = self::THUMB_DIR . date('Y-m-d');
-        $thumb_path = $thumb_dir . '/' . $thumb_file;
+        $thumb_file = $thumb_dir . '/' . uniqid() . '.' . $thumb->config_output_format;
 
         if(!file_exists($thumb_dir)) {
             try {
@@ -94,7 +93,7 @@ class ThumbWrapper
         }
 
         if ($thumb->GenerateThumbnail()) { 
-            if (!$thumb->RenderToFile(__DIR__ . '/../../public/' . $thumb_path)) {
+            if (!$thumb->RenderToFile(__DIR__ . '/../../public/' . $thumb_file)) {
                 throw new AppException('File write failed', 106);
             }
         } else {
@@ -102,7 +101,7 @@ class ThumbWrapper
         }
 
         // -- 
-        $user_term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user->id, 'term_key' => 'thumb_path']);
+        $user_term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user->id, 'term_key' => 'thumb_file']);
         if(!empty($user_term)) {
             if(!empty($user_term->term_value) and file_exists($user_term->term_value)) {
                 try {
@@ -114,7 +113,7 @@ class ThumbWrapper
             }
 
             $user_term->update_date = Flight::datetime();
-            $user_term->term_value = $thumb_path;
+            $user_term->term_value = $thumb_file;
             $this->em->persist($user_term);
             $this->em->flush();
 
@@ -123,8 +122,8 @@ class ThumbWrapper
             $user_term->create_date = Flight::datetime();
             $user_term->update_date = new DateTime('1970-01-01 00:00:00');
             $user_term->user_id = $user->id;
-            $user_term->term_key = 'thumb_path';
-            $user_term->term_value = $thumb_path;
+            $user_term->term_key = 'thumb_file';
+            $user_term->term_value = $thumb_file;
             $user_term->user = $user;
             $this->em->persist($user_term);
             $this->em->flush();
@@ -141,7 +140,7 @@ class ThumbWrapper
         Flight::json([
             'success' => 'true',
             'user_term' => [
-                'thumb_path' =>$thumb_path
+                'thumb_file' =>$thumb_file
             ]
         ]);
     }

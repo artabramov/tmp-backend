@@ -52,7 +52,7 @@ class Upload
      * @Column(type="string", length="255")
      * @var string
      */
-    private $upload_path;
+    private $upload_file;
 
     /** 
      * @Column(type="string", length="255")
@@ -70,7 +70,7 @@ class Upload
      * @Column(type="string", length="255")
      * @var string
      */
-    private $thumb_path;
+    private $thumb_file;
 
     /**
      * @Cache("NONSTRICT_READ_WRITE")
@@ -129,11 +129,11 @@ class Upload
         } elseif(!is_string($this->upload_name) or mb_strlen($this->upload_name) > 255) {
             throw new AppException('Upload name is incorrect', 339);
 
-        } elseif(empty($this->upload_path)) {
-            throw new AppException('Upload path is empty', 340);
+        } elseif(empty($this->upload_file)) {
+            throw new AppException('Upload file is empty', 340);
 
-        } elseif(!is_string($this->upload_path) or mb_strlen($this->upload_path) > 255) {
-            throw new AppException('Upload path is incorrect', 341);
+        } elseif(!is_string($this->upload_file) or mb_strlen($this->upload_file) > 255) {
+            throw new AppException('Upload file is incorrect', 341);
 
         } elseif(empty($this->upload_mime)) {
             throw new AppException('Upload MIME type is empty', 342);
@@ -147,8 +147,8 @@ class Upload
         } elseif(!is_int($this->upload_size)) {
             throw new AppException('Upload size is incorrect', 345);
 
-        } elseif(!empty($this->thumb_path) and (!is_string($this->thumb_path) or mb_strlen($this->thumb_path) > 255)) {
-            throw new AppException('Thumb path is incorrect', 346);
+        } elseif(!empty($this->thumb_file) and (!is_string($this->thumb_file) or mb_strlen($this->thumb_file) > 255)) {
+            throw new AppException('Thumb file is incorrect', 346);
         }
     }
 }
