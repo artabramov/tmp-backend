@@ -340,14 +340,12 @@ class CommentWrapper
             ->setMaxResults(self::COMMENT_LIST_LIMIT);
         $comments = array_map(fn($n) => $this->em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
 
-        /*
+        
         // -- Delete alerts --
-        $post_alert = $this->em->getRepository('\App\Entities\PostAlert')->findOneBy(['user_id' => $user->id, 'post_id' => $post->id]);
-        if(!empty($post_alert)) {
-            $this->em->remove($post_alert);
-            $this->em->flush();
-        }
-        */
+        $stmt = $this->em->getConnection()->prepare("DELETE FROM alerts WHERE user_id = :user_id AND post_id = :post_id");
+        $stmt->bindValue('user_id', $user->id);
+        $stmt->bindValue('post_id', $post->id);
+        $stmt->execute();
 
         // -- End --
         Flight::json([

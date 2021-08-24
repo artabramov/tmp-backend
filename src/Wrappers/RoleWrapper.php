@@ -257,6 +257,12 @@ class RoleWrapper
             throw new AppException('Action prohibited', 102);
         }
 
+        // -- Delete alerts --
+        $stmt = $this->em->getConnection()->prepare("DELETE FROM alerts WHERE user_id = :user_id AND repo_id = :repo_id");
+        $stmt->bindValue('user_id', $member->id);
+        $stmt->bindValue('repo_id', $repo->id);
+        $stmt->execute();
+
         // -- Member role delete --
         $this->em->remove($member_role);
         $this->em->flush();

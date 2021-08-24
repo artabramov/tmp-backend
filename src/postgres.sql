@@ -797,7 +797,7 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
-SELECT * FROM vw_users_relations;
+SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM vw_repos_alerts; SELECT * FROM vw_posts_alerts;
 
 -- test data --
 
