@@ -434,8 +434,6 @@ class PostWrapper
 
         $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
 
-
-
         // -- End --
         Flight::json([
             'success' => 'true',

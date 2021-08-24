@@ -3,6 +3,7 @@
 SET TIME ZONE 'Etc/UTC';
 
 DROP VIEW IF EXISTS vw_users_relations;
+DROP VIEW IF EXISTS vw_users_uploads;
 DROP VIEW IF EXISTS vw_users_alerts;
 DROP VIEW IF EXISTS vw_repos_alerts;
 DROP VIEW IF EXISTS vw_posts_alerts;
@@ -267,6 +268,16 @@ CREATE OR REPLACE VIEW vw_users_relations AS
     JOIN users ON users.id IN (SELECT users_roles.user_id FROM users_roles WHERE users_roles.repo_id = repos.id)
     WHERE users.id <> users_roles.user_id
     ORDER BY users_roles.user_id, users.id;
+
+-- view: vw_users_uploads --
+
+CREATE OR REPLACE VIEW vw_users_uploads AS
+    SELECT users_roles.user_id AS user_id, uploads.id AS upload_id, repos.id AS repo_id, posts.id AS post_id FROM users_roles
+    JOIN repos ON repos.id = users_roles.repo_id
+    JOIN posts ON posts.repo_id = repos.id
+    JOIN comments ON comments.post_id = posts.id
+    JOIN uploads ON uploads.comment_id = comments.id
+    ORDER BY uploads.id DESC;
 
 -- view: vw_users_alerts --
 
@@ -797,7 +808,7 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
 SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
-SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM vw_repos_alerts; SELECT * FROM vw_posts_alerts;
+SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM vw_repos_alerts; SELECT * FROM vw_posts_alerts; SELECT * FROM vw_users_uploads;
 
 -- test data --
 

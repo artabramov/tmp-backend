@@ -24,6 +24,7 @@ class UploadWrapper
     protected $em;
 
     const UPLOAD_INSERT_LIMIT = 128; // maximum uploads number per one comment
+    const UPLOAD_LIST_LIMIT = 5;
     const UPLOAD_DIR = 'uploads/';
     const UPLOAD_FILESIZE = '10M'; // max size of one file
     const UPLOAD_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff', 'image/webp', 'application/pdf']; // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
@@ -376,6 +377,83 @@ class UploadWrapper
         Flight::json([ 
             'success' => 'true'
         ]);
+    }
+
+    public function list(string $user_token, int $offset) {
+
+        // -- User auth --
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            throw new AppException('User not found', 201);
+
+        } elseif($user->user_status == 'trash') {
+            throw new AppException('User deleted', 202);
+        }
+
+        // -- Post alerts --
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('post_id', 'post_id');
+        $rsm->addScalarResult('repo_id', 'repo_id');
+        $rsm->addScalarResult('upload_id', 'upload_id');
+        $rsm->addScalarResult('uploads_count', 'uploads_count');
+
+        $query = $this->em
+            ->createNativeQuery("SELECT post_id, repo_id, upload_id FROM vw_users_uploads WHERE user_id = :user_id OFFSET :offset LIMIT :limit", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('offset', $offset)
+            ->setParameter('limit', self::UPLOAD_LIST_LIMIT);
+        $uploads = $query->getResult();
+        
+        $query = $this->em
+            ->createNativeQuery("SELECT COUNT(upload_id) AS uploads_count FROM vw_users_uploads WHERE user_id = :user_id", $rsm)
+            ->setParameter('user_id', $user->id);
+        $uploads_count = $query->getResult();
+
+        // -- End --
+        Flight::json([
+            'success' => 'true',
+
+            'uploads_count' => $uploads_count[0]['uploads_count'],
+            'uploads_limit' => self::UPLOAD_LIST_LIMIT,
+
+            'uploads' => array_map(fn($n) => 
+                call_user_func(function($n) {
+                    $upload = $this->em->find('App\Entities\Upload', $n['upload_id']);
+                    $repo = $this->em->find('App\Entities\Repo', $n['repo_id']);
+                    $post = $this->em->find('App\Entities\Post', $n['post_id']);
+                    return [
+                        'id' => $upload->id,
+                        'create_date' => $upload->create_date->format('Y-m-d H:i:s'),
+                        'user_id' => $upload->user_id,
+                        'comment_id' => $upload->comment_id,
+                        'upload_name' => $upload->upload_name,
+                        'upload_path' => $upload->upload_path,
+                        'upload_mime' => $upload->upload_mime,
+                        'upload_size' => $upload->upload_size,
+                        'thumb_path' => $upload->thumb_path,
+
+                        'repo' => [
+                            'id' => $repo->id, 
+                            'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
+                            'user_id' => $repo->user_id,
+                            'repo_name' => $repo->repo_name
+                        ],
+
+                        'post' => [
+                            'id' => $post->id, 
+                            'create_date' => $post->create_date->format('Y-m-d H:i:s'),
+                            'user_id' => $post->user_id,
+                            'repo_id' => $post->repo_id,
+                            'post_status' => $post->post_status,
+                            'post_title' => $post->post_title
+                        ]
+                    ];
+                }, $n),
+            $uploads)
+        ]);
+
+
     }
 
 }
