@@ -486,11 +486,28 @@ class PostWrapper
                 ],
 
                 'post_terms' => call_user_func( 
+
+                    function($post_id) {
+                        $qb1 = $this->em->createQueryBuilder();
+                        $qb1->select('term.id')->from('App\Entities\PostTerm', 'term')->where($qb1->expr()->eq('term.post_id', $post_id));
+                        $qb1_results = $qb1->getQuery()->getResult();
+                        $post_terms = [];
+                        foreach($qb1_results as $result) {
+                            $term = $this->em->find('App\Entities\PostTerm', $result['id']);
+                            $post_terms[$term->term_key] = $term->term_value;
+                        }
+                        return $post_terms;
+
+                    }, $n->id),
+                    
+
+                    /*
                     function($post_terms) {
                         return array_combine(
                             array_map(fn($m) => $m->term_key, $post_terms), 
                             array_map(fn($m) => $m->term_value, $post_terms));
                     }, $n->post_terms->toArray()),
+                    */
     
                 'post_tags' => call_user_func( 
                     function($post_tags) {

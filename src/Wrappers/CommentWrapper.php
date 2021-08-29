@@ -101,12 +101,40 @@ class CommentWrapper
         $this->em->persist($comment);
         $this->em->flush();
 
+        /*
         // -- Clear cache: post terms --
         foreach($post->post_terms->getValues() as $term) {
             if($this->em->getCache()->containsEntity('\App\Entities\PostTerm', $term->id)) {
                 $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
             }
         }
+        */
+
+        /*
+        // -- Clear cache: post --
+        if($this->em->getCache()->containsEntity('\App\Entities\Post', $post)) {
+            $this->em->getCache()->evictEntity('\App\Entities\Post', $post);
+        }
+        */
+
+        // -- Clear cache: post terms --
+        $term = $this->em->getRepository('\App\Entities\PostTerm')->findOneBy(['post_id' => $post->id, 'term_key' => 'comments_count']);
+        $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term);
+
+        /*
+        // -- Clear cache: post terms --
+        $qb1 = $this->em->createQueryBuilder();
+        $qb1->select('term.id')->from('App\Entities\PostTerm', 'term')->where($qb1->expr()->eq('term.post_id', $post->id));
+        $qb1_results = $qb1->getQuery()->getResult();        
+        foreach($qb1_results as $result) {
+            $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
+            //$term = $this->em->find('App\Entities\PostTerm', $result['id']);
+            //$a = 1;
+        }
+        //$comments = array_map(fn($n) => $this->em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
+        */
+
+
 
         // -- Members --
         $qb1 = $this->em->createQueryBuilder();
@@ -374,12 +402,17 @@ class CommentWrapper
 
             'comments_limit' => self::COMMENT_LIST_LIMIT,
             'comments_count' => (int) call_user_func( 
+                /*
                 function($terms) {
                     $tmp = $terms->filter(function($el) {
                         return $el->term_key == 'comments_count';
                     })->first();
                     return empty($tmp) ? 0 : $tmp->term_value;
-                }, $post->post_terms),
+                */
+                function($post_id) {
+                    $term = $this->em->getRepository('\App\Entities\PostTerm')->findOneBy(['post_id' => $post_id, 'term_key' => 'comments_count']);
+                    return empty($term) ? 0 : $term->term_value;
+                }, $post->id),
 
             'comments'=> array_map(fn($n) => [
                 'id' => $n->id,
