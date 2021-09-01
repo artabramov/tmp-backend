@@ -42,13 +42,6 @@ class PostTag
      */
     private $tag_value;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Post", inversedBy="post_tags", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post;
-
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
             $this->$key = $value;
@@ -70,28 +63,28 @@ class PostTag
     public function validate() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            throw new AppException('create_date is empty', 1903);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            throw new AppException('create_date is incorrect', 1904);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            throw new AppException('update_date is empty', 1905);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            throw new AppException('update_date is incorrect', 1906);
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('Post ID is empty', 328);
+            throw new AppException('post_id is empty', 1907);
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('Post ID is incorrect', 329);
+            throw new AppException('post_id is incorrect', 1908);
 
         } elseif(empty($this->tag_value)) {
-            throw new AppException('Tag value is empty', 351);
+            throw new AppException('tag_value is empty', 1909);
 
         } elseif(!is_string($this->tag_value) or mb_strlen($this->tag_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('Tag value is incorrect', 352);
+            throw new AppException('tag_value is incorrect', 1910);
         }
     }
 }

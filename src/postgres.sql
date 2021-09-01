@@ -74,15 +74,16 @@ CREATE SEQUENCE users_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE user_status AS ENUM ('pending', 'approved', 'trash');
 
 CREATE TABLE IF NOT EXISTS users (
-    id          BIGINT DEFAULT NEXTVAL('users_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    remind_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    user_status user_status,
-    user_token  CHAR(80) NOT NULL UNIQUE,
-    user_email  VARCHAR(255) NOT NULL UNIQUE,
-    user_hash   VARCHAR(40) NULL,
-    user_name   VARCHAR(128) NOT NULL
+    id            BIGINT DEFAULT NEXTVAL('users_id_seq'::regclass) NOT NULL PRIMARY KEY,
+    create_date   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
+    update_date   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    remind_date   TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    user_status   user_status,
+    user_token    CHAR(80) NOT NULL UNIQUE,
+    user_email    VARCHAR(255) NOT NULL UNIQUE,
+    user_hash     VARCHAR(40) NULL,
+    user_name     VARCHAR(128) NOT NULL,
+    user_timezone VARCHAR(80) NOT NULL
 );
 
 -- table: users_terms --

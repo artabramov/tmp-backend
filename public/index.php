@@ -84,7 +84,8 @@ $conn = array(
 );
 
 // -- Entity manager --
-Flight::set('em', \Doctrine\ORM\EntityManager::create($conn, $config));
+$em = \Doctrine\ORM\EntityManager::create($conn, $config);
+Flight::set('em', $em);
 
 // -- Phpmailer --
 $phpmailer = new \PHPMailer\PHPMailer\PHPMailer( true );
@@ -100,13 +101,14 @@ $phpmailer->isHTML(true);
 $phpmailer->setFrom(PHPMAILER_FROM, PHPMAILER_NAME);
 Flight::set('phpmailer', $phpmailer);
 
+// -- Date --
+$date = new App\Services\Date(Flight::get('em'));
+Flight::set('date', $date);
+
 // -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
     Flight::get('em')->getConnection()->beginTransaction();
     Flight::set('microtime', microtime(true));
-
-    $stmt = Flight::get('em')->getConnection()->prepare("SET TIME ZONE 'Etc/UTC'");
-    $stmt->execute();
 });
 
 Flight::after('error', function( &$params, &$output ) {
@@ -119,38 +121,105 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    $params[0]['datetime']['date'] = Flight::datetime()->format('Y-m-d H:i:s');
-    $params[0]['datetime']['timezone'] = Flight::datetime()->getTimezone()->getName();
-    $params[0]['debug']['microtime'] = microtime(true) - Flight::get('microtime');
+    $params[0]['date']['datetime'] = Flight::get('date')->datetime->format('Y-m-d H:i:s');
+    $params[0]['date']['timezone'] = Flight::get('date')->datetime->getTimezone()->getName();
+    $params[0]['date']['timecost'] = microtime(true) - Flight::get('microtime');
 });
 
-// datetime
-Flight::map('datetime', function() {
+/*
+// -- Find one term_value by parent entity and term_key --
+Flight::map('get_user_term_value', function($user_id, $term_key) {
+});
+*/
 
-    if(!Flight::has('timestamp_em')) {
-        $stmt = Flight::get('em')->getConnection()->prepare("SELECT NOW()::timestamp(0)");
-        $stmt->execute();
-        $datetime = new DateTime($stmt->fetchOne());
-        Flight::set('timestamp_em', $datetime->getTimestamp());
+/*
+// -- Get all terms of parent entity --
+Flight::map('get_terms', function($entity) {
+    
+    $reflect = new ReflectionClass($entity);
+    $class = $reflect->getShortName();
 
-        $stmt = Flight::get('em')->getConnection()->prepare("SELECT current_setting('TIMEZONE')");
-        $stmt->execute();
-        Flight::set('timezone_em', $stmt->fetchOne());
+    $qb1 = Flight::get('em')->createQueryBuilder();
+    $qb1->select('term.id')->from('App\Entities\\' . $class . 'Term', 'term')
+        ->where($qb1->expr()->eq('term.' . strtolower($class) . '_id', $entity->id));
+    $qb1_res = $qb1->getQuery()->getResult();
 
-        $datetime = new DateTime('now');
-        Flight::set('timestamp_php', $datetime->getTimestamp());
+    $terms = [];
+    foreach($qb1_res as $res) {
+        array_push($terms, Flight::get('em')->find('App\Entities\\' . $class . 'Term', $res['id']));
+    }
+    return $terms;
+});
+*/
+
+/*
+// -- Count alerts of parent entity and user_id --
+Flight::map('count_alerts', function($entity, $user) {
+
+    $reflect = new ReflectionClass($entity);
+    $class = $reflect->getShortName();
+
+    $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+    $rsm->addScalarResult('alerts_count', 'alerts_count');
+
+    if($class == 'User') {
+        $q1 = Flight::get('em')
+            ->createNativeQuery("SELECT alerts_count FROM vw_users_alerts WHERE user_id = :user_id LIMIT 1", $rsm)
+            ->setParameter('user_id', $user->id);
+
+    } elseif($class == 'Repo') {
+        $q1 = Flight::get('em')
+            ->createNativeQuery("SELECT alerts_count FROM vw_repos_alerts WHERE user_id = :user_id AND repo_id = :repo_id  LIMIT 1", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('repo_id', $entity->id);
+
+    } elseif($class == 'Post') {
+        $q1 = Flight::get('em')
+            ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id  LIMIT 1", $rsm)
+            ->setParameter('user_id', $user->id)
+            ->setParameter('post_id', $entity->id);
     }
 
-    $datetime = new DateTime('now');
-    $timestamp = $datetime->getTimestamp();
-    $time = $timestamp - Flight::get('timestamp_php');
+    $q1_res = $q1->getResult();
+    return !empty($q1_res[0]) ? $q1_res[0]['alerts_count'] : 0;
+});
+*/
 
-    $timestamp_em = Flight::get('timestamp_em') + $time;
-    $datetime_em = new DateTime();
-    $datetime_em->setTimestamp($timestamp_em);
-    $datetime_em->setTimezone(new DateTimeZone(Flight::get('timezone_em')));
+/*
+// -- Evict terms from cache --
+Flight::map('evict_terms', function($entity) {
 
-    return $datetime_em;
+    $reflect = new ReflectionClass($entity);
+    $class = $reflect->getShortName();
+
+    $qb1 = Flight::get('em')->createQueryBuilder();
+    $qb1->select('term.id')->from('App\Entities\\' . $class . 'Term', 'term')
+        ->where($qb1->expr()->eq('term.' . strtolower($class) . '_id', $entity->id));
+    $qb1_res = $qb1->getQuery()->getResult();
+
+    foreach($qb1_res as $res) {
+        if(Flight::get('em')->getCache()->containsEntity('App\Entities\\' . $class . 'Term', $term->id)) {
+            Flight::get('em')->getCache()->evictEntity('App\Entities\\' . $class . 'Term', $term->id);
+        }
+    }
+});
+*/
+
+
+// -- Temp --
+Flight::route('GET /temp', function() {
+
+    $qb1 = $this->em->createQueryBuilder();
+
+    $qb2->select('role.repo_id')
+        ->from('App\Entities\UserRole', 'role')
+        ->where($qb2->expr()->eq('role.user_id', $user->id));
+    $terms = array_map(fn($n) => $this->em->find('App\Entities\Repo', $n['id']), $qb1->getQuery()->getResult());
+
+
+    Flight::json([
+        'success' => 'true',
+    ]);
 });
 
 // -- Default --
@@ -160,17 +229,18 @@ Flight::route('GET /', function() {
 
 // -- User insert --
 Flight::route('POST /user', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->insert(
         (string) Flight::request()->query['user_email'],
-        (string) Flight::request()->query['user_name']
+        (string) Flight::request()->query['user_name'],
+        (string) Flight::request()->query['user_timezone']
     );
 });
 
 // -- User select - 
 Flight::route('GET /user/@user_id', function($user_id) {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->select(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->select(
         (string) Flight::request()->query['user_token'],
         (int) $user_id
     );
@@ -178,17 +248,18 @@ Flight::route('GET /user/@user_id', function($user_id) {
 
 // -- User update --
 Flight::route('PUT /user', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_name']
+        (string) Flight::request()->query['user_name'],
+        (string) Flight::request()->query['user_timezone']
     );
 });
 
 // -- User list --
 Flight::route('GET /users', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['offset'],
     );
@@ -196,16 +267,16 @@ Flight::route('GET /users', function() {
 
 // -- User remind --
 Flight::route('GET /pass', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->remind(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->remind(
         (string) Flight::request()->query['user_email']
     );
 });
 
 // -- User signin --
 Flight::route('POST /pass', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->signin(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->signin(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_pass']
     );
@@ -213,24 +284,24 @@ Flight::route('POST /pass', function() {
 
 // -- User signout --
 Flight::route('PUT /token', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->signout(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->signout(
         (string) Flight::request()->query['user_token']
     );
 });
 
 // -- User auth --
 Flight::route('POST /token', function() {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->auth(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->auth(
         (string) Flight::request()->query['user_token']
     );
 });
 
 // -- User auto find --
 Flight::route('GET /users/find/@like_text', function($like_text) {
-    $wrapper = new \App\Wrappers\UserWrapper(Flight::get('em'));
-    $wrapper->find(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
+    $router->find(
         (string) Flight::request()->query['user_token'],
         (string) $like_text
     );
@@ -241,8 +312,8 @@ Flight::route('POST /thumb', function() {
     $files = Flight::request()->files->getData();
     $file = array_shift($files);
 
-    $wrapper = new \App\Wrappers\ThumbWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\ThumbRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         !empty($file) ? $file : []
     );
@@ -250,8 +321,8 @@ Flight::route('POST /thumb', function() {
 
 // -- User timezone --
 Flight::route('PUT /timezone', function() {
-    $wrapper = new \App\Wrappers\TimezoneWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\TimezoneRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_timezone']
     );
@@ -259,8 +330,8 @@ Flight::route('PUT /timezone', function() {
 
 // -- User bio --
 Flight::route('PUT /bio', function() {
-    $wrapper = new \App\Wrappers\BioWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\BioRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_bio']
     );
@@ -268,8 +339,8 @@ Flight::route('PUT /bio', function() {
 
 // -- Repo insert --
 Flight::route('POST /repo', function() {
-    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\RepoRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['repo_name'],
     );
@@ -277,8 +348,8 @@ Flight::route('POST /repo', function() {
 
 // -- Repo select - 
 Flight::route('GET /repo/@repo_id', function($repo_id) {
-    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->select(
+    $router = new \App\Routers\RepoRouter(Flight::get('em'));
+    $router->select(
         (string) Flight::request()->query['user_token'],
         (int) $repo_id,
     );
@@ -286,8 +357,8 @@ Flight::route('GET /repo/@repo_id', function($repo_id) {
 
 // -- Repo update --
 Flight::route('PUT /repo/@repo_id', function($repo_id) {
-    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\RepoRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (int) $repo_id,
         (string) Flight::request()->query['repo_name'],
@@ -296,8 +367,8 @@ Flight::route('PUT /repo/@repo_id', function($repo_id) {
 
 // -- Repo delete --
 Flight::route('DELETE /repo/@repo_id', function($repo_id) {
-    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->delete(
+    $router = new \App\Routers\RepoRouter(Flight::get('em'));
+    $router->delete(
         (string) Flight::request()->query['user_token'],
         (int) $repo_id,
     );
@@ -305,8 +376,8 @@ Flight::route('DELETE /repo/@repo_id', function($repo_id) {
 
 // -- Repos list --
 Flight::route('GET /repos', function() {
-    $wrapper = new \App\Wrappers\RepoWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\RepoRouter(Flight::get('em'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['offset'],
     );
@@ -314,8 +385,8 @@ Flight::route('GET /repos', function() {
 
 // -- Role insert --
 Flight::route('POST /role', function() {
-    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\RoleRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_email'],
         (int) Flight::request()->query['repo_id'],
@@ -325,8 +396,8 @@ Flight::route('POST /role', function() {
 
 // -- Role update --
 Flight::route('PUT /role', function() {
-    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\RoleRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['user_id'],
         (int) Flight::request()->query['repo_id'],
@@ -336,8 +407,8 @@ Flight::route('PUT /role', function() {
 
 // -- Role delete --
 Flight::route('DELETE /role', function() {
-    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
-    $wrapper->delete(
+    $router = new \App\Routers\RoleRouter(Flight::get('em'));
+    $router->delete(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['user_id'],
         (int) Flight::request()->query['repo_id'],
@@ -346,8 +417,8 @@ Flight::route('DELETE /role', function() {
 
 // -- Role query --
 Flight::route('GET /roles', function() {
-    $wrapper = new \App\Wrappers\RoleWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\RoleRouter(Flight::get('em'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['repo_id'],
         (int) Flight::request()->query['offset'],
@@ -356,8 +427,8 @@ Flight::route('GET /roles', function() {
 
 // -- Post insert --
 Flight::route('POST /post', function() {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['repo_id'],
         (string) Flight::request()->query['post_status'],
@@ -368,8 +439,8 @@ Flight::route('POST /post', function() {
 
 // -- Post select --
 Flight::route('GET /post/@post_id', function($post_id) {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->select(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->select(
         (string) Flight::request()->query['user_token'],
         (int) $post_id,
     );
@@ -377,8 +448,8 @@ Flight::route('GET /post/@post_id', function($post_id) {
 
 // -- Post update --
 Flight::route('PUT /post/@post_id', function($post_id) {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (int) $post_id,
         (string) Flight::request()->query['post_status'],
@@ -389,8 +460,8 @@ Flight::route('PUT /post/@post_id', function($post_id) {
 
 // -- Post delete --
 Flight::route('DELETE /post/@post_id', function($post_id) {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->delete(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->delete(
         (string) Flight::request()->query['user_token'],
         (int) $post_id,
     );
@@ -398,8 +469,8 @@ Flight::route('DELETE /post/@post_id', function($post_id) {
 
 // -- Posts list --
 Flight::route('GET /posts', function() {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['repo_id'],
         (string) Flight::request()->query['post_status'],
@@ -409,8 +480,8 @@ Flight::route('GET /posts', function() {
 
 // -- Posts by tag --
 Flight::route('GET /bytag', function() {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->bytag(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->bytag(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['post_tag'],
         (int) Flight::request()->query['offset'],
@@ -419,8 +490,8 @@ Flight::route('GET /bytag', function() {
 
 // -- Posts by title --
 Flight::route('GET /bytitle', function() {
-    $wrapper = new \App\Wrappers\PostWrapper(Flight::get('em'));
-    $wrapper->bytitle(
+    $router = new \App\Routers\PostRouter(Flight::get('em'));
+    $router->bytitle(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['post_title'],
         (int) Flight::request()->query['offset'],
@@ -429,8 +500,8 @@ Flight::route('GET /bytitle', function() {
 
 // -- Comment insert --
 Flight::route('POST /comment', function() {
-    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\CommentRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['post_id'],
         (string) Flight::request()->query['comment_content'],
@@ -439,8 +510,8 @@ Flight::route('POST /comment', function() {
 
 // -- Comment update --
 Flight::route('PUT /comment/@comment_id', function($comment_id) {
-    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\CommentRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (int) $comment_id,
         (string) Flight::request()->query['comment_content'],
@@ -449,8 +520,8 @@ Flight::route('PUT /comment/@comment_id', function($comment_id) {
 
 // -- Comment delete --
 Flight::route('DELETE /comment/@comment_id', function($comment_id) {
-    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
-    $wrapper->delete(
+    $router = new \App\Routers\CommentRouter(Flight::get('em'));
+    $router->delete(
         (string) Flight::request()->query['user_token'],
         (int) $comment_id,
     );
@@ -458,8 +529,8 @@ Flight::route('DELETE /comment/@comment_id', function($comment_id) {
 
 // -- Comment list --
 Flight::route('GET /comments', function() {
-    $wrapper = new \App\Wrappers\CommentWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\CommentRouter(Flight::get('em'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['post_id'],
         (int) Flight::request()->query['offset'],
@@ -468,8 +539,8 @@ Flight::route('GET /comments', function() {
 
 // -- Upload insert --
 Flight::route('POST /upload', function() {
-    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
-    $wrapper->insert(
+    $router = new \App\Routers\UploadRouter(Flight::get('em'));
+    $router->insert(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['comment_id'],
         Flight::request()->files->getData()
@@ -478,8 +549,8 @@ Flight::route('POST /upload', function() {
 
 // -- Upload update --
 Flight::route('PUT /upload/@upload_id', function($upload_id) {
-    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
-    $wrapper->update(
+    $router = new \App\Routers\UploadRouter(Flight::get('em'));
+    $router->update(
         (string) Flight::request()->query['user_token'],
         (int) $upload_id,
         (string) Flight::request()->query['upload_name'],
@@ -488,8 +559,8 @@ Flight::route('PUT /upload/@upload_id', function($upload_id) {
 
 // -- Upload delete --
 Flight::route('DELETE /upload/@upload_id', function($upload_id) {
-    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
-    $wrapper->delete(
+    $router = new \App\Routers\UploadRouter(Flight::get('em'));
+    $router->delete(
         (string) Flight::request()->query['user_token'],
         (int) $upload_id
     );
@@ -497,8 +568,8 @@ Flight::route('DELETE /upload/@upload_id', function($upload_id) {
 
 // -- Upload list --
 Flight::route('GET /uploads', function() {
-    $wrapper = new \App\Wrappers\UploadWrapper(Flight::get('em'));
-    $wrapper->list(
+    $router = new \App\Routers\UploadRouter(Flight::get('em'));
+    $router->list(
         (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['offset'],
     );
@@ -506,8 +577,8 @@ Flight::route('GET /uploads', function() {
 
 // -- Premium select --
 Flight::route('GET /premium', function() {
-    $wrapper = new \App\Wrappers\PremiumWrapper(Flight::get('em'));
-    $wrapper->select(
+    $router = new \App\Routers\PremiumRouter(Flight::get('em'));
+    $router->select(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['premium_code'],
     );
@@ -515,14 +586,14 @@ Flight::route('GET /premium', function() {
 
 // -- POST cache --
 Flight::route('POST /cache', function() {
-    $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
-    $wrapper->create();
+    $router = new \App\Routers\CacheRouter(Flight::get('em'));
+    $router->create();
 });
 
 // -- GET cache --
 Flight::route('GET /cache', function() {
-    $wrapper = new \App\Wrappers\CacheWrapper(Flight::get('em'));
-    $wrapper->read();
+    $router = new \App\Routers\CacheRouter(Flight::get('em'));
+    $router->read();
 });
 
 // -- Go! --

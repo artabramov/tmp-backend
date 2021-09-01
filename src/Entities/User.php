@@ -68,26 +68,11 @@ class User
      */
     private $user_name;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\UserTerm", mappedBy="user", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
+    /** 
+     * @Column(type="string", length="80")
+     * @var string
      */
-    private $user_terms;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\UserRole", mappedBy="user", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user_roles;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="user", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user_alerts;
+    private $user_timezone;
 
     public function __construct() {
         $this->user_terms = new \Doctrine\Common\Collections\ArrayCollection();
@@ -127,53 +112,59 @@ class User
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            throw new AppException('create_date is empty', 1102);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            throw new AppException('create_date is incorrect', 1103);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            throw new AppException('update_date is empty', 1104);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            throw new AppException('update_date is incorrect', 1105);
 
         } elseif(empty($this->remind_date)) {
-            throw new AppException('Remind date is empty', 309);
+            throw new AppException('remind_date is empty', 1106);
 
         } elseif(!$this->remind_date  instanceof \DateTime) {
-            throw new AppException('Remind date is incorrect', 310);
+            throw new AppException('remind_date is incorrect', 1107);
 
         } elseif(empty($this->user_status)) {
-            throw new AppException('User status is empty', 313);
+            throw new AppException('user_status is empty', 1108);
 
         } elseif(!in_array($this->user_status, ['pending', 'approved', 'trash'])) {
-            throw new AppException('User status is incorrect', 314);
+            throw new AppException('user_status is incorrect', 1109);
 
         } elseif(empty($this->user_token)) {
-            throw new AppException('User token is empty', 315);
+            throw new AppException('user_token is empty', 1111);
 
         } elseif(!is_string($this->user_token) or !preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
-            throw new AppException('User token is incorrect', 316);
+            throw new AppException('user_token is incorrect', 1112);
 
         } elseif(!empty($this->user_hash) and !preg_match("/^[0-9a-f]{40}$/", $this->user_hash)) {
-            throw new AppException('User hash is incorrect', 317);
+            throw new AppException('user_hash is incorrect', 1114);
 
         } elseif(empty($this->user_email)) {
-            throw new AppException('User email is empty', 318);
+            //throw new AppException('user_email is empty', 1116);
+            \App\Services\Halt::throw(1116);
 
         } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            throw new AppException('User email is incorrect', 319);
+            throw new AppException('user_email is incorrect', 1117);
 
         } elseif(empty($this->user_name)) {
-            throw new AppException('User name is empty', 320);
+            throw new AppException('user_name is empty', 1119);
 
         } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 2 or mb_strlen($this->user_name) > 128) {
-            throw new AppException('User name is incorrect', 321);
+            throw new AppException('user_name is incorrect', 1120);
+
+        } elseif(empty($this->user_timezone)) {
+            throw new AppException('user_timezone is empty', 1121);
+
+        } elseif(!in_array($this->user_timezone, \DateTimeZone::listIdentifiers())) {
+            throw new AppException('user_timezone is incorrect', 1122);
         }
     }
-    
 }

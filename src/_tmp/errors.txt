@@ -1,0 +1,209 @@
+-- 10 core --
+1000 app error
+1001 wait a bit
+
+-- 23 email --
+2300 SMTP error
+
+-- 11 user --
+1100 user error
+1101 user not found
+1102 create_date is empty
+1103 create_date is incorrect
+1104 update_date is empty
+1105 update_date is incorrect
+1106 remind_date is empty
+1107 remind_date is incorrect
+1108 user_status is empty
+1109 user_status is incorrect
+1110 user_status is trash
+1111 user_token is empty
+1112 user_token is incorrect
+1113 user_token is occupied
+1114 user_hash is incorrect
+1115 user_hash expired
+1116 user_email is empty
+1117 user_email is incorrect
+1118 user_email is occupied
+1119 user_name is empty
+1120 user_name is incorrect
+1121 user_timezone is empty
+1122 user_timezone is incorrect
+
+-- 12 user term --
+1200 term error
+1201 term not found
+1202 create_date is empty
+1203 create_date is incorrect
+1204 update_date is empty
+1205 update_date is incorrect
+1206 user_id is empty
+1207 user_id is incorrect
+1208 term_key is empty
+1209 term_key is incorrect
+1210 term_value is empty
+1211 term_value is incorrect
+
+-- 13 user volume --
+1300 volume error
+1301 volume not found
+1302 create_date is empty
+1303 create_date is incorrect
+1304 update_date is empty
+1305 update_date is incorrect
+1306 expires_date is empty
+1307 expires_date is incorrect
+1308 user_id is empty
+1309 user_id is incorrect
+1310 volume_size is empty
+1311 volume_size is incorrect
+
+-- 14 user role --
+1400 role error
+1401 role not found
+1403 role limit exceeded
+1404 create_date is empty
+1405 create_date is incorrect
+1406 update_date is empty
+1407 update_date is incorrect
+1408 user_id is empty
+1409 user_id is incorrect
+1400 repo_id is empty
+1410 repo_id is incorrect
+1411 role_status is empty
+1412 role_status is incorrect
+1413 role_status is occupied
+
+-- 15 repo --
+1500 repo error
+1501 repo not found
+1502 repo limit exceeded
+1503 create_date is empty
+1504 create_date is incorrect
+1505 update_date is empty
+1506 update_date is incorrect
+1507 user_id is empty
+1508 user_id is incorrect
+1509 repo_name is empty
+1510 repo_name is incorrect
+
+-- 16 repo term --
+1600 term error
+1601 term not found
+1602 create_date is empty
+1603 create_date is incorrect
+1604 update_date is empty
+1605 update_date is incorrect
+1606 repo_id is empty
+1607 repo_id is incorrect
+1608 term_key is empty
+1609 term_key is incorrect
+1610 term_value is empty
+1611 term_value is incorrect
+
+-- 17 post --
+1700 post error
+1701 post not found
+1702 post limit exceeded
+1703 create_date is empty
+1704 create_date is incorrect
+1705 update_date is empty
+1706 update_date is incorrect
+1707 user_id is empty
+1708 user_id is incorrect
+1709 repo_id is empty
+1710 repo_id is incorrect
+1711 post_status is empty
+1712 post_status is incorrect
+1713 post_title is empty
+1714 post_title is incorrect
+
+-- 18 post term --
+1800 term error
+1801 term not found
+1802 create_date is empty
+1803 create_date is incorrect
+1804 update_date is empty
+1805 update_date is incorrect
+1806 post_id is empty
+1807 post_id is incorrect
+1808 term_key is empty
+1809 term_key is incorrect
+1810 term_value is empty
+1811 term_value is incorrect
+
+-- 19 tag --
+1900 tag error
+1901 tag not found
+1902 tag limit exceeded
+1903 create_date is empty
+1904 create_date is incorrect
+1905 update_date is empty
+1906 update_date is incorrect
+1907 post_id is empty
+1908 post_id is incorrect
+1909 tag_value is empty
+1910 tag_value is incorrect
+
+-- 6 Comment entity --
+334 Comment ID is empty
+335 Comment ID is incorrect
+336 Comment content is empty
+337 Comment content is incorrect
+
+-- Upload entity --
+338 Upload name is empty
+339 Upload name is incorrect
+340 Upload file is empty
+341 Upload file is incorrect
+342 Upload MIME type is empty
+343 Upload MIME type is incorrect
+344 Upload size is empty
+345 Upload size is incorrect
+346 Thumb file is incorrect
+
+-- Premium entity --
+355 Premium status is empty
+356 Premium status is incorrect
+357 Premium code is empty
+358 Premium code is incorrect
+359 Premium size is empty
+360 Premium size is incorrect
+361 Premium interval is empty
+362 Premium interval is incorrect
+363 Premium sum is incorrect
+364 Premium currency is incorrect
+365 Referrer key is incorrect
+
+-- Alert entity --
+
+
+1003 SMTP error
+1004 directory make failed
+1005 directory delete failed
+1006 file missing
+1007 file write failed
+1008 file delete failed
+1009 file MIME type not allowed
+1010 file is too large
+2005 Trash date is empty
+2006 Trash date is incorrect
+
+
+
+214 Comment limit exceeded
+216 Upload limit exceeded
+218 Premium deleted
+221 User bio is incorrect
+
+
+
+
+
+
+
+
+
+
+
+

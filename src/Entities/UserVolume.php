@@ -65,37 +65,37 @@ class UserVolume
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            throw new AppException('create_date is empty', 1302);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            throw new AppException('create_date is incorrect', 1303);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            throw new AppException('update_date is empty', 1304);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            throw new AppException('update_date is incorrect', 1305);
 
         } elseif(empty($this->expires_date)) {
-            throw new AppException('Expires date is empty', 307);
+            throw new AppException('expires_date is empty', 1306);
 
         } elseif(!$this->expires_date  instanceof \DateTime) {
-            throw new AppException('Expires date is incorrect', 308);
+            throw new AppException('expires_date is incorrect', 1307);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('User ID is empty', 311);
+            throw new AppException('user_id is empty', 1308);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            throw new AppException('user_id is incorrect', 1309);
 
         } elseif(empty($this->volume_size)) {
-            throw new AppException('Volume size is empty', 353);
+            throw new AppException('volume_size is empty', 1310);
 
         } elseif(!is_int($this->volume_size)) {
-            throw new AppException('Volume size is incorrect', 354);
+            throw new AppException('volume_size is incorrect', 1311);
         }
     }
 }

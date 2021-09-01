@@ -48,13 +48,6 @@ class UserTerm
      */
     private $term_value;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_terms", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user;
-
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
             $this->$key = $value;
@@ -73,37 +66,37 @@ class UserTerm
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            throw new AppException('create_date is empty', 1202);
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            throw new AppException('create_date is incorrect', 1203);
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            throw new AppException('update_date is empty', 1204);
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            throw new AppException('update_date is incorrect', 1205);
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('User ID is empty', 311);
+            throw new AppException('user_id is empty', 1206);
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            throw new AppException('user_id is incorrect', 1207);
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('Term key is empty', 347);
+            throw new AppException('term_key is empty', 1208);
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
-            throw new AppException('Term key is incorrect', 348);
+            throw new AppException('term_key is incorrect', 1209);
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('Term value is empty', 349);
+            throw new AppException('term_value is empty', 1210);
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('Term value is incorrect', 350);
+            throw new AppException('term_value is incorrect', 1211);
         }
     }
 }
