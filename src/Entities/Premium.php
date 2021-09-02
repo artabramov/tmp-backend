@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -101,61 +101,61 @@ class Premium
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            Halt::throw(2304); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            Halt::throw(2305); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            Halt::throw(2306); // update date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            Halt::throw(2307); // update_date is incorrect
 
         } elseif(empty($this->trash_date)) {
-            throw new AppException('Trash date is empty', 305);
+            Halt::throw(2308); // trash_date is empty
 
         } elseif(!$this->trash_date  instanceof \DateTime) {
-            throw new AppException('Trash date is incorrect', 306);
+            Halt::throw(2309); // trash_date is incorrect
 
         } elseif(!empty($this->user_id) and !is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            Halt::throw(2311); // user_id is incorrect
 
         } elseif(empty($this->premium_status)) {
-            throw new AppException('Premium status is empty', 355);
+            Halt::throw(2312); // premium_status is empty
 
         } elseif(!in_array($this->premium_status, ['hold', 'trash'])) {
-            throw new AppException('Premium status is incorrect', 356);
+            Halt::throw(2313); // premium_status is incorrect
 
         } elseif(empty($this->premium_code)) {
-            throw new AppException('Premium code is empty', 357);
+            Halt::throw(2315); // premium_code is empty
 
         } elseif(!is_string($this->premium_code) or mb_strlen($this->premium_code) < 2 or mb_strlen($this->premium_code) > 40) {
-            throw new AppException('Premium code is incorrect', 358);
+            Halt::throw(2316); // premium_code is incorrect
 
         } elseif(empty($this->premium_size)) {
-            throw new AppException('Premium size is empty', 359);
+            Halt::throw(2317); // premium_size is empty
 
         } elseif(!is_int($this->premium_size)) {
-            throw new AppException('Premium size is incorrect', 360);
+            Halt::throw(2318); // premium_size is incorrect
 
         } elseif(empty($this->premium_interval)) {
-            throw new AppException('Premium interval is empty', 361);
+            Halt::throw(2319); // premium_interval is empty
 
         } elseif(!is_string($this->premium_interval) or mb_strlen($this->premium_interval) < 2 or mb_strlen($this->premium_interval) > 20) {
-            throw new AppException('Premium interval is incorrect', 362);
+            Halt::throw(2320); // premium_interval is incorrect
 
         } elseif(!empty($this->premium_sum) and !is_int($this->premium_sum)) {
-            throw new AppException('Premium sum is incorrect', 363);
+            Halt::throw(2322); // premium_sum is incorrect
 
         } elseif(!empty($this->premium_currency) and !in_array($this->premium_currency, ['RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY'])) {
-            throw new AppException('Premium currency is incorrect', 364);
+            Halt::throw(2324); // premium_currency is incorrect
 
         } elseif(!empty($this->referrer_key) and (!is_string($this->referrer_key) or mb_strlen($this->referrer_key) < 2 or mb_strlen($this->referrer_key) > 20)) {
-            throw new AppException('Referrer key is incorrect', 365);
+            Halt::throw(2326); // referrer_key is incorrect
         }
     }
 }

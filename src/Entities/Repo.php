@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -64,31 +64,31 @@ class Repo
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1503);
+            Halt::throw(1504); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1504);
+            Halt::throw(1505); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1505);
+            Halt::throw(1506); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1506);
+            Halt::throw(1507); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1507);
+            Halt::throw(1508); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1508);
+            Halt::throw(1509); // user_id is incorrect
 
         } elseif(empty($this->repo_name)) {
-            throw new AppException('repo_name is empty', 1509);
+            Halt::throw(1510); // repo_name is empty
 
         } elseif(!is_string($this->repo_name) or mb_strlen($this->repo_name) < 2 or mb_strlen($this->repo_name) > 128) {
-            throw new AppException('repo_name is incorrect', 1510);
+            Halt::throw(1511); // repo_name is incorrect
         }
     }
 }

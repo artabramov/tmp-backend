@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -60,31 +60,31 @@ class PostTag
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1903);
+            Halt::throw(1904); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1904);
+            Halt::throw(1905); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1905);
+            Halt::throw(1906); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1906);
+            Halt::throw(1907); // update_date is incorrect
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('post_id is empty', 1907);
+            Halt::throw(1908); // post_id is empty
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('post_id is incorrect', 1908);
+            Halt::throw(1909); // post_id is incorrect
 
         } elseif(empty($this->tag_value)) {
-            throw new AppException('tag_value is empty', 1909);
+            Halt::throw(1910); // tag_value is empty
 
         } elseif(!is_string($this->tag_value) or mb_strlen($this->tag_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('tag_value is incorrect', 1910);
+            Halt::throw(1911); // tag_value is incorrect
         }
     }
 }

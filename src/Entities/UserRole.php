@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -69,34 +69,34 @@ class UserRole
     public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1403);
+            Halt::throw(1404); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1404);
+            Halt::throw(1405); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1405);
+            Halt::throw(1406); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1406);
+            Halt::throw(1407); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1407);
+            Halt::throw(1408); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1408);
+            Halt::throw(1409); // user_id is incorrect
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 1409);
+            Halt::throw(1410); // repo_id is empty
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 1410);
+            Halt::throw(1411); // repo_id is incorrect
 
         } elseif(empty($this->role_status)) {
-            throw new AppException('role_status is empty', 1411);
+            Halt::throw(1412); // role_status is empty
 
         } elseif(!in_array($this->role_status, ['admin', 'editor', 'reader'])) {
-            throw new AppException('role_status is incorrect', 1412);
+            Halt::throw(1413); // role_status is incorrect
         }
     }
 }

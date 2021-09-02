@@ -101,9 +101,9 @@ $phpmailer->isHTML(true);
 $phpmailer->setFrom(PHPMAILER_FROM, PHPMAILER_NAME);
 Flight::set('phpmailer', $phpmailer);
 
-// -- Date --
-$date = new App\Services\Date(Flight::get('em'));
-Flight::set('date', $date);
+// -- Time --
+$time = new App\Services\Time(Flight::get('em'));
+Flight::set('time', $time);
 
 // -- Transaction --
 Flight::before('start', function( &$params, &$output ) {
@@ -121,9 +121,9 @@ Flight::after('stop', function( &$params, &$output ) {
 
 // -- Send json --
 Flight::before('json', function( &$params, &$output ) {
-    $params[0]['date']['datetime'] = Flight::get('date')->datetime->format('Y-m-d H:i:s');
-    $params[0]['date']['timezone'] = Flight::get('date')->datetime->getTimezone()->getName();
-    $params[0]['date']['timecost'] = microtime(true) - Flight::get('microtime');
+    $params[0]['time']['datetime'] = Flight::get('time')->datetime->format('Y-m-d H:i:s');
+    $params[0]['time']['timezone'] = Flight::get('time')->datetime->getTimezone()->getName();
+    $params[0]['time']['timecost'] = microtime(true) - Flight::get('microtime');
 });
 
 /*
@@ -229,12 +229,12 @@ Flight::route('GET /', function() {
 
 // -- User insert --
 Flight::route('POST /user', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->insert(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'), Flight::get('phpmailer'));
+    Flight::json($router->insert(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_name'],
         (string) Flight::request()->query['user_timezone']
-    );
+    ));
 });
 
 // -- User select - 

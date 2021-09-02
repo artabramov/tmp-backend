@@ -1,34 +1,16 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \Doctrine\ORM\Query\ResultSetMapping,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Wrappers\UserWrapper;
 
 class UserRouter
 {
     protected $em;
-    protected $date;
+    protected $time;
     protected $phpmailer;
 
-    const DEFAULT_TIMEZONE = 'Europe/Moscow'; // default timezone for new users
+    /*
     const LIST_LIMIT = 10; // users number in one select result
-    const REGISTER_LIMIT = 20; // maximum registers number per 1 minute (for any users)
     const REGISTER_SUBJECT = 'User register'; // register email subject
     const REGISTER_BODY = 'One-time pass: '; // register email body
     const REMIND_EXPIRES = 30; // minimal time between pass reminds to email (in seconds)
@@ -37,6 +19,7 @@ class UserRouter
     const REMIND_BODY = 'One-time pass: ';
     const SIGNIN_EXPIRES = 180; // hash expires in seconds
     const FIND_LIMIT = 5; // limit for autofind
+    */
 
     /*
     const VOLUME_DEFAULT_SIZE = 1000000;
@@ -48,9 +31,9 @@ class UserRouter
     const COMMENT_DEFAULT_CONTENT = 'First comment.';
     */
 
-    public function __construct($em, $date, $phpmailer) {
+    public function __construct($em, $time, $phpmailer) {
         $this->em = $em;
-        $this->date = $date;
+        $this->time = $time;
         $this->phpmailer = $phpmailer;
     }
 
@@ -107,11 +90,19 @@ class UserRouter
 
     public function insert(string $user_email, string $user_name, string $user_timezone = '') {
 
+        $wrapper = new UserWrapper($this->em, $this->time);
+        $user = $wrapper->insert([
+            'user_email' => $user_email, 
+            'user_name' => $user_name, 
+            'user_timezone' => $user_timezone
+        ]);
+
+        /*
         $user_timezone = empty($user_timezone) ? self::DEFAULT_TIMEZONE : $user_timezone;
         $user_email = mb_strtolower($user_email);
 
         if($this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email])) {
-            throw new AppException('user_email is occupied', 1118);
+            Halt::throw(1120); // user_email is occupied
         }
 
         // -- Filter --
@@ -120,7 +111,7 @@ class UserRouter
         $users_count = $stmt->fetchOne();
 
         if($users_count > self::REGISTER_LIMIT) {
-            throw new AppException('wait a bit', 1001);
+            Halt::throw(1001); // wait a bit
         }
 
         // -- User --
@@ -157,6 +148,7 @@ class UserRouter
         $term->term_value = 'value 2';
         $this->em->persist($term);
         $this->em->flush();
+        */
 
         /*
         // -- User volume --
@@ -222,22 +214,21 @@ class UserRouter
         $this->em->flush();
         */
 
+        /*
         // -- Email --
         $this->phpmailer->addAddress($user->user_email, $user->user_name);
         $this->phpmailer->Subject = self::REGISTER_SUBJECT;
         $this->phpmailer->Body = self::REGISTER_BODY . $user->user_pass;
-
-        if(!$this->phpmailer->send()) {
-            throw new AppException('SMTP error', 2300);
-        }
+        $this->phpmailer->send();
+        */
 
         // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
             'user' => [
                 'id' => $user->id
             ],
-        ]);
+        ];
     }
 
     public function select(string $user_token, int $user_id) {
@@ -416,10 +407,7 @@ class UserRouter
         $this->phpmailer->addAddress($user->user_email, $user->user_name);
         $this->phpmailer->Subject = self::REMIND_SUBJECT;
         $this->phpmailer->Body = self::REMIND_BODY . $user->user_pass;
-
-        if(!$this->phpmailer->send()) {
-            throw new AppException('SMTP error', 2300);
-        }
+        $this->phpmailer->send();
 
         // -- End --
         Flight::json([

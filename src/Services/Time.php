@@ -2,7 +2,7 @@
 namespace App\Services;
 use \App\Exceptions\AppException;
 
-class Date
+class Time
 {
     protected $em;
     protected $offset; // time offset between PHP time and DB time (in seconds)

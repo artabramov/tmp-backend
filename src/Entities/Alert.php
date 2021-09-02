@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -54,34 +54,6 @@ class Alert
      */
     private $comment_id;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\User", inversedBy="user_alerts", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="user_id", referencedColumnName="id")
-     */
-    private $user;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Repo", inversedBy="repo_alerts", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="repo_id", referencedColumnName="id")
-     */
-    private $repo;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Post", inversedBy="post_alerts", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_alerts", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="comment_id", referencedColumnName="id")
-     */
-    private $comment;
-
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
             $this->$key = $value;
@@ -100,43 +72,43 @@ class Alert
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            Halt::throw(2204); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            Halt::throw(2205); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            Halt::throw(2206); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            Halt::throw(2207); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('User ID is empty', 311);
+            Halt::throw(2208); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            Halt::throw(2209); // user_id is incorrect
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('Repository ID is empty', 322);
+            Halt::throw(2210); // repo_id is empty
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('Repository ID is incorrect', 323);
+            Halt::throw(2211); // repo_id is incorrect
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('Post ID is empty', 328);
+            Halt::throw(2212); // post_id is empty
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('Post ID is incorrect', 329);
+            Halt::throw(2213); // post_id is incorrect
 
         } elseif(empty($this->comment_id)) {
-            throw new AppException('Comment ID is empty', 334);
+            Halt::throw(2214); // comment_id is empty
 
         } elseif(!is_int($this->comment_id)) {
-            throw new AppException('Comment ID is incorrect', 335);
+            Halt::throw(2215); // comment_id is incorrect
         }
     }
 }

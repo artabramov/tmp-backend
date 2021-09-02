@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -66,37 +66,37 @@ class RepoTerm
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1602);
+            Halt::throw(1604); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1603);
+            Halt::throw(1605); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1604);
+            Halt::throw(1606); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1605);
+            Halt::throw(1607); // update_date is incorrect
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 1606);
+            Halt::throw(1608); // repo_id is empty
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 1607);
+            Halt::throw(1609); // repo_id is incorrect
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 1608);
+            Halt::throw(1610); // term_key is empty
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 1609);
+            Halt::throw(1611); // term_key is incorrect
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 1610);
+            Halt::throw(1612); // term_value is empty
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 1611);
+            Halt::throw(1613); // term_value is incorrect
         }
     }
 }

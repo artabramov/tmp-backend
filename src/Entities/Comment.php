@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity 
@@ -49,20 +49,6 @@ class Comment
      */
     private $comment_content;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Upload", mappedBy="comment", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="comment_id", referencedColumnName="id")
-     */
-    private $comment_uploads;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="comment", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="comment_id", referencedColumnName="id")
-     */
-    private $comment_alerts;
-
     public function __construct() {
         $this->comment_uploads = new \Doctrine\Common\Collections\ArrayCollection();
     }
@@ -85,37 +71,37 @@ class Comment
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            Halt::throw(2004); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            Halt::throw(2005); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            Halt::throw(2006); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            Halt::throw(2007); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('User ID is empty', 311);
+            Halt::throw(2008); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            Halt::throw(2009); // user_id is incorrect
 
         } elseif(empty($this->post_id)) {
-            throw new AppException('Post ID is empty', 328);
+            Halt::throw(2010); // post_id is empty
 
         } elseif(!is_int($this->post_id)) {
-            throw new AppException('Post ID is incorrect', 329);
+            Halt::throw(2011); // post_id is incorrect
 
         } elseif(empty($this->comment_content)) {
-            throw new AppException('Comment content is empty', 336);
+            Halt::throw(2012); // comment_content is empty
 
         } elseif(!is_string($this->comment_content) or mb_strlen($this->comment_content) < 2 or mb_strlen($this->comment_content) > 65535) {
-            throw new AppException('Comment content is incorrect', 337);
+            Halt::throw(2013); // comment_content is incorrect
         }
     }
     

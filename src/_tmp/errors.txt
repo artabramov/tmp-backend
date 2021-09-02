@@ -178,7 +178,7 @@
 -- Alert entity --
 
 
-1003 SMTP error
+
 1004 directory make failed
 1005 directory delete failed
 1006 file missing
@@ -186,6 +186,7 @@
 1008 file delete failed
 1009 file MIME type not allowed
 1010 file is too large
+
 2005 Trash date is empty
 2006 Trash date is incorrect
 

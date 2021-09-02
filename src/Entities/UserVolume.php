@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -68,34 +68,34 @@ class UserVolume
     public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1302);
+            Halt::throw(1304); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1303);
+            Halt::throw(1305); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1304);
+            Halt::throw(1306); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1305);
+            Halt::throw(1307); // update_date is incorrect
 
         } elseif(empty($this->expires_date)) {
-            throw new AppException('expires_date is empty', 1306);
+            Halt::throw(1308); // expires_date is empty
 
         } elseif(!$this->expires_date  instanceof \DateTime) {
-            throw new AppException('expires_date is incorrect', 1307);
+            Halt::throw(1309); // expires_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1308);
+            Halt::throw(1310); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1309);
+            Halt::throw(1311); // user_id is incorrect
 
         } elseif(empty($this->volume_size)) {
-            throw new AppException('volume_size is empty', 1310);
+            Halt::throw(1312); // volume_size is empty
 
         } elseif(!is_int($this->volume_size)) {
-            throw new AppException('volume_size is incorrect', 1311);
+            Halt::throw(1313); // volume_size is incorrect
         }
     }
 }

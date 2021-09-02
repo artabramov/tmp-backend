@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity 
@@ -72,13 +72,6 @@ class Upload
      */
     private $thumb_file;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @ManyToOne(targetEntity="\App\Entities\Comment", inversedBy="comment_uploads", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="comment_id", referencedColumnName="id")
-     */
-    private $comment;
-
     public function __set($key, $value) {
         if(property_exists($this, $key)) {
             $this->$key = $value;
@@ -97,58 +90,58 @@ class Upload
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('Create date is empty', 301);
+            Halt::throw(2104); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('Create date is incorrect', 302);
+            Halt::throw(2105); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('Update date is empty', 303);
+            Halt::throw(2106); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('Update date is incorrect', 304);
+            Halt::throw(2107); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('User ID is empty', 311);
+            Halt::throw(2108); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('User ID is incorrect', 312);
+            Halt::throw(2109); // user_id is incorrect
 
         } elseif(empty($this->comment_id)) {
-            throw new AppException('Comment ID is empty', 334);
+            Halt::throw(2110); // comment_id is empty
 
         } elseif(!is_int($this->comment_id)) {
-            throw new AppException('Comment ID is incorrect', 335);
+            Halt::throw(2111); // comment_id is incorrect
 
         } elseif(empty($this->upload_name)) {
-            throw new AppException('Upload name is empty', 338);
+            Halt::throw(2112); // upload_name is empty
 
         } elseif(!is_string($this->upload_name) or mb_strlen($this->upload_name) > 255) {
-            throw new AppException('Upload name is incorrect', 339);
+            Halt::throw(2113); // upload_name is incorrect
 
         } elseif(empty($this->upload_file)) {
-            throw new AppException('Upload file is empty', 340);
+            Halt::throw(2114); // upload_file is empty
 
         } elseif(!is_string($this->upload_file) or mb_strlen($this->upload_file) > 255) {
-            throw new AppException('Upload file is incorrect', 341);
+            Halt::throw(2115); // upload_file is incorrect
 
         } elseif(empty($this->upload_mime)) {
-            throw new AppException('Upload MIME type is empty', 342);
+            Halt::throw(2117); // upload_mime is empty
 
         } elseif(!is_string($this->upload_mime) or mb_strlen($this->upload_mime) > 255) {
-            throw new AppException('Upload MIME type is incorrect', 343);
+            Halt::throw(2118); // upload_mime is incorrect
 
         } elseif(empty($this->upload_size)) {
-            throw new AppException('Upload size is empty', 344);
+            Halt::throw(2119); // upload_size is empty
 
         } elseif(!is_int($this->upload_size)) {
-            throw new AppException('Upload size is incorrect', 345);
+            Halt::throw(2120); // upload_size is incorrect
 
         } elseif(!empty($this->thumb_file) and (!is_string($this->thumb_file) or mb_strlen($this->thumb_file) > 255)) {
-            throw new AppException('Thumb file is incorrect', 346);
+            Halt::throw(2121); // thumb_file is incorrect
         }
     }
 }

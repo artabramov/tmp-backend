@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity 
@@ -93,21 +93,6 @@ class User
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function create_token() {
-        return sha1(date('U')) . bin2hex(random_bytes(20));
-    }
-
-    public function create_pass() {
-        $pass_symbols = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
-        $pass_len = 8;
-        $symbols_length = mb_strlen($pass_symbols, 'utf-8') - 1;
-        $user_pass = '';
-        for($i = 0; $i < $pass_len; $i++) {
-            $user_pass .= $pass_symbols[random_int(0, $symbols_length)];
-        }
-        return $user_pass;
-    }
-
     /** 
      * @PrePersist
      * @PreUpdate
@@ -115,56 +100,55 @@ class User
     public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1102);
+            Halt::throw(1104); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1103);
+            Halt::throw(1105); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1104);
+            Halt::throw(1106); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1105);
+            Halt::throw(1107); // update_date is incorrect
 
         } elseif(empty($this->remind_date)) {
-            throw new AppException('remind_date is empty', 1106);
+            Halt::throw(1108); // remind_date is empty
 
         } elseif(!$this->remind_date  instanceof \DateTime) {
-            throw new AppException('remind_date is incorrect', 1107);
+            Halt::throw(1109); // remind_date is incorrect
 
         } elseif(empty($this->user_status)) {
-            throw new AppException('user_status is empty', 1108);
+            Halt::throw(1110); // user_status is empty
 
         } elseif(!in_array($this->user_status, ['pending', 'approved', 'trash'])) {
-            throw new AppException('user_status is incorrect', 1109);
+            Halt::throw(1111); // user_status is incorrect
 
         } elseif(empty($this->user_token)) {
-            throw new AppException('user_token is empty', 1111);
+            Halt::throw(1113); // user_token is empty
 
         } elseif(!is_string($this->user_token) or !preg_match("/^[0-9a-f]{80}$/", $this->user_token)) {
-            throw new AppException('user_token is incorrect', 1112);
+            Halt::throw(1114); // user_token is incorrect
 
         } elseif(!empty($this->user_hash) and !preg_match("/^[0-9a-f]{40}$/", $this->user_hash)) {
-            throw new AppException('user_hash is incorrect', 1114);
+            Halt::throw(1116); // user_hash is incorrect
 
         } elseif(empty($this->user_email)) {
-            //throw new AppException('user_email is empty', 1116);
-            \App\Services\Halt::throw(1116);
-
+            Halt::throw(1118); // user_email is empty
+            
         } elseif(!is_string($this->user_email) or mb_strlen($this->user_email) > 255 or !preg_match("/^[a-z0-9._-]{2,123}@[a-z0-9._-]{2,123}\.[a-z]{2,8}$/", $this->user_email)) {
-            throw new AppException('user_email is incorrect', 1117);
+            Halt::throw(1119); // user_email is incorrect
 
         } elseif(empty($this->user_name)) {
-            throw new AppException('user_name is empty', 1119);
+            Halt::throw(1121); // user_name is empty
 
         } elseif(!is_string($this->user_name) or mb_strlen($this->user_name) < 2 or mb_strlen($this->user_name) > 128) {
-            throw new AppException('user_name is incorrect', 1120);
+            Halt::throw(1122); // user_name is incorrect
 
         } elseif(empty($this->user_timezone)) {
-            throw new AppException('user_timezone is empty', 1121);
+            Halt::throw(1123); // user_timezone is empty
 
         } elseif(!in_array($this->user_timezone, \DateTimeZone::listIdentifiers())) {
-            throw new AppException('user_timezone is incorrect', 1122);
+            Halt::throw(1124); // user_timezone is incorrect
         }
     }
 }

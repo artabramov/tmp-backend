@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity
@@ -69,34 +69,34 @@ class UserTerm
     public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1202);
+            Halt::throw(1204); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1203);
+            Halt::throw(1205); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1204);
+            Halt::throw(1206); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1205);
+            Halt::throw(1207); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1206);
+            Halt::throw(1208); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1207);
+            Halt::throw(1209); // user_id is incorrect
 
         } elseif(empty($this->term_key)) {
-            throw new AppException('term_key is empty', 1208);
+            Halt::throw(1210); // term_key is empty
 
         } elseif(!is_string($this->term_key) or mb_strlen($this->term_key) < 2 or mb_strlen($this->term_key) > 20) {
-            throw new AppException('term_key is incorrect', 1209);
+            Halt::throw(1211); // term_key is incorrect
 
         } elseif(empty($this->term_value)) {
-            throw new AppException('term_value is empty', 1210);
+            Halt::throw(1212); // term_value is empty
 
         } elseif(!is_string($this->term_value) or mb_strlen($this->term_value) < 2 or mb_strlen($this->term_value) > 255) {
-            throw new AppException('term_value is incorrect', 1211);
+            Halt::throw(1213); // term_value is incorrect
         }
     }
 }

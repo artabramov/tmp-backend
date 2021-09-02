@@ -1,6 +1,6 @@
 <?php
 namespace App\Entities;
-use \App\Exceptions\AppException;
+use \App\Services\Halt;
 
 /**
  * @Entity 
@@ -55,27 +55,6 @@ class Post
      */
     private $post_title;
 
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\PostTerm", mappedBy="post", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post_terms;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\PostTag", mappedBy="post", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post_tags;
-
-    /**
-     * @Cache("NONSTRICT_READ_WRITE")
-     * @OneToMany(targetEntity="\App\Entities\Alert", mappedBy="post", fetch="EXTRA_LAZY")
-     * @JoinColumn(name="post_id", referencedColumnName="id")
-     */
-    private $post_alerts;
-
     public function __construct() {
         $this->post_terms = new \Doctrine\Common\Collections\ArrayCollection();
         $this->post_tags = new \Doctrine\Common\Collections\ArrayCollection();
@@ -99,43 +78,43 @@ class Post
      * @PrePersist
      * @PreUpdate
      */
-    public function validate() {
+    public function pre() {
 
         if(empty($this->create_date)) {
-            throw new AppException('create_date is empty', 1703);
+            Halt::throw(1704); // create_date is empty
 
         } elseif(!$this->create_date  instanceof \DateTime) {
-            throw new AppException('create_date is incorrect', 1704);
+            Halt::throw(1705); // create_date is incorrect
 
         } elseif(empty($this->update_date)) {
-            throw new AppException('update_date is empty', 1705);
+            Halt::throw(1706); // update_date is empty
 
         } elseif(!$this->update_date  instanceof \DateTime) {
-            throw new AppException('update_date is incorrect', 1706);
+            Halt::throw(1707); // update_date is incorrect
 
         } elseif(empty($this->user_id)) {
-            throw new AppException('user_id is empty', 1707);
+            Halt::throw(1708); // user_id is empty
 
         } elseif(!is_int($this->user_id)) {
-            throw new AppException('user_id is incorrect', 1708);
+            Halt::throw(1709); // user_id is incorrect
 
         } elseif(empty($this->repo_id)) {
-            throw new AppException('repo_id is empty', 1709);
+            Halt::throw(1710); // repo_id is empty
 
         } elseif(!is_int($this->repo_id)) {
-            throw new AppException('repo_id is incorrect', 1710);
+            Halt::throw(1711); // repo_id is incorrect
 
         } elseif(empty($this->post_status)) {
-            throw new AppException('post_status is empty', 1711);
+            Halt::throw(1712); // post_status is empty
 
         } elseif(!in_array($this->post_status, ['todo', 'doing', 'done'])) {
-            throw new AppException('post_status is incorrect', 1712);
+            Halt::throw(1713); // post_status is incorrect
 
         } elseif(empty($this->post_title)) {
-            throw new AppException('post_title is empty', 1713);
+            Halt::throw(1714); // post_title is empty
 
         } elseif(!is_string($this->post_title) or mb_strlen($this->post_title) < 2 or mb_strlen($this->post_title) > 255) {
-            throw new AppException('post_title is incorrect', 1714);
+            Halt::throw(1715); // post_title is incorrect
         }
     }
 }

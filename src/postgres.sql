@@ -257,9 +257,9 @@ CREATE TABLE IF NOT EXISTS premiums (
     premium_code     VARCHAR(40) NOT NULL UNIQUE,
     premium_size     INT NOT NULL,
     premium_interval VARCHAR(20) NOT NULL, -- P2Y
-    premium_sum      INT NULL,
-    premium_currency premium_currency NULL,
-    referrer_key     VARCHAR(20) NULL
+    premium_sum      INT NOT NULL,
+    premium_currency premium_currency NOT NULL,
+    referrer_key     VARCHAR(20) NOT NULL
 );
 
 -- view: vw_users_relations --
