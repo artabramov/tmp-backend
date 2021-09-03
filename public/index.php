@@ -227,85 +227,90 @@ Flight::route('GET /', function() {
     require_once(__DIR__ . '/webapp/index.php');
 });
 
-// -- User insert --
+// -- User register --
 Flight::route('POST /user', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'), Flight::get('phpmailer'));
-    Flight::json($router->insert(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->register(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_name'],
         (string) Flight::request()->query['user_timezone']
     ));
 });
 
-// -- User select - 
-Flight::route('GET /user/@user_id', function($user_id) {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->select(
-        (string) Flight::request()->query['user_token'],
-        (int) $user_id
-    );
-});
-
-// -- User update --
-Flight::route('PUT /user', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_name'],
-        (string) Flight::request()->query['user_timezone']
-    );
-});
-
-// -- User list --
-Flight::route('GET /users', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
 // -- User remind --
 Flight::route('GET /pass', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->remind(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->remind(
         (string) Flight::request()->query['user_email']
-    );
+    ));
 });
 
 // -- User signin --
 Flight::route('POST /pass', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->signin(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->signin(
         (string) Flight::request()->query['user_email'],
         (string) Flight::request()->query['user_pass']
-    );
+    ));
 });
 
 // -- User signout --
 Flight::route('PUT /token', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->signout(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->signout(
         (string) Flight::request()->query['user_token']
-    );
+    ));
+});
+
+// -- User update --
+Flight::route('PUT /user', function() {
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_name'],
+        (string) Flight::request()->query['user_timezone']
+    ));
 });
 
 // -- User auth --
 Flight::route('POST /token', function() {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->auth(
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->auth(
         (string) Flight::request()->query['user_token']
-    );
+    ));
+});
+
+// -- User select - 
+Flight::route('GET /user/@user_id', function($user_id) {
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $user_id
+    ));
+});
+
+// -- User list --
+Flight::route('GET /users', function() {
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['offset'],
+    ));
 });
 
 // -- User auto find --
-Flight::route('GET /users/find/@like_text', function($like_text) {
-    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('date'), Flight::get('phpmailer'));
-    $router->find(
+Flight::route('GET /users/find/@value', function($value) {
+    $router = new \App\Routers\UserRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->find(
         (string) Flight::request()->query['user_token'],
-        (string) $like_text
-    );
+        (string) $value
+    ));
 });
+
+
+
+
+
 
 // -- Thumb --
 Flight::route('POST /thumb', function() {
