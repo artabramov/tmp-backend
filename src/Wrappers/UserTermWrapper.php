@@ -32,6 +32,17 @@ class UserTermWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
+    // evict user term from cache
+    public function evict(int $user_id, string $term_key) {
+
+        $term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user_id, 'term_key' => $term_key]);
+
+        if(!empty($term)) {
+            $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
+        }
+    }
+
+    // insert user term
     public function insert(int $user_id, string $term_key, mixed $term_value) {
 
         $term = new UserTerm();
@@ -43,13 +54,34 @@ class UserTermWrapper
 
         $this->em->persist($term);
         $this->em->flush();
-
         return $term;
     }
 
-    /**
-     * Select all terms of the user.
-     */
+    // select user term
+    public function select(int $user_id, string $term_key) {
+
+        $term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user_id, 'term_key' => $term_key]);
+        return $term;
+    }
+
+    // update user term
+    public function update(\App\Entities\UserTerm $term, string $term_value) {
+
+        $term->update_date = $this->time->datetime;
+        $term->term_value = $term_value;
+        $this->em->persist($term);
+        $this->em->flush();
+        return $term;
+    }
+
+    // delete user term
+    public function delete(\App\Entities\UserTerm $term) {
+
+        $this->em->remove($term);
+        $this->em->flush();
+    }
+
+    // select all terms of the user.
     public function list(int $user_id) {
 
         $qb1 = $this->em->createQueryBuilder();
@@ -62,36 +94,5 @@ class UserTermWrapper
 
         return $terms;
     }
-
-    /*
-    public function select(array $args) {
-
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy($args);
-
-        if(empty($user)) {
-            Halt::throw(1101); // user not found
-        }
-
-        return $user;
-    }
-
-    public function update($user, array $data) {
-
-        if($user->user_status == 'trash') {
-            Halt::throw(1112); // user_status is trash
-        }
-
-        foreach($data as $key => $value) {
-            $user->$key = $value;
-        }
-
-        $user->update_date = $this->time->datetime;
-        $this->em->persist($user);
-        $this->em->flush();
-        return $user;
-    }
-    */
-
-
 
 }

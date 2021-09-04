@@ -49,11 +49,6 @@ class UserRouter
         $user_wrapper = new UserWrapper($this->em, $this->time);
         $user = $user_wrapper->register($user_email, $user_name, $user_timezone);
 
-        $term_wrapper = new UserTermWrapper($this->em, $this->time);
-        $term_1 = $term_wrapper->insert($user->id, 'key 1', 'value 1');
-        $term_2 = $term_wrapper->insert($user->id, 'key 2', 'value 2');
-        $term_3 = $term_wrapper->insert($user->id, 'key 3', 'value 3');
-
         Email::send(
             $user->user_email,
             $user->user_name,
@@ -69,8 +64,8 @@ class UserRouter
 
     public function remind(string $user_email) {
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->remind($user_email);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->remind($user_email);
 
         Email::send(
             $user->user_email,
@@ -88,8 +83,8 @@ class UserRouter
 
         $user_email = mb_strtolower($user_email);
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->signin($user_email, $user_pass);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->signin($user_email, $user_pass);
 
         return [
             'success' => 'true',
@@ -120,9 +115,9 @@ class UserRouter
 
     public function signout(string $user_token) {
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->auth($user_token);
-        $user = $wrapper->signout($user);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+        $user = $user_wrapper->signout($user);
 
         return [
             'success' => 'true'
@@ -131,9 +126,9 @@ class UserRouter
 
     public function update(string $user_token, string $user_name, string $user_timezone) {
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->auth($user_token);
-        $user = $wrapper->update($user, $user_name, $user_timezone);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+        $user = $user_wrapper->update($user, $user_name, $user_timezone);
 
         return[
             'success' => 'true'
@@ -142,8 +137,8 @@ class UserRouter
 
     public function auth(string $user_token) {
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->auth($user_token);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
         // -- End --
         return [
@@ -175,9 +170,9 @@ class UserRouter
 
     public function select(string $user_token, int $user_id) {
 
-        $wrapper = new UserWrapper($this->em, $this->time);
-        $user = $wrapper->auth($user_token);
-        $member = $wrapper->select($user_id);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+        $member = $user_wrapper->select($user_id);
 
         return [
             'success' => 'true',
@@ -220,35 +215,11 @@ class UserRouter
         ];
     }
 
+    public function find(string $user_token, string $value) {
 
-
-
-
-
-    public function find(string $user_token, string $like_text) {
-
-        // -- User --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
-
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
-
-        // -- Search --
-        /*
-        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-        $rsm->addScalarResult('id', 'id');
-
-        $query = $this->em->createNativeQuery("SELECT id FROM users WHERE (user_email LIKE :like_text OR user_name LIKE :like_text) AND id IN (SELECT relate_id FROM vw_users_relations WHERE user_id = :user_id) LIMIT :limit", $rsm)
-            ->setParameter('user_id', $user->id)
-            ->setParameter('like_text', '%' . $like_text . '%')
-            ->setParameter('limit', self::USER_FIND_LIMIT);
-
-        $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['id']), $query->getResult());
-        */
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+        $users = $user_wrapper->find($value);
 
         // -- End --
         Flight::json([
@@ -257,10 +228,10 @@ class UserRouter
             'users'=> array_map(fn($n) => [
                 'id' => $n->id,
                 'create_date' => $n->create_date->format('Y-m-d H:i:s'),
-                'user_status' => $n->user_status,
                 'user_email' => $n->user_email,
+                'user_status' => $n->user_status,
                 'user_name' => $n->user_name
-            ], $this->select_related($user->id))
+            ], $users)
         ]);
     }
 

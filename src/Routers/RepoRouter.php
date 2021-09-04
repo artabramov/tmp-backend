@@ -1,33 +1,20 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Services\Email,
+    \App\Wrappers\UserWrapper,
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\RepoWrapper,
+    \App\Wrappers\RoleWrapper;
 
 class RepoRouter
 {
     protected $em;
+    protected $time;
 
-    const REPO_INSERT_LIMIT = 20; // maximum repo number per user
-    const REPO_LIST_LIMIT = 5; // number of results in list
-
-    public function __construct($em) {
+    public function __construct($em, $time) {
         $this->em = $em;
+        $this->time = $time;
     }
 
     public function __set($key, $value) {
@@ -46,95 +33,39 @@ class RepoRouter
 
     public function insert(string $user_token, string $repo_name) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->insert($user->id, $repo_name);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $role = $role_wrapper->insert($user->id, $repo->id, 'admin');
 
-        // -- Filter: repos number per user --
-        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM repos WHERE user_id = :user_id");
-        $stmt->bindValue(':user_id', $user->id, Type::INTEGER);
-        $stmt->execute();
-        $repos_count = $stmt->fetchOne();
+        $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        $user_term_wrapper->evict($user->id, 'roles_count');
 
-        if($repos_count >= self::REPO_INSERT_LIMIT) {
-            throw new AppException('Repository limit exceeded', 206);
-        }
-
-        // -- Insert repo --
-        $repo = new Repo();
-        $repo->create_date = Flight::datetime();
-        $repo->update_date = new DateTime('1970-01-01 00:00:00');
-        $repo->user_id = $user->id;
-        $repo->repo_name = $repo_name;
-        $this->em->persist($repo);
-        $this->em->flush();
-
-        // -- Insert user role --
-        $user_role = new UserRole();
-        $user_role->create_date = Flight::datetime();
-        $user_role->update_date = new DateTime('1970-01-01 00:00:00');
-        $user_role->user_id = $user->id;
-        $user_role->repo_id = $repo->id;
-        $user_role->role_status = 'admin';
-        $user_role->user = $user;
-        $user_role->repo = $repo;
-        $this->em->persist($user_role);
-        $this->em->flush();
-
-        // -- Clear cache: user terms --
-        Flight::evict_terms($user);
-
-        /*
-        foreach($user->user_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
-            }
-        }
-        */
-
-        // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
             'repo' => [
                 'id' => $repo->id
             ]
-        ]);
+        ];
     }
-
+    
     public function select(string $user_token, string $repo_id) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($repo_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $user_role->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo_id);
 
         // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
 
             'repo' => [
@@ -143,6 +74,15 @@ class RepoRouter
                 'user_id' => $repo->user_id,
                 'repo_name' => $repo->repo_name,
 
+                'user_role' => [
+                    'id' => $user_role->id,
+                    'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
+                    'user_id' => $user_role->user_id,
+                    'repo_id' => $user_role->repo_id,
+                    'role_status' => $user_role->role_status,
+                ]
+
+                /*
                 'repo_terms' => (array) call_user_func(function($repo) {
                     $terms = Flight::get_terms($repo);
                     return array_combine(
@@ -151,58 +91,35 @@ class RepoRouter
                 }, $repo),
 
                 'repo_alerts' => (int) Flight::count_alerts($repo, $user),
-
-                'user_role' => [
-                    'id' => $user_role->id,
-                    'create_date' => $user_role->create_date->format('Y-m-d H:i:s'),
-                    'user_id' => $user_role->user_id,
-                    'repo_id' => $user_role->repo_id,
-                    'role_status' => $user_role->role_status,
-                ]
+                */
             ],
 
-        ]);
+        ];
     }
 
     public function update(string $user_token, int $repo_id, string $repo_name) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($repo_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo_id, 'admin');
 
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo_id, 'user_id' => $user->id]);
+        $repo = $repo_wrapper->update($repo, $repo_name);
 
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin') {
-            throw new AppException('Role rights are not enough', 208);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $user_role->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        $repo->update_date = Flight::datetime();
-        $repo->repo_name = $repo_name;
-        $this->em->persist($repo);
-        $this->em->flush();
-
-        // -- End --
-        Flight::json([
+        return [
             'success' => 'true'
-        ]);
+        ];
     }
+
+
+
+
+
+
 
     public function delete(string $user_token, string $repo_id) {
 

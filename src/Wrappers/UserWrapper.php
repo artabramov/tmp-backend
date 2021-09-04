@@ -103,7 +103,6 @@ class UserWrapper
         // Save
         $this->em->persist($user);
         $this->em->flush();
-
         return $user;
     }
 
@@ -139,7 +138,6 @@ class UserWrapper
         $user->user_hash = sha1($user->user_pass);
         $this->em->persist($user);
         $this->em->flush();
-
         return $user;
     }
 
@@ -166,7 +164,6 @@ class UserWrapper
         $user->user_hash = null;
         $this->em->persist($user);
         $this->em->flush();
-
         return $user;
     }
 
@@ -190,7 +187,6 @@ class UserWrapper
         $user->user_token = $this->token();
         $this->em->persist($user);
         $this->em->flush();
-
         return $user;
     }
 
@@ -201,7 +197,6 @@ class UserWrapper
         $user->user_timezone = $user_timezone;
         $this->em->persist($user);
         $this->em->flush();
-
         return $user;
     }
 
@@ -240,10 +235,7 @@ class UserWrapper
             ->setParameter('limit', self::FIND_LIMIT);
 
         $users = array_map(fn($n) => $this->em->find('App\Entities\User', $n['id']), $query->getResult());
-
         return $users;
     }
-
-
 
 }

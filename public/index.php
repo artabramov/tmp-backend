@@ -206,6 +206,7 @@ Flight::map('evict_terms', function($entity) {
 */
 
 
+/*
 // -- Temp --
 Flight::route('GET /temp', function() {
 
@@ -221,11 +222,15 @@ Flight::route('GET /temp', function() {
         'success' => 'true',
     ]);
 });
+*/
 
+/*
 // -- Default --
 Flight::route('GET /', function() {
-    require_once(__DIR__ . '/webapp/index.php');
+    //require_once(__DIR__ . '/webapp/index.php');
+    //phpinfo();
 });
+*/
 
 // -- User register --
 Flight::route('POST /user', function() {
@@ -307,6 +312,33 @@ Flight::route('GET /users/find/@value', function($value) {
     ));
 });
 
+// -- Repo insert --
+Flight::route('POST /repo', function() {
+    $router = new \App\Routers\RepoRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->insert(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['repo_name'],
+    ));
+});
+
+// -- Repo select - 
+Flight::route('GET /repo/@repo_id', function($repo_id) {
+    $router = new \App\Routers\RepoRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
+    ));
+});
+
+// -- Repo update --
+Flight::route('PUT /repo/@repo_id', function($repo_id) {
+    $router = new \App\Routers\RepoRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
+        (string) Flight::request()->query['repo_name'],
+    ));
+});
 
 
 
@@ -324,49 +356,12 @@ Flight::route('POST /thumb', function() {
     );
 });
 
-// -- User timezone --
-Flight::route('PUT /timezone', function() {
-    $router = new \App\Routers\TimezoneRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_timezone']
-    );
-});
-
 // -- User bio --
 Flight::route('PUT /bio', function() {
     $router = new \App\Routers\BioRouter(Flight::get('em'));
     $router->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_bio']
-    );
-});
-
-// -- Repo insert --
-Flight::route('POST /repo', function() {
-    $router = new \App\Routers\RepoRouter(Flight::get('em'));
-    $router->insert(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['repo_name'],
-    );
-});
-
-// -- Repo select - 
-Flight::route('GET /repo/@repo_id', function($repo_id) {
-    $router = new \App\Routers\RepoRouter(Flight::get('em'));
-    $router->select(
-        (string) Flight::request()->query['user_token'],
-        (int) $repo_id,
-    );
-});
-
-// -- Repo update --
-Flight::route('PUT /repo/@repo_id', function($repo_id) {
-    $router = new \App\Routers\RepoRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (int) $repo_id,
-        (string) Flight::request()->query['repo_name'],
     );
 });
 
