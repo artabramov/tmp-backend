@@ -80,7 +80,7 @@ class RepoWrapper
 
         $qb2->select('role.repo_id')
             ->from('App\Entities\UserRole', 'role')
-            ->where($qb2->expr()->eq('role.user_id', $user->id));
+            ->where($qb2->expr()->eq('role.user_id', $user_id));
 
         $qb1 = $this->em->createQueryBuilder();
         $qb1->select(['repo.id'])
@@ -91,7 +91,6 @@ class RepoWrapper
             ->setMaxResults(self::LIST_LIMIT);
 
         $repos = array_map(fn($n) => $this->em->find('App\Entities\Repo', $n['id']), $qb1->getQuery()->getResult());
-
         return $repos;
     }
 

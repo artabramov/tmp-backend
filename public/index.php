@@ -340,6 +340,68 @@ Flight::route('PUT /repo/@repo_id', function($repo_id) {
     ));
 });
 
+// -- Repo delete --
+Flight::route('DELETE /repo/@repo_id', function($repo_id) {
+    $router = new \App\Routers\RepoRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $repo_id,
+    ));
+});
+
+// -- Repos list --
+Flight::route('GET /repos', function() {
+    $router = new \App\Routers\RepoRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['offset'],
+    ));
+});
+
+// -- Role insert --
+Flight::route('POST /role', function() {
+    $router = new \App\Routers\RoleRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->insert(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['user_email'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['role_status'],
+    ));
+});
+
+// -- Role update --
+Flight::route('PUT /role', function() {
+    $router = new \App\Routers\RoleRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['user_id'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['role_status'],
+    ));
+});
+
+// -- Role delete --
+Flight::route('DELETE /role', function() {
+    $router = new \App\Routers\RoleRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['user_id'],
+        (int) Flight::request()->query['repo_id'],
+    ));
+});
+
+// -- Role query --
+Flight::route('GET /roles', function() {
+    $router = new \App\Routers\RoleRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (int) Flight::request()->query['offset'],
+    ));
+});
+
+
+
 
 
 
@@ -362,66 +424,6 @@ Flight::route('PUT /bio', function() {
     $router->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_bio']
-    );
-});
-
-// -- Repo delete --
-Flight::route('DELETE /repo/@repo_id', function($repo_id) {
-    $router = new \App\Routers\RepoRouter(Flight::get('em'));
-    $router->delete(
-        (string) Flight::request()->query['user_token'],
-        (int) $repo_id,
-    );
-});
-
-// -- Repos list --
-Flight::route('GET /repos', function() {
-    $router = new \App\Routers\RepoRouter(Flight::get('em'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
-// -- Role insert --
-Flight::route('POST /role', function() {
-    $router = new \App\Routers\RoleRouter(Flight::get('em'));
-    $router->insert(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['user_email'],
-        (int) Flight::request()->query['repo_id'],
-        (string) Flight::request()->query['role_status'],
-    );
-});
-
-// -- Role update --
-Flight::route('PUT /role', function() {
-    $router = new \App\Routers\RoleRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['user_id'],
-        (int) Flight::request()->query['repo_id'],
-        (string) Flight::request()->query['role_status'],
-    );
-});
-
-// -- Role delete --
-Flight::route('DELETE /role', function() {
-    $router = new \App\Routers\RoleRouter(Flight::get('em'));
-    $router->delete(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['user_id'],
-        (int) Flight::request()->query['repo_id'],
-    );
-});
-
-// -- Role query --
-Flight::route('GET /roles', function() {
-    $router = new \App\Routers\RoleRouter(Flight::get('em'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['repo_id'],
-        (int) Flight::request()->query['offset'],
     );
 });
 

@@ -22,10 +22,6 @@ class UserWrapper
     const FIND_LIMIT = 5; // users number in autofind result
 
     /*
-    const REGISTER_SUBJECT = 'User register'; // register email subject
-    const REGISTER_BODY = 'One-time pass: '; // register email body
-    const REMIND_SUBJECT = 'User remind';
-    const REMIND_BODY = 'One-time pass: ';
     const VOLUME_DEFAULT_SIZE = 1000000;
     const VOLUME_DEFAULT_INTERVAL = 'P20Y';
     const REPO_DEFAULT_NAME = 'My first hub';
@@ -169,8 +165,22 @@ class UserWrapper
 
     public function auth(string $user_token) {
 
-        // -- User --
         $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+
+        if(empty($user)) {
+            Halt::throw(1101); // user not found
+
+        } elseif($user->user_status == 'trash') {
+            Halt::throw(1112); // user_status is trash
+        }
+
+        return $user;
+    }
+
+    // select user by email
+    public function byemail(string $user_email) {
+
+        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_email' => $user_email]);
 
         if(empty($user)) {
             Halt::throw(1101); // user not found
