@@ -7,12 +7,10 @@ DROP VIEW IF EXISTS vw_users_uploads;
 DROP VIEW IF EXISTS vw_users_alerts;
 DROP VIEW IF EXISTS vw_repos_alerts;
 DROP VIEW IF EXISTS vw_posts_alerts;
---DROP VIEW IF EXISTS vw_posts_tags;
 
-DROP TABLE IF EXISTS premiums;
+DROP TABLE IF EXISTS users_spaces;
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
-DROP TABLE IF EXISTS users_volumes;
 DROP TABLE IF EXISTS alerts;
 DROP TABLE IF EXISTS repos_terms;
 DROP TABLE IF EXISTS posts_terms;
@@ -23,16 +21,15 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS repos;
 DROP TABLE IF EXISTS users;
 
-DROP TYPE IF EXISTS premium_currency;
-DROP TYPE IF EXISTS premium_status;
+DROP TYPE IF EXISTS payment_currency;
+DROP TYPE IF EXISTS space_status;
 DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
 
-DROP SEQUENCE IF EXISTS premiums_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS spaces_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
-DROP SEQUENCE IF EXISTS users_volumes_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS alerts_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS repos_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS posts_terms_id_seq CASCADE;
@@ -52,9 +49,6 @@ DROP TRIGGER IF EXISTS comment_insert ON comments;
 DROP TRIGGER IF EXISTS comment_delete ON comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
 DROP TRIGGER IF EXISTS upload_delete ON uploads;
-DROP TRIGGER IF EXISTS volume_insert ON users_volumes;
-DROP TRIGGER IF EXISTS volume_update ON users_volumes;
-DROP TRIGGER IF EXISTS volume_delete ON users_volumes;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
@@ -65,8 +59,6 @@ DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
 DROP FUNCTION IF EXISTS upload_delete;
-DROP FUNCTION IF EXISTS volume_insert;
-DROP FUNCTION IF EXISTS volume_update;
 
 -- table: users --
 
@@ -98,19 +90,6 @@ CREATE TABLE IF NOT EXISTS users_terms (
     term_key    VARCHAR(20)  NOT NULL,
     term_value  VARCHAR(255) NOT NULL,
     CONSTRAINT user_terms_uid UNIQUE(user_id, term_key)
-);
-
--- table: users_volumes --
-
-CREATE SEQUENCE users_volumes_id_seq START WITH 1 INCREMENT BY 1;
-
-CREATE TABLE IF NOT EXISTS users_volumes (
-    id           BIGINT DEFAULT NEXTVAL('users_volumes_id_seq'::regclass) NOT NULL PRIMARY KEY,
-    create_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
-    update_date  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    expires_date TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    user_id      BIGINT REFERENCES users(id) ON DELETE NO ACTION NOT NULL,
-    volume_size  INT NOT NULL
 );
 
 -- table: repos --
@@ -241,25 +220,25 @@ CREATE TABLE IF NOT EXISTS uploads (
     thumb_file  VARCHAR(255) NULL
 );
 
--- table: premiums --
+-- table: users_spaces --
 
-CREATE SEQUENCE premiums_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TYPE premium_status AS ENUM ('hold', 'trash');
-CREATE TYPE premium_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
+CREATE SEQUENCE spaces_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TYPE space_status AS ENUM ('pending', 'approved');
+CREATE TYPE payment_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
 
-CREATE TABLE IF NOT EXISTS premiums (
-    id               BIGINT DEFAULT NEXTVAL('premiums_id_seq'::regclass) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS users_spaces (
+    id               BIGINT DEFAULT NEXTVAL('spaces_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    trash_date       TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    expires_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
-    premium_status   premium_status NOT NULL,
-    premium_code     VARCHAR(40) NOT NULL UNIQUE,
-    premium_size     INT NOT NULL,
-    premium_interval VARCHAR(20) NOT NULL, -- P2Y
-    premium_sum      INT NOT NULL,
-    premium_currency premium_currency NOT NULL,
-    referrer_key     VARCHAR(20) NOT NULL
+    space_status     space_status NOT NULL,
+    space_code       VARCHAR(40) NOT NULL UNIQUE,
+    space_size       INT NOT NULL,
+    space_interval   VARCHAR(20) NOT NULL, -- in seconds
+    payment_sum      INT NOT NULL,
+    payment_currency payment_currency NOT NULL,
+    referrer_key     VARCHAR(20) NULL
 );
 
 -- view: vw_users_relations --
@@ -307,17 +286,6 @@ CREATE OR REPLACE VIEW vw_posts_alerts AS
     JOIN posts ON posts.id = alerts.post_id
     WHERE alerts.user_id = users.id AND alerts.post_id = posts.id
     GROUP BY users.id, posts.id;
-
--- view: vw_posts_tags --
-
---CREATE OR REPLACE VIEW vw_posts_tags AS
---    SELECT posts.id AS post_id, users_roles.user_id AS user_id, posts_tags.tag_value AS tag_value FROM posts
---    JOIN repos ON repos.id = posts.repo_id
---    JOIN users_roles ON users_roles.repo_id = repos.id
---    JOIN posts_tags ON posts_tags.post_id = posts.id
---    ORDER BY posts.id DESC;
-
--- trigger: role insert --
 
 CREATE FUNCTION role_insert() RETURNS trigger AS $role_insert$
     DECLARE
@@ -734,100 +702,16 @@ $upload_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
 
--- trigger: volume_insert --
-
-CREATE FUNCTION volume_insert() RETURNS trigger AS $volume_insert$
-    DECLARE
-        vol_size INTEGER;
-        vol_expires VARCHAR;
-    BEGIN
-
-        -- users terms: volume_size
-        SELECT volume_size INTO vol_size FROM users_volumes
-        WHERE user_id = NEW.user_id AND expires_date >= NOW()
-        ORDER BY volume_size DESC
-        LIMIT 1;
-
-        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_size') THEN
-            UPDATE users_terms SET term_value = vol_size WHERE user_id = NEW.user_id AND term_key = 'volume_size';
-        ELSE
-            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'volume_size', vol_size);
-        END IF;
-
-        -- users terms: volume_expires
-        SELECT expires_date INTO vol_expires FROM users_volumes
-        WHERE user_id = NEW.user_id AND expires_date >= NOW()
-        ORDER BY volume_size DESC
-        LIMIT 1;
-
-        IF EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'volume_expires') THEN
-            UPDATE users_terms SET term_value = vol_expires WHERE user_id = NEW.user_id AND term_key = 'volume_expires';
-        ELSE
-            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'volume_expires', vol_expires);
-        END IF;
-
-        --
-        RETURN NEW;
-    END;
-$volume_insert$ LANGUAGE plpgsql;
-
-CREATE TRIGGER volume_insert AFTER INSERT ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_insert();
-
--- triggers: volume_update, volume_delete --
-
-CREATE FUNCTION volume_update() RETURNS trigger AS $volume_update$
-    DECLARE
-        vol_size INTEGER;
-        vol_expires VARCHAR;
-    BEGIN
-
-        -- users terms: volume_size
-        SELECT volume_size INTO vol_size FROM users_volumes
-        WHERE user_id = OLD.user_id AND expires_date >= NOW()
-        ORDER BY volume_size DESC
-        LIMIT 1;
-
-        IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_size') THEN
-            UPDATE users_terms SET term_value = vol_size WHERE user_id = OLD.user_id AND term_key = 'volume_size';
-        ELSE
-            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'volume_size', vol_size);
-        END IF;
-
-        -- users terms: volume_expires
-        SELECT expires_date INTO vol_expires FROM users_volumes
-        WHERE user_id = OLD.user_id AND expires_date >= NOW()
-        ORDER BY volume_size DESC
-        LIMIT 1;
-
-        IF EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'volume_expires') THEN
-            UPDATE users_terms SET term_value = vol_expires WHERE user_id = OLD.user_id AND term_key = 'volume_expires';
-        ELSE
-            INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'volume_expires', vol_expires);
-        END IF;
-
-        --
-        RETURN OLD;
-    END;
-$volume_update$ LANGUAGE plpgsql;
-
-CREATE TRIGGER volume_update AFTER UPDATE ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_update();
-CREATE TRIGGER volume_delete AFTER DELETE ON users_volumes FOR EACH ROW EXECUTE PROCEDURE volume_update();
-
 -- privileges --
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_volumes; SELECT * FROM premiums;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_spaces;
 SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM vw_repos_alerts; SELECT * FROM vw_posts_alerts; SELECT * FROM vw_users_uploads;
 
 -- test data --
-
---INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF1', 5000000, 'P2Y', 100, 'USD', 'no_key');
---INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF2', 6000000, 'P2Y', 100, 'USD', 'no_key');
---INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF3', 7000000, 'P1M', 100, 'USD', 'no_key');
---INSERT INTO premiums (premium_status, premium_code, premium_size, premium_interval, premium_sum, premium_currency, referrer_key) values ('hold', 'ABCDEF4', 8000000, 'P1M', 100, 'USD', 'no_key');
 
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '11234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply1@noreply.no', '', 'user 1');
 --INSERT INTO users (id, create_date, update_date, remind_date, auth_date, user_status, user_token, user_email, user_hash, user_name) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', '1970-01-01 00:00:00', 'approved', '21234567890123456789012345678901234567890123456789012345678901234567890123456789', 'noreply2@noreply.no', '', 'user 2');
@@ -861,9 +745,4 @@ SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM v
 --DELETE FROM uploads WHERE id = 2;
 --DELETE FROM uploads WHERE id = 3;
 --DELETE FROM uploads WHERE id = 4;
---INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (1, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1900);
---INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (2, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 1800);
---INSERT INTO users_volumes (id, create_date, update_date, expires_date, user_id, volume_size) VALUES (3, '1970-01-01 00:00:00', '1970-01-01 00:00:00', '2030-01-01 00:00:00', 1, 2100);
---DELETE FROM users_volumes WHERE id = 3;
---DELETE FROM users_volumes WHERE id = 1;
---UPDATE users_volumes SET volume_size = 2900 WHERE id = 2;
+
