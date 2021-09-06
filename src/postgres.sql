@@ -21,7 +21,7 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS repos;
 DROP TABLE IF EXISTS users;
 
-DROP TYPE IF EXISTS payment_currency;
+DROP TYPE IF EXISTS space_currency;
 DROP TYPE IF EXISTS space_status;
 DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS role_status;
@@ -224,21 +224,23 @@ CREATE TABLE IF NOT EXISTS uploads (
 
 CREATE SEQUENCE spaces_id_seq START WITH 1 INCREMENT BY 1;
 CREATE TYPE space_status AS ENUM ('pending', 'approved');
-CREATE TYPE payment_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
+CREATE TYPE space_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
 
 CREATE TABLE IF NOT EXISTS users_spaces (
     id               BIGINT DEFAULT NEXTVAL('spaces_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
+    approve_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     expires_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
     space_status     space_status NOT NULL,
-    space_code       VARCHAR(40) NOT NULL UNIQUE,
+    space_key        VARCHAR(20) NOT NULL, -- referrer/customer unique key
+    space_code       VARCHAR(40) NOT NULL UNIQUE, -- approval code
     space_size       INT NOT NULL,
-    space_interval   VARCHAR(20) NOT NULL, -- in seconds
-    payment_sum      INT NOT NULL,
-    payment_currency payment_currency NOT NULL,
-    referrer_key     VARCHAR(20) NULL
+    space_interval   VARCHAR(20) NOT NULL, -- P1Y
+    space_cost       NUMERIC(20,2) NOT NULL,
+    space_currency   space_currency NOT NULL,
+    space_comment    VARCHAR(255) NULL
 );
 
 -- view: vw_users_relations --
@@ -746,3 +748,5 @@ SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM v
 --DELETE FROM uploads WHERE id = 3;
 --DELETE FROM uploads WHERE id = 4;
 
+INSERT INTO users_spaces (expires_date, user_id, space_status, space_key, space_code, space_size, space_interval, space_cost, space_currency) 
+VALUES ('2022-01-01 00:00:00', 1, 'approved', 'nokey', 'a1', 100, 'P1Y', 100, 'RUB');

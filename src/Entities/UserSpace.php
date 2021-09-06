@@ -5,9 +5,9 @@ use \App\Services\Halt;
 /**
  * @Entity
  * @HasLifecycleCallbacks
- * @Table(name="premiums")
+ * @Table(name="users_spaces")
  */
-class Premium
+class UserSpace
 {
     /**
      * @Id
@@ -33,7 +33,13 @@ class Premium
      * @Column(type="datetime")
      * @var DateTime
      */
-    protected $trash_date;
+    protected $approve_date;
+
+    /**
+     * @Column(type="datetime")
+     * @var DateTime
+     */
+    protected $expires_date;
 
     /**
      * @Column(type="integer", nullable="true")
@@ -42,46 +48,52 @@ class Premium
     private $user_id;
 
     /** 
-     * @Column(type="string", columnDefinition="ENUM('hold', 'trash')") 
+     * @Column(type="string", columnDefinition="ENUM('pending', 'approved')") 
      * @var string
      */
-    private $premium_status;
+    private $space_status;
+
+    /**
+     * @Column(type="string", length="20")
+     * @var int
+     */
+    private $space_key;
 
     /**
      * @Column(type="string", length="40", unique="true")
      * @var int
      */
-    private $premium_code;
+    private $space_code;
 
     /**
      * @Column(type="integer")
      * @var int
      */
-    private $premium_size;
+    private $space_size;
 
     /** 
      * @Column(type="string", length="20")
      * @var string
      */
-    private $premium_interval;
+    private $space_interval;
 
     /**
-     * @Column(type="integer", nullable="true")
+     * @Column(type="float")
      * @var int
      */
-    private $premium_sum;
+    private $space_cost;
 
     /** 
      * @Column(type="string", columnDefinition="ENUM('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY')") 
      * @var string
      */
-    private $premium_currency;
+    private $space_currency;
 
     /**
-     * @Column(type="string", length="20")
+     * @Column(type="string", length="255", nullable="true")
      * @var int
      */
-    private $referrer_key;
+    private $space_comment;
 
     public function __set($key, $value) {
         if(property_exists($this, $key)) {

@@ -3,7 +3,8 @@ namespace App\Routers;
 use \App\Services\Halt,
     \App\Services\Email,
     \App\Wrappers\UserWrapper,
-    \App\Wrappers\UserTermWrapper;
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\UserSpaceWrapper;
 
 class UserRouter
 {
@@ -150,6 +151,17 @@ class UserRouter
                 'user_email' => $user->user_email,
                 'user_name' => $user->user_name,
                 'user_timezone' => $user->user_timezone,
+
+                'user_space' => (array) call_user_func(function($user_id) {
+                    $space_wrapper = new UserSpaceWrapper($this->em, $this->time);
+                    $user_space = $space_wrapper->select($user_id);
+                    return [
+                        'id' => !empty($user_space) ? $user_space->id : 0,
+                        'create_date' => !empty($user_space) ? $user_space->create_date->format('Y-m-d H:i:s') : '1970-01-01 00:00:00',
+                        'expires_date' => !empty($user_space) ? $user_space->expires_date->format('Y-m-d H:i:s') : '1970-01-01 00:00:00',
+                        'space_size' => !empty($user_space) ? $user_space->space_size : $space_wrapper::DEFAULT_SIZE,
+                    ];
+                }, $user->id),
 
                 
                 'user_terms' => (array) call_user_func(function($user_id) {
