@@ -51,7 +51,7 @@ class RoleRouter
 
         // user & mate roles
         $role_wrapper = new RoleWrapper($this->em, $this->time);
-        $user_role = $role_wrapper->select($user->id, $repo->id, 'admin');
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin']);
         $mate_role = $role_wrapper->insert($mate->id, $repo->id, $role_status);
 
         // user cache
@@ -84,7 +84,7 @@ class RoleRouter
 
         // user & mate roles
         $role_wrapper = new RoleWrapper($this->em, $this->time);
-        $user_role = $role_wrapper->select($user->id, $repo->id, 'admin');
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin']);
         $mate_role = $role_wrapper->select($mate->id, $repo->id);
 
         // update mate role
@@ -108,7 +108,7 @@ class RoleRouter
 
         // user & mate roles
         $role_wrapper = new RoleWrapper($this->em, $this->time);
-        $user_role = $role_wrapper->select($user->id, $repo->id, 'admin');
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin']);
         $mate_role = $role_wrapper->select($mate->id, $repo->id);
 
         // delete mate role

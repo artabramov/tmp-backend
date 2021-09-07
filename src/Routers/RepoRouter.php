@@ -109,7 +109,7 @@ class RepoRouter
         $repo = $repo_wrapper->select($repo_id);
 
         $role_wrapper = new RoleWrapper($this->em, $this->time);
-        $user_role = $role_wrapper->select($user->id, $repo_id, 'admin');
+        $user_role = $role_wrapper->select($user->id, $repo_id, ['admin']);
 
         $repo = $repo_wrapper->update($repo, $repo_name);
 
@@ -127,7 +127,7 @@ class RepoRouter
         $repo = $repo_wrapper->select($repo_id);
 
         $role_wrapper = new RoleWrapper($this->em, $this->time);
-        $user_role = $role_wrapper->select($user->id, $repo_id, 'admin');
+        $user_role = $role_wrapper->select($user->id, $repo_id, ['admin']);
 
         $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
         $user_term_wrapper->evict($user->id, 'roles_count');

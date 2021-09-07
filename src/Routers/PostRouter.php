@@ -1,33 +1,22 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Services\Email,
+    \App\Wrappers\UserWrapper,
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\RepoWrapper,
+    \App\Wrappers\RepoTermWrapper,
+    \App\Wrappers\RoleWrapper,
+    \App\Wrappers\PostWrapper;
 
 class PostRouter
 {
     protected $em;
+    protected $time;
 
-    const POST_INSERT_LIMIT = 512; // maximum posts numbers per one repo
-    const POST_LIST_LIMIT = 5;
-
-    public function __construct($em) {
+    public function __construct($em, $time) {
         $this->em = $em;
+        $this->time = $time;
     }
 
     public function __set($key, $value) {
@@ -46,59 +35,33 @@ class PostRouter
 
     public function insert(string $user_token, int $repo_id, string $post_status, string $post_title, string $post_tags) {
 
-        $post_tags = explode(',', $post_tags);
-        $post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
-        $post_tags = array_filter($post_tags, fn($value) => !empty($value));
-        $post_tags = array_unique($post_tags);
+        //$post_tags = explode(',', $post_tags);
+        //$post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
+        //$post_tags = array_filter($post_tags, fn($value) => !empty($value));
+        //$post_tags = array_unique($post_tags);
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($repo_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo_id, ['admin', 'editor']);
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->insert($user->id, $repo_id, $post_status, $post_title);
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
+        // repo cache
+        $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
+        $repo_term_wrapper->evict($repo->id, $post_status . '_count');
 
-        // -- Filter: posts number per repo --
-        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM posts WHERE repo_id = :repo_id");
-        $stmt->bindValue(':repo_id', $repo->id, Type::INTEGER);
-        $stmt->execute();
-        $posts_count = $stmt->fetchOne();
 
-        if($posts_count >= self::POST_INSERT_LIMIT) {
-            throw new AppException('Post limit exceeded', 212);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif(!in_array($user_role->role_status, ['admin', 'editor'])) {
-            throw new AppException('Role rights are not enough', 208);
-        }
-
-        // -- Post --
-        $post = new Post();
-        $post->create_date = Flight::datetime();
-        $post->update_date = new DateTime('1970-01-01 00:00:00');
-        $post->user_id = $user->id;
-        $post->repo_id = $repo->id;
-        $post->post_status = $post_status;
-        $post->post_title = $post_title;
-        $this->em->persist($post);
-        $this->em->flush();
-
+        /*
         // -- Tags --
         foreach($post_tags as $post_tag) {
             $tag = new PostTag();
@@ -110,21 +73,14 @@ class PostRouter
             $this->em->persist($tag);
             $this->em->flush();
         }
+        */
 
-        // -- Clear cache: repo terms --
-        foreach($repo->repo_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true',
             'post' => [
                 'id' => $post->id
             ]
-        ]);
+        ];
     }
 
     public function select(string $user_token, int $post_id) {

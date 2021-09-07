@@ -8,7 +8,7 @@ DROP VIEW IF EXISTS vw_users_alerts;
 DROP VIEW IF EXISTS vw_repos_alerts;
 DROP VIEW IF EXISTS vw_posts_alerts;
 
-DROP TABLE IF EXISTS users_spaces;
+DROP TABLE IF EXISTS billings;
 DROP TABLE IF EXISTS users_terms;
 DROP TABLE IF EXISTS users_roles;
 DROP TABLE IF EXISTS alerts;
@@ -21,13 +21,13 @@ DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS repos;
 DROP TABLE IF EXISTS users;
 
-DROP TYPE IF EXISTS space_currency;
-DROP TYPE IF EXISTS space_status;
+DROP TYPE IF EXISTS billing_currency;
+DROP TYPE IF EXISTS billing_status;
 DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS role_status;
 DROP TYPE IF EXISTS post_status;
 
-DROP SEQUENCE IF EXISTS spaces_id_seq CASCADE;
+DROP SEQUENCE IF EXISTS billings_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_terms_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS users_roles_id_seq CASCADE;
 DROP SEQUENCE IF EXISTS alerts_id_seq CASCADE;
@@ -49,6 +49,9 @@ DROP TRIGGER IF EXISTS comment_insert ON comments;
 DROP TRIGGER IF EXISTS comment_delete ON comments;
 DROP TRIGGER IF EXISTS upload_insert ON uploads;
 DROP TRIGGER IF EXISTS upload_delete ON uploads;
+DROP TRIGGER IF EXISTS billing_insert ON billings;
+DROP TRIGGER IF EXISTS billing_update ON billings;
+DROP TRIGGER IF EXISTS billing_delete ON billings;
 
 DROP FUNCTION IF EXISTS role_insert;
 DROP FUNCTION IF EXISTS role_delete;
@@ -59,6 +62,9 @@ DROP FUNCTION IF EXISTS comment_insert;
 DROP FUNCTION IF EXISTS comment_delete;
 DROP FUNCTION IF EXISTS upload_insert;
 DROP FUNCTION IF EXISTS upload_delete;
+DROP FUNCTION IF EXISTS billing_insert;
+DROP FUNCTION IF EXISTS billing_update;
+DROP FUNCTION IF EXISTS billing_delete;
 
 -- table: users --
 
@@ -220,27 +226,25 @@ CREATE TABLE IF NOT EXISTS uploads (
     thumb_file  VARCHAR(255) NULL
 );
 
--- table: users_spaces --
+-- table: billings --
 
-CREATE SEQUENCE spaces_id_seq START WITH 1 INCREMENT BY 1;
-CREATE TYPE space_status AS ENUM ('pending', 'approved');
-CREATE TYPE space_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
+CREATE SEQUENCE billings_id_seq START WITH 1 INCREMENT BY 1;
+CREATE TYPE billing_status AS ENUM ('pending', 'approved');
+CREATE TYPE billing_currency AS ENUM ('RUB', 'USD', 'EUR', 'GBP', 'CHF', 'CNY', 'JPY');
 
-CREATE TABLE IF NOT EXISTS users_spaces (
-    id               BIGINT DEFAULT NEXTVAL('spaces_id_seq'::regclass) NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS billings (
+    id               BIGINT DEFAULT NEXTVAL('billings_id_seq'::regclass) NOT NULL PRIMARY KEY,
     create_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()::timestamp(0),
     update_date      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
-    approve_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     expires_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
-    space_status     space_status NOT NULL,
-    space_key        VARCHAR(20) NOT NULL, -- referrer/customer unique key
-    space_code       VARCHAR(40) NOT NULL UNIQUE, -- approval code
     space_size       INT NOT NULL,
-    space_interval   VARCHAR(20) NOT NULL, -- P1Y
-    space_cost       NUMERIC(20,2) NOT NULL,
-    space_currency   space_currency NOT NULL,
-    space_comment    VARCHAR(255) NULL
+    space_interval   VARCHAR(20) NOT NULL, -- '1 year' (postgres interval)
+    billing_status   billing_status NOT NULL,
+    billing_code     VARCHAR(40) NOT NULL UNIQUE, -- activation (approve) code
+    billing_sum      NUMERIC(20,2) NOT NULL,
+    billing_currency billing_currency NOT NULL,
+    billing_comment  VARCHAR(255) NULL
 );
 
 -- view: vw_users_relations --
@@ -704,13 +708,133 @@ $upload_delete$ LANGUAGE plpgsql;
 
 CREATE TRIGGER upload_delete AFTER DELETE ON uploads FOR EACH ROW EXECUTE PROCEDURE upload_delete();
 
+-- triggers: billing_insert --
+
+CREATE FUNCTION billing_insert() RETURNS trigger AS $billing_insert$
+    DECLARE
+        spc_size INTEGER;
+        spc_expires VARCHAR;
+    BEGIN
+
+        IF NEW.user_id IS NOT NULL THEN
+
+            -- users terms: space_size + space_expires
+            SELECT space_size, expires_date INTO spc_size, spc_expires FROM billings
+            WHERE user_id = NEW.user_id AND expires_date >= NOW() AND billing_status = 'approved'
+            ORDER BY space_size DESC
+            LIMIT 1;
+
+            IF spc_size IS NOT NULL AND spc_expires IS NOT NULL AND EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'space_size') THEN
+                UPDATE users_terms SET term_value = spc_size WHERE user_id = NEW.user_id AND term_key = 'space_size';
+                UPDATE users_terms SET term_value = spc_expires WHERE user_id = NEW.user_id AND term_key = 'space_expires';
+
+            ELSIF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_size', spc_size);
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_expires', spc_expires);
+            END IF;
+
+        END IF;
+
+        --
+        RETURN NEW;
+    END;
+$billing_insert$ LANGUAGE plpgsql;
+
+CREATE TRIGGER billing_insert AFTER INSERT ON billings FOR EACH ROW EXECUTE PROCEDURE billing_insert();
+
+-- triggers: billing_update --
+
+CREATE FUNCTION billing_update() RETURNS trigger AS $billing_update$
+    DECLARE
+        spc_size INTEGER;
+        spc_expires VARCHAR;
+    BEGIN
+
+        -- OLD user --
+        IF OLD.user_id IS NOT NULL THEN
+
+            -- users terms: space_size + space_expires
+            SELECT space_size, expires_date INTO spc_size, spc_expires FROM billings
+            WHERE user_id = OLD.user_id AND expires_date >= NOW() AND billing_status = 'approved'
+            ORDER BY space_size DESC
+            LIMIT 1;
+
+            IF spc_size IS NOT NULL AND spc_expires IS NOT NULL AND EXISTS (SELECT id FROM users_terms WHERE user_id = OLD.user_id AND term_key = 'space_size') THEN
+                UPDATE users_terms SET term_value = spc_size WHERE user_id = OLD.user_id AND term_key = 'space_size';
+                UPDATE users_terms SET term_value = spc_expires WHERE user_id = OLD.user_id AND term_key = 'space_expires';
+
+            ELSIF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'space_size', spc_size);
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'space_expires', spc_expires);
+            END IF;
+
+        END IF;
+
+        -- NEW user --
+        IF NEW.user_id IS NOT NULL THEN
+
+            -- users terms: space_size + space_expires
+            SELECT space_size, expires_date INTO spc_size, spc_expires FROM billings
+            WHERE user_id = NEW.user_id AND expires_date >= NOW() AND billing_status = 'approved'
+            ORDER BY space_size DESC
+            LIMIT 1;
+
+            IF spc_size IS NOT NULL AND spc_expires IS NOT NULL AND EXISTS (SELECT id FROM users_terms WHERE user_id = NEW.user_id AND term_key = 'space_size') THEN
+                UPDATE users_terms SET term_value = spc_size WHERE user_id = NEW.user_id AND term_key = 'space_size';
+                UPDATE users_terms SET term_value = spc_expires WHERE user_id = NEW.user_id AND term_key = 'space_expires';
+                
+            ELSIF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_size', spc_size);
+                INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_expires', spc_expires);
+            END IF;
+
+        END IF;
+
+        --
+        RETURN NEW;
+    END;
+$billing_update$ LANGUAGE plpgsql;
+
+CREATE TRIGGER billing_update AFTER UPDATE ON billings FOR EACH ROW EXECUTE PROCEDURE billing_update();
+
+-- triggers: billing_delete --
+
+CREATE FUNCTION billing_delete() RETURNS trigger AS $billing_delete$
+    DECLARE
+        spc_size INTEGER;
+        spc_expires VARCHAR;
+    BEGIN
+
+        IF OLD.user_id IS NOT NULL THEN
+
+            -- users terms: space_size + space_expires
+            SELECT space_size, expires_date INTO spc_size, spc_expires FROM billings
+            WHERE user_id = OLD.user_id AND expires_date >= NOW() AND billing_status = 'approved'
+            ORDER BY space_size DESC
+            LIMIT 1;
+
+            IF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
+                UPDATE users_terms SET term_value = spc_size WHERE user_id = OLD.user_id AND term_key = 'space_size';
+                UPDATE users_terms SET term_value = spc_expires WHERE user_id = OLD.user_id AND term_key = 'space_expires';
+            ELSE
+                DELETE FROM users_terms WHERE user_id = OLD.user_id AND (term_key = 'space_size' OR term_key = 'space_expires');
+            END IF;
+
+        END IF;
+
+        RETURN OLD;
+    END;
+$billing_delete$ LANGUAGE plpgsql;
+
+CREATE TRIGGER billing_delete AFTER DELETE ON billings FOR EACH ROW EXECUTE PROCEDURE billing_delete();
+
 -- privileges --
 
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO echidna_usr;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO echidna_usr;
 
 \pset format wrapped
-SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM users_spaces;
+SELECT * FROM users; SELECT * FROM users_terms; SELECT * FROM alerts; SELECT * FROM repos; SELECT * FROM repos_terms; SELECT * FROM users_roles; SELECT * FROM posts; SELECT * FROM posts_terms; SELECT * FROM posts_tags; SELECT * FROM comments; SELECT * FROM uploads; SELECT * FROM billings;
 SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM vw_repos_alerts; SELECT * FROM vw_posts_alerts; SELECT * FROM vw_users_uploads;
 
 -- test data --
@@ -748,5 +872,24 @@ SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM v
 --DELETE FROM uploads WHERE id = 3;
 --DELETE FROM uploads WHERE id = 4;
 
-INSERT INTO users_spaces (expires_date, user_id, space_status, space_key, space_code, space_size, space_interval, space_cost, space_currency) 
-VALUES ('2022-01-01 00:00:00', 1, 'approved', 'nokey', 'a1', 100, 'P1Y', 100, 'RUB');
+INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES (100, '10 days', 'pending', 'a1', 100, 'RUB');
+
+INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES (200, '20 days', 'pending', 'a2', 200, 'RUB');
+
+INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES (300, '30 days', 'pending', 'a3', 300, 'RUB');
+
+update billings set expires_date=NOw() + interval '10 days', billing_status='approved', user_id=1 where billing_code='a1';
+update billings set expires_date=NOw() + interval '20 days', billing_status='approved', user_id=1 where billing_code='a2';
+update billings set expires_date=NOw() + interval '30 days', billing_status='approved', user_id=1 where billing_code='a3';
+
+INSERT INTO billings (expires_date, user_id, space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES ('2022-01-01 00:00:00', 1, 100, '10 days', 'approved', 'b1', 10, 'RUB');
+
+INSERT INTO billings (expires_date, user_id, space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES ('2022-01-02 00:00:00', 1, 200, '20 days', 'approved', 'b2', 20, 'RUB');
+
+INSERT INTO billings (expires_date, user_id, space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
+VALUES ('2022-01-03 00:00:00', 1, 300, '20 days', 'approved', 'b3', 20, 'RUB');

@@ -77,14 +77,14 @@ class RoleWrapper
         return $role;
     }
 
-    public function select(int $user_id, int $repo_id, string $role_status = '') {
+    public function select(int $user_id, int $repo_id, array $role_statuses = []) {
 
         $role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['user_id' => $user_id, 'repo_id' => $repo_id]);
 
         if(empty($role)) {
             Halt::throw(1401); // role not found
 
-        } elseif(!empty($role_status) and $role->role_status != 'admin') {
+        } elseif(!empty($role_status) and !in_array($role->role_status, $role_statuses)) {
             Halt::throw(1402); // role action denied
         }
 

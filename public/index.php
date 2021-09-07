@@ -400,6 +400,18 @@ Flight::route('GET /roles', function() {
     ));
 });
 
+// -- Post insert --
+Flight::route('POST /post', function() {
+    $router = new \App\Routers\PostRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['post_status'],
+        (string) Flight::request()->query['post_title'],
+        (string) Flight::request()->query['post_tags'],
+    ));
+});
+
 
 
 
@@ -424,18 +436,6 @@ Flight::route('PUT /bio', function() {
     $router->update(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['user_bio']
-    );
-});
-
-// -- Post insert --
-Flight::route('POST /post', function() {
-    $router = new \App\Routers\PostRouter(Flight::get('em'));
-    $router->insert(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['repo_id'],
-        (string) Flight::request()->query['post_status'],
-        (string) Flight::request()->query['post_title'],
-        (string) Flight::request()->query['post_tags'],
     );
 });
 
