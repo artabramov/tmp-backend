@@ -61,51 +61,54 @@ class PostWrapper
         return $post;
     }
 
-    public function select(int $repo_id) {
+    public function update(\App\Entities\Post $post, \App\Entities\UserRole $role, string $post_status, string $post_title) {
 
-        $repo = $this->em->getRepository('\App\Entities\Repo')->find($repo_id);
-
-        if(empty($repo)) {
-            Halt::throw(1501); // repo not found
+        if($post->user_id != $role->user_id and $role->role_status != 'admin') {
+            Halt::throw(1702); // post action denied
         }
 
-        return $repo;
-    }
-
-    public function update(\App\Entities\Repo $repo, string $repo_name) {
-
-        $repo->update_date = $this->time->datetime;
-        $repo->repo_name = $repo_name;
-        $this->em->persist($repo);
+        $post->update_date = $this->time->datetime;
+        $post->post_status = $post_status;
+        $post->post_title = $post_title;
+        $this->em->persist($post);
         $this->em->flush();
-        return $repo;
+        return $post;
     }
 
-    public function delete(\App\Entities\Repo $repo) {
+    public function select(int $post_id) {
 
-        $this->em->remove($repo);
+        $post = $this->em->getRepository('\App\Entities\Post')->find($post_id);
+
+        if(empty($post)) {
+            Halt::throw(1701); // post not found
+        }
+
+        return $post;
+    }
+
+    public function delete(\App\Entities\Post $post, \App\Entities\UserRole $role) {
+
+        if($post->user_id != $role->user_id and $role->role_status != 'admin') {
+            Halt::throw(1702); // post action denied
+        }
+
+        $this->em->remove($post);
         $this->em->flush();
     }
 
-    // repos of the user
-    public function list(int $user_id, int $offset) {
-
-        $qb2 = $this->em->createQueryBuilder();
-
-        $qb2->select('role.repo_id')
-            ->from('App\Entities\UserRole', 'role')
-            ->where($qb2->expr()->eq('role.user_id', $user_id));
+    public function list(int $repo_id, string $post_status, int $offset) {
 
         $qb1 = $this->em->createQueryBuilder();
-        $qb1->select(['repo.id'])
-            ->from('App\Entities\Repo', 'repo')
-            ->where($qb1->expr()->in('repo.id', $qb2->getDQL()))
-            ->orderBy('repo.repo_name', 'ASC')
+
+        $qb1->select('post.id')->from('App\Entities\Post', 'post')
+            ->where($qb1->expr()->eq('post.repo_id', $repo_id))
+            ->andWhere($qb1->expr()->eq('post.post_status', $this->em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)))
+            ->orderBy('post.id', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults(self::LIST_LIMIT);
 
-        $repos = array_map(fn($n) => $this->em->find('App\Entities\Repo', $n['id']), $qb1->getQuery()->getResult());
-        return $repos;
+        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
+        return $posts;
     }
 
 }

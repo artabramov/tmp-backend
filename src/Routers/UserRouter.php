@@ -2,6 +2,7 @@
 namespace App\Routers;
 use \App\Services\Halt,
     \App\Services\Email,
+    \App\Wrappers\AlertWrapper,
     \App\Wrappers\UserWrapper,
     \App\Wrappers\UserTermWrapper,
     \App\Wrappers\UserSpaceWrapper;
@@ -29,21 +30,6 @@ class UserRouter
     public function __isset( $key ) {
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
-
-    /*
-    private function count_alerts(int $user_id) {
-
-        $rsm = new ResultSetMapping();
-        $rsm->addScalarResult('alerts_count', 'alerts_count');
-
-        $q1 = $this->em
-            ->createNativeQuery("SELECT alerts_count FROM vw_users_alerts WHERE user_id = :user_id LIMIT 1", $rsm)
-            ->setParameter('user_id', $user_id);
-
-        $q1_res = $q1->getResult();
-        return !empty($q1_res) ? $q1_res[0]['alerts_count'] : 0;
-    }
-    */
 
     public function register(string $user_email, string $user_name, string $user_timezone = '') {
 
@@ -107,9 +93,12 @@ class UserRouter
                     );
                 }, $user->id),
 
-                /*
-                'alerts_count' => $this->count_alerts($user->id)
-                */
+                'alerts_count' => (int) call_user_func(function($user_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofuser($user_id);
+                    return $alerts_count;
+                }, $user->id),
+                
             ],
         ];
     }
@@ -151,18 +140,6 @@ class UserRouter
                 'user_email' => $user->user_email,
                 'user_name' => $user->user_name,
                 'user_timezone' => $user->user_timezone,
-
-                'user_space' => (array) call_user_func(function($user_id) {
-                    $space_wrapper = new UserSpaceWrapper($this->em, $this->time);
-                    $user_space = $space_wrapper->select($user_id);
-                    return [
-                        'id' => !empty($user_space) ? $user_space->id : 0,
-                        'create_date' => !empty($user_space) ? $user_space->create_date->format('Y-m-d H:i:s') : '1970-01-01 00:00:00',
-                        'expires_date' => !empty($user_space) ? $user_space->expires_date->format('Y-m-d H:i:s') : '1970-01-01 00:00:00',
-                        'space_size' => !empty($user_space) ? $user_space->space_size : $space_wrapper::DEFAULT_SIZE,
-                    ];
-                }, $user->id),
-
                 
                 'user_terms' => (array) call_user_func(function($user_id) {
                     $term_wrapper = new UserTermWrapper($this->em, $this->time);
@@ -173,9 +150,11 @@ class UserRouter
                     );
                 }, $user->id),
 
-                /*
-                'alerts_count' => $this->count_alerts($user->id)
-                */
+                'alerts_count' => (int) call_user_func(function($user_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofuser($user_id);
+                    return $alerts_count;
+                }, $user->id),
             ],
         ];
     }

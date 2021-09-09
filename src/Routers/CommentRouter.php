@@ -1,33 +1,27 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Services\Email,
+    \App\Wrappers\AlertWrapper,
+    \App\Wrappers\UserWrapper,
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\RepoWrapper,
+    \App\Wrappers\RepoTermWrapper,
+    \App\Wrappers\RoleWrapper,
+    \App\Wrappers\PostWrapper,
+    \App\Wrappers\PostTermWrapper,
+    \App\Wrappers\PostTagWrapper,
+    \App\Wrappers\CommentWrapper,
+    \App\Wrappers\UploadWrapper;
 
 class CommentRouter
 {
     protected $em;
+    protected $time;
 
-    const COMMENT_INSERT_LIMIT = 2048; // maximum comments number per one post
-    const COMMENT_LIST_LIMIT = 5;
-
-    public function __construct($em) {
+    public function __construct($em, $time) {
         $this->em = $em;
+        $this->time = $time;
     }
 
     public function __set($key, $value) {
@@ -46,220 +40,69 @@ class CommentRouter
 
     public function insert(string $user_token, int $post_id, string $comment_content) {
  
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($post_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $post_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->insert($user->id, $post->id, $comment_content);
 
-        // -- Filter: comments number per post --
-        $stmt = $this->em->getConnection()->prepare("SELECT COUNT(id) FROM comments WHERE post_id = :post_id");
-        $stmt->bindValue(':post_id', $post->id, Type::INTEGER);
-        $stmt->execute();
-        $comments_count = $stmt->fetchOne();
+        // post cache
+        $post_term_wrapper = new PostTermWrapper($this->em, $this->time);
+        $post_term_wrapper->evict($post->id, 'comments_count');
 
-        if($comments_count >= self::COMMENT_INSERT_LIMIT) {
-            throw new AppException('Comment limit exceeded', 214);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif(!in_array($user_role->role_status, ['admin', 'editor'])) {
-            throw new AppException('permission denied', 0);
-        }
-
-        // -- Comment --
-        $comment = new Comment();
-        $comment->create_date = Flight::datetime();
-        $comment->update_date = new DateTime('1970-01-01 00:00:00');
-        $comment->user_id = $user->id;
-        $comment->post_id = $post->id;
-        $comment->comment_content = $comment_content;
-        $comment->post = $post;
-        $this->em->persist($comment);
-        $this->em->flush();
-
-        /*
-        // -- Clear cache: post terms --
-        foreach($post->post_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\PostTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
-            }
-        }
-        */
-
-        /*
-        // -- Clear cache: post --
-        if($this->em->getCache()->containsEntity('\App\Entities\Post', $post)) {
-            $this->em->getCache()->evictEntity('\App\Entities\Post', $post);
-        }
-        */
-
-        // -- Clear cache: post terms --
-        $term = $this->em->getRepository('\App\Entities\PostTerm')->findOneBy(['post_id' => $post->id, 'term_key' => 'comments_count']);
-        $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term);
-
-        /*
-        // -- Clear cache: post terms --
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('term.id')->from('App\Entities\PostTerm', 'term')->where($qb1->expr()->eq('term.post_id', $post->id));
-        $qb1_results = $qb1->getQuery()->getResult();        
-        foreach($qb1_results as $result) {
-            $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
-            //$term = $this->em->find('App\Entities\PostTerm', $result['id']);
-            //$a = 1;
-        }
-        //$comments = array_map(fn($n) => $this->em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
-        */
-
-
-
-        // -- Members --
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('role.user_id')
-            ->from('App\Entities\UserRole', 'role')
-            ->where($qb1->expr()->eq('role.repo_id', $repo->id));
-
-        $members = array_map(fn($n) => $this->em->find('App\Entities\User', $n['user_id']), $qb1->getQuery()->getResult());
-
-        // -- Clear cache: users terms --
-        foreach($members as $member) {
-            foreach($member->user_terms->getValues() as $term) {
-                if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
-                    $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
-                }
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true',
             'comment' => [
                 'id' => $comment->id
             ]
-        ]);
-    }
-
-    public function update(string $user_token, int $comment_id, string $comment_content) {
-
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
-
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
-
-        // -- Comment --
-        $comment = $this->em->find('App\Entities\Comment', $comment_id);
-
-        if(empty($comment)) {
-            throw new AppException('Comment not found', 213);
-        }
-
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $comment->post_id);
-
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($comment->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
-        // -- Update comment --
-        $comment->update_date = Flight::datetime();
-        $comment->comment_content = $comment_content;
-        $this->em->persist($comment);
-        $this->em->flush();
-
-        // -- End --
-        Flight::json([ 
-            'success' => 'true'
-        ]);
+        ];
     }
 
     public function delete(string $user_token, int $comment_id) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->select($comment_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($comment->post_id);
 
-        // -- Comment --
-        $comment = $this->em->find('App\Entities\Comment', $comment_id);
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        if(empty($comment)) {
-            throw new AppException('Comment not found', 213);
-        }
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $comment->post_id);
+        // delete comment
+        $comment_wrapper->delete($comment, $user_role);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // post cache
+        $post_term_wrapper = new PostTermWrapper($this->em, $this->time);
+        $post_term_wrapper->evict($post->id, 'comments_count');
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($comment->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
+        /*
         // -- Uploads --
         $qb1 = $this->em->createQueryBuilder();
         $qb1->select('upload.id')
@@ -291,92 +134,81 @@ class CommentRouter
                 }
             }
         }
+        */
 
-        // -- Delete comment --
-        $this->em->remove($comment);
-        $this->em->flush();
 
-        // -- Clear cache: post terms --
-        foreach($post->post_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\PostTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
-            }
-        }
 
-        // -- Members --
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('role.user_id')
-            ->from('App\Entities\UserRole', 'role')
-            ->where($qb1->expr()->eq('role.repo_id', $repo->id));
 
-        $members = array_map(fn($n) => $this->em->find('App\Entities\User', $n['user_id']), $qb1->getQuery()->getResult());
-
-        // -- Clear cache: users terms --
-        foreach($members as $member) {
-            foreach($member->user_terms->getValues() as $term) {
-                if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
-                    $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
-                }
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true'
-        ]);
+        ];
+    }
+
+    public function update(string $user_token, int $comment_id, string $comment_content) {
+
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->select($comment_id);
+
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($comment->post_id);
+
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
+
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
+
+        // update comment
+        $comment_wrapper->update($comment, $user_role, $comment_content);
+
+        return [ 
+            'success' => 'true'
+        ];
     }
 
     public function list(string $user_token, int $post_id, int $offset) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($post_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $post_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comments = $comment_wrapper->list($post->id, $offset);
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
+        // delete alerts
+        $alert_wrapper = new AlertWrapper($this->em, $this->time);
+        $alert_wrapper->delete($user->id, $post->id);
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-        }
-
-        // -- Comments --
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('comment.id')->from('App\Entities\Comment', 'comment')
-            ->where($qb1->expr()->eq('comment.post_id', $post->id))
-            ->orderBy('comment.id', 'ASC')
-            ->setFirstResult($offset)
-            ->setMaxResults(self::COMMENT_LIST_LIMIT);
-        $comments = array_map(fn($n) => $this->em->find('App\Entities\Comment', $n['id']), $qb1->getQuery()->getResult());
-
-        
+        /*
         // -- Delete alerts --
         $stmt = $this->em->getConnection()->prepare("DELETE FROM alerts WHERE user_id = :user_id AND post_id = :post_id");
         $stmt->bindValue('user_id', $user->id);
         $stmt->bindValue('post_id', $post->id);
         $stmt->execute();
+        */
 
-        // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
 
             'post' => [
@@ -387,30 +219,28 @@ class CommentRouter
                 'post_status' => $post->post_status,
                 'post_title' => $post->post_title,
 
-                'post_terms' => call_user_func( 
-                    function($post_terms) {
-                        return array_combine(
-                            array_map(fn($n) => $n->term_key, $post_terms), 
-                            array_map(fn($n) => $n->term_value, $post_terms));
-                    }, $post->post_terms->toArray()),
-    
-                'post_tags' => call_user_func( 
-                    function($post_tags) {
-                        return array_map(fn($n) => $n->tag_value, $post_tags);
-                    }, $post->post_tags->toArray()),
+                'post_tags' => (array) call_user_func(function($post_id) {
+                    $tag_wrapper = new PostTagWrapper($this->em, $this->time);
+                    $tags = $tag_wrapper->list($post_id);
+                    return array_map(fn($n) => $n->tag_value, $tags);
+                }, $post->id),
+
+                'post_terms' => (array) call_user_func(function($post_id) {
+                    $term_wrapper = new PostTermWrapper($this->em, $this->time);
+                    $terms = $term_wrapper->list($post_id);
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $terms), 
+                        array_map(fn($n) => $n->term_value, $terms)
+                    );
+                }, $post->id),
             ],
 
-            'comments_limit' => self::COMMENT_LIST_LIMIT,
+            'comments_limit' => $comment_wrapper::LIST_LIMIT,
+
             'comments_count' => (int) call_user_func( 
-                /*
-                function($terms) {
-                    $tmp = $terms->filter(function($el) {
-                        return $el->term_key == 'comments_count';
-                    })->first();
-                    return empty($tmp) ? 0 : $tmp->term_value;
-                */
                 function($post_id) {
-                    $term = $this->em->getRepository('\App\Entities\PostTerm')->findOneBy(['post_id' => $post_id, 'term_key' => 'comments_count']);
+                    $term_wrapper = new PostTermWrapper($this->em, $this->time);
+                    $term = $term_wrapper->select($post_id, 'comments_count');
                     return empty($term) ? 0 : $term->term_value;
                 }, $post->id),
 
@@ -430,10 +260,16 @@ class CommentRouter
                     'upload_file' => $m->upload_file,
                     'upload_size' => $m->upload_size,
                     'thumb_file' => $m->thumb_file
-                ], $n->comment_uploads->toArray())
+                ], call_user_func( 
+                    function($comment_id) {
+                        $upload_wrapper = new UploadWrapper($this->em, $this->time);
+                        $uploads = $upload_wrapper->list($comment_id);
+                        return $uploads;
+                    }, $n->id)
+                ),
 
             ], $comments)
-        ]);
+        ];
     }
 
 }

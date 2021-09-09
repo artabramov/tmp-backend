@@ -1,40 +1,25 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Services\Email,
+    \App\Wrappers\UserWrapper,
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\RepoWrapper,
+    \App\Wrappers\RepoTermWrapper,
+    \App\Wrappers\RoleWrapper,
+    \App\Wrappers\PostWrapper,
+    \App\Wrappers\PostTermWrapper,
+    \App\Wrappers\CommentWrapper,
+    \App\Wrappers\UploadWrapper;
 
 class UploadRouter
 {
     protected $em;
+    protected $time;
 
-    const UPLOAD_INSERT_LIMIT = 128; // maximum uploads number per one comment
-    const UPLOAD_LIST_LIMIT = 5;
-    const UPLOAD_DIR = 'files/';
-    const UPLOAD_FILESIZE = '10M'; // max size of one file
-    const UPLOAD_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff', 'image/webp', 'application/pdf']; // available mimes: http://www.iana.org/assignments/media-types/media-types.xhtml
-    const UPLOAD_THUMB_DIR = 'thumbs/';
-    const UPLOAD_THUMB_WIDTH = 240;
-    const UPLOAD_THUMB_FORMAT = 'jpeg';
-    const UPLOAD_THUMB_MIMES = ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png', 'image/tiff', 'image/webp'];
-
-    public function __construct($em) {
+    public function __construct($em, $time) {
         $this->em = $em;
+        $this->time = $time;
     }
 
     public function __set($key, $value) {
@@ -53,329 +38,139 @@ class UploadRouter
 
     public function insert(string $user_token, int $comment_id, array $files) {
 
-        if(empty($files)) {
-            throw new AppException('File missing', 105);
-        }
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->select($comment_id);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($comment->post_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Comment --
-        $comment = $this->em->find('App\Entities\Comment', $comment_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        if(empty($comment)) {
-            throw new AppException('Comment not found', 213);
-        }
+        // TODO: user space
+        //$user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        //$space_size = $user_term_wrapper->select($user_id, 'space_size');
+        //$space_expires = $user_term_wrapper->select($user_id, 'space_expires');
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $comment->post_id);
+        // upload
+        $upload_wrapper = new UploadWrapper($this->em, $this->time);
+        $upload = $upload_wrapper->insert($comment->id, $user->id, $files);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // post cache
+        $post_term_wrapper = new PostTermWrapper($this->em, $this->time);
+        $post_term_wrapper->evict($post->id, 'uploads_count');
+        $post_term_wrapper->evict($post->id, 'uploads_sum');
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
+        // repo cache
+        $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
+        $repo_term_wrapper->evict($repo->id, 'uploads_count');
+        $repo_term_wrapper->evict($repo->id, 'uploads_sum');
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
+        // user cache
+        $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        $user_term_wrapper->evict($user->id, 'uploads_count');
+        $user_term_wrapper->evict($user->id, 'uploads_sum');
 
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($comment->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
-        // -- Filter: user volume --
-        $volume_size = call_user_func( 
-            function($terms) {
-                $tmp = $terms->filter(function($el) {
-                    return $el->term_key == 'volume_size';
-                })->first();
-                return empty($tmp) ? 0 : (int) $tmp->term_value;
-            }, $user->user_terms);
-
-        $uploads_sum = call_user_func( 
-            function($terms) {
-                $tmp = $terms->filter(function($el) {
-                    return $el->term_key == 'uploads_sum';
-                })->first();
-                return empty($tmp) ? 0 : (int) $tmp->term_value;
-            }, $user->user_terms);
-
-        if($uploads_sum >= $volume_size) {
-            throw new AppException('Upload limit exceeded', 216);
-        }
-
-        // -- Original file --
-        $upload_dir = self::UPLOAD_DIR . date('Y-m-d');
-        if(!file_exists($upload_dir)) {
-            try {
-                mkdir($upload_dir, 0777, true);
-
-            } catch (\Exception $e) {
-                throw new AppException('Directory make failed', 103);
-            }
-        }
-
-        $file_key = array_key_first($files);
-        $file = new \Upload\File($file_key, new \Upload\Storage\FileSystem($upload_dir));
-        $file->addValidations([new \Upload\Validation\Mimetype(self::UPLOAD_MIMES), new \Upload\Validation\Size(self::UPLOAD_FILESIZE)]);
-        $file->setName(uniqid());
-
-        // -- Thumb file --
-        if(in_array($file->getMimetype(), self::UPLOAD_THUMB_MIMES)) {
-
-            $thumb = new \phpThumb();
-            $thumb->setSourceFilename($files[$file_key]['tmp_name']);
-            $thumb->setParameter('w', self::UPLOAD_THUMB_WIDTH);
-            $thumb->setParameter('config_output_format', self::UPLOAD_THUMB_FORMAT);
-            $thumb->setParameter('config_allow_src_above_docroot', true);
-
-            $thumb_dir = self::UPLOAD_THUMB_DIR . date('Y-m-d');
-            $thumb_file = $thumb_dir . '/' . uniqid() . '.' . $thumb->config_output_format;
-
-            if(!file_exists($thumb_dir)) {
-                try {
-                    mkdir($thumb_dir, 0777, true);
-
-                } catch (\Exception $e) {
-                    throw new AppException('Directory make failed', 103);
-                }
-            }
-
-            if ($thumb->GenerateThumbnail()) { 
-                if (!$thumb->RenderToFile(__DIR__ . '/../../public/' . $thumb_file)) {
-                    $thumb_file = null;
-                }
-            } else {
-                $thumb_file = null;
-            }
-        }
-
-        // -- Upload --
-        $upload = new Upload();
-        $upload->create_date = Flight::datetime();
-        $upload->update_date = new DateTime('1970-01-01 00:00:00');
-        $upload->user_id = $user->id;
-        $upload->comment_id = $comment->id;
-        $upload->upload_name = $files[$file_key]['name'];
-        $upload->upload_file = $upload_dir . '/' . $file->getNameWithExtension();
-        $upload->upload_mime = $file->getMimetype();
-        $upload->upload_size = $file->getSize();
-        $upload->thumb_file = !empty($thumb_file) ? $thumb_file : null;
-        $upload->comment = $comment;
-
-        try {
-            $file->upload();
-            $this->em->persist($upload);
-            $this->em->flush();
-
-        } catch (\Exception $e) {
-            throw new AppException('File write failed', 106);
-        }
-
-        // -- Clear cache: post terms --
-        foreach($post->post_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\PostTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
-            }
-        }
-
-        // -- Clear cache: repo terms --
-        foreach($repo->repo_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
-            }
-        }
-
-        // -- Clear cache: user terms --
-        foreach($user->user_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true',
             'upload' => [
                 'id' => $upload->id
             ]
-        ]);
+        ];
     }
 
     public function delete(string $user_token, int $upload_id) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // upload
+        $upload_wrapper = new UploadWrapper($this->em, $this->time);
+        $upload = $upload_wrapper->select($upload_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->select($upload->comment_id);
 
-        // -- Upload --
-        $upload = $this->em->find('\App\Entities\Upload', $upload_id);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($comment->post_id);
 
-        if(empty($upload)) {
-            throw new AppException('Upload not found', 215);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Comment --
-        $comment = $this->em->find('App\Entities\Comment', $upload->comment_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        if(empty($comment)) {
-            throw new AppException('Comment not found', 213);
-        }
+        // delete upload
+        $upload = $upload_wrapper->delete($upload, $user_role);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $comment->post_id);
+        // post cache
+        $post_term_wrapper = new PostTermWrapper($this->em, $this->time);
+        $post_term_wrapper->evict($post->id, 'uploads_count');
+        $post_term_wrapper->evict($post->id, 'uploads_sum');
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // repo cache
+        $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
+        $repo_term_wrapper->evict($repo->id, 'uploads_count');
+        $repo_term_wrapper->evict($repo->id, 'uploads_sum');
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
+        // user cache
+        $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        $user_term_wrapper->evict($user->id, 'uploads_count');
+        $user_term_wrapper->evict($user->id, 'uploads_sum');
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($upload->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
-        // -- Original file --
-        if(file_exists($upload->upload_file)) {
-            try {
-                unlink($upload->upload_file);
-
-            } catch (\Exception $e) {
-                throw new AppException('File delete failed', 107);
-            }
-        }
-
-        // -- Thumb file --
-        if(!empty($upload->thumb_file) and file_exists($upload->thumb_file)) {
-            try {
-                unlink($upload->thumb_file);
-
-            } catch (\Exception $e) {
-                throw new AppException('File delete failed', 107);
-            }
-        }
-
-        $this->em->remove($upload);
-        $this->em->flush();
-
-        // -- Clear cache: post terms --
-        foreach($post->post_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\PostTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\PostTerm', $term->id);
-            }
-        }
-
-        // -- Clear cache: repo terms --
-        foreach($repo->repo_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
-            }
-        }
-
-        // -- Clear cache: user terms --
-        foreach($user->user_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\UserTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true'
-        ]);
+        ];
     }
 
     public function update(string $user_token, int $upload_id, string $upload_name) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // upload
+        $upload_wrapper = new UploadWrapper($this->em, $this->time);
+        $upload = $upload_wrapper->select($upload_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // comment
+        $comment_wrapper = new CommentWrapper($this->em, $this->time);
+        $comment = $comment_wrapper->select($upload->comment_id);
 
-        // -- Upload --
-        $upload = $this->em->find('\App\Entities\Upload', $upload_id);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($comment->post_id);
 
-        if(empty($upload)) {
-            throw new AppException('Upload not found', 215);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Comment --
-        $comment = $this->em->find('App\Entities\Comment', $upload->comment_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        if(empty($comment)) {
-            throw new AppException('Comment not found', 213);
-        }
+        // update upload
+        $upload = $upload_wrapper->update($upload, $user_role, $upload_name);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $comment->post_id);
-
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($upload->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
-        $upload->update_date = Flight::datetime();
-        $upload->upload_name = $upload_name;
-        $this->em->persist($upload);
-        $this->em->flush();
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true'
-        ]);
+        ];
     }
 
     public function list(string $user_token, int $offset) {

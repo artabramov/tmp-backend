@@ -13,7 +13,7 @@ class UserSpaceWrapper
     protected $em;
     protected $time;
 
-    const DEFAULT_SIZE = 100;
+    const SIZE_LIMIT = 1000000; // default space size
 
     public function __construct(\Doctrine\ORM\EntityManager $em, \App\Services\Time $time) {
         $this->em = $em;
@@ -34,8 +34,8 @@ class UserSpaceWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    // select user space
-    public function select(int $user_id) {
+    // TODO: is user space filled up
+    public function crowded(int $user_id) {
 
         $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
         $rsm->addScalarResult('id', 'id');

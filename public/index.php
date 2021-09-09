@@ -412,6 +412,116 @@ Flight::route('POST /post', function() {
     ));
 });
 
+// -- Post update --
+Flight::route('PUT /post/@post_id', function($post_id) {
+    $router = new \App\Routers\PostRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+        (string) Flight::request()->query['post_status'],
+        (string) Flight::request()->query['post_title'],
+        (string) Flight::request()->query['post_tags'],
+    ));
+});
+
+// -- Post select --
+Flight::route('GET /post/@post_id', function($post_id) {
+    $router = new \App\Routers\PostRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->select(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+    ));
+});
+
+// -- Post delete --
+Flight::route('DELETE /post/@post_id', function($post_id) {
+    $router = new \App\Routers\PostRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $post_id,
+    ));
+});
+
+// -- Posts list --
+Flight::route('GET /posts', function() {
+    $router = new \App\Routers\PostRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['repo_id'],
+        (string) Flight::request()->query['post_status'],
+        (int) Flight::request()->query['offset'],
+    ));
+});
+
+// -- Comment insert --
+Flight::route('POST /comment', function() {
+    $router = new \App\Routers\CommentRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['post_id'],
+        (string) Flight::request()->query['comment_content'],
+    ));
+});
+
+// -- Comment delete --
+Flight::route('DELETE /comment/@comment_id', function($comment_id) {
+    $router = new \App\Routers\CommentRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $comment_id,
+    ));
+});
+
+// -- Comment update --
+Flight::route('PUT /comment/@comment_id', function($comment_id) {
+    $router = new \App\Routers\CommentRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $comment_id,
+        (string) Flight::request()->query['comment_content'],
+    ));
+});
+
+// -- Comment list --
+Flight::route('GET /comments', function() {
+    $router = new \App\Routers\CommentRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->list(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['post_id'],
+        (int) Flight::request()->query['offset'],
+    ));
+});
+
+// -- Upload insert --
+Flight::route('POST /upload', function() {
+    $router = new \App\Routers\UploadRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->insert(
+        (string) Flight::request()->query['user_token'],
+        (int) Flight::request()->query['comment_id'],
+        Flight::request()->files->getData()
+    ));
+});
+
+// -- Upload update --
+Flight::route('PUT /upload/@upload_id', function($upload_id) {
+    $router = new \App\Routers\UploadRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->update(
+        (string) Flight::request()->query['user_token'],
+        (int) $upload_id,
+        (string) Flight::request()->query['upload_name'],
+    ));
+});
+
+// -- Upload delete --
+Flight::route('DELETE /upload/@upload_id', function($upload_id) {
+    $router = new \App\Routers\UploadRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->delete(
+        (string) Flight::request()->query['user_token'],
+        (int) $upload_id
+    ));
+});
+
+
 
 
 
@@ -439,47 +549,6 @@ Flight::route('PUT /bio', function() {
     );
 });
 
-// -- Post select --
-Flight::route('GET /post/@post_id', function($post_id) {
-    $router = new \App\Routers\PostRouter(Flight::get('em'));
-    $router->select(
-        (string) Flight::request()->query['user_token'],
-        (int) $post_id,
-    );
-});
-
-// -- Post update --
-Flight::route('PUT /post/@post_id', function($post_id) {
-    $router = new \App\Routers\PostRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (int) $post_id,
-        (string) Flight::request()->query['post_status'],
-        (string) Flight::request()->query['post_title'],
-        (string) Flight::request()->query['post_tags'],
-    );
-});
-
-// -- Post delete --
-Flight::route('DELETE /post/@post_id', function($post_id) {
-    $router = new \App\Routers\PostRouter(Flight::get('em'));
-    $router->delete(
-        (string) Flight::request()->query['user_token'],
-        (int) $post_id,
-    );
-});
-
-// -- Posts list --
-Flight::route('GET /posts', function() {
-    $router = new \App\Routers\PostRouter(Flight::get('em'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['repo_id'],
-        (string) Flight::request()->query['post_status'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
 // -- Posts by tag --
 Flight::route('GET /bytag', function() {
     $router = new \App\Routers\PostRouter(Flight::get('em'));
@@ -496,83 +565,6 @@ Flight::route('GET /bytitle', function() {
     $router->bytitle(
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['post_title'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
-// -- Comment insert --
-Flight::route('POST /comment', function() {
-    $router = new \App\Routers\CommentRouter(Flight::get('em'));
-    $router->insert(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['post_id'],
-        (string) Flight::request()->query['comment_content'],
-    );
-});
-
-// -- Comment update --
-Flight::route('PUT /comment/@comment_id', function($comment_id) {
-    $router = new \App\Routers\CommentRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (int) $comment_id,
-        (string) Flight::request()->query['comment_content'],
-    );
-});
-
-// -- Comment delete --
-Flight::route('DELETE /comment/@comment_id', function($comment_id) {
-    $router = new \App\Routers\CommentRouter(Flight::get('em'));
-    $router->delete(
-        (string) Flight::request()->query['user_token'],
-        (int) $comment_id,
-    );
-});
-
-// -- Comment list --
-Flight::route('GET /comments', function() {
-    $router = new \App\Routers\CommentRouter(Flight::get('em'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['post_id'],
-        (int) Flight::request()->query['offset'],
-    );
-});
-
-// -- Upload insert --
-Flight::route('POST /upload', function() {
-    $router = new \App\Routers\UploadRouter(Flight::get('em'));
-    $router->insert(
-        (string) Flight::request()->query['user_token'],
-        (int) Flight::request()->query['comment_id'],
-        Flight::request()->files->getData()
-    );
-});
-
-// -- Upload update --
-Flight::route('PUT /upload/@upload_id', function($upload_id) {
-    $router = new \App\Routers\UploadRouter(Flight::get('em'));
-    $router->update(
-        (string) Flight::request()->query['user_token'],
-        (int) $upload_id,
-        (string) Flight::request()->query['upload_name'],
-    );
-});
-
-// -- Upload delete --
-Flight::route('DELETE /upload/@upload_id', function($upload_id) {
-    $router = new \App\Routers\UploadRouter(Flight::get('em'));
-    $router->delete(
-        (string) Flight::request()->query['user_token'],
-        (int) $upload_id
-    );
-});
-
-// -- Upload list --
-Flight::route('GET /uploads', function() {
-    $router = new \App\Routers\UploadRouter(Flight::get('em'));
-    $router->list(
-        (string) Flight::request()->query['user_token'],
         (int) Flight::request()->query['offset'],
     );
 });

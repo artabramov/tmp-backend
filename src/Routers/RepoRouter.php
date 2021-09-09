@@ -2,6 +2,7 @@
 namespace App\Routers;
 use \App\Services\Halt,
     \App\Services\Email,
+    \App\Wrappers\AlertWrapper,
     \App\Wrappers\UserWrapper,
     \App\Wrappers\UserTermWrapper,
     \App\Wrappers\RepoWrapper,
@@ -92,9 +93,12 @@ class RepoRouter
                     );
                 }, $repo->id),
 
-                /*
-                'repo_alerts' => (int) Flight::count_alerts($repo, $user),
-                */
+                'alerts_count' => (int) call_user_func(function($user_id, $repo_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofrepo($user_id, $repo_id);
+                    return $alerts_count;
+                }, $user->id, $repo->id),
+
             ],
 
         ];
@@ -248,21 +252,11 @@ class RepoRouter
                     );
                 }, $n->id),
 
-                /*
-                'repo_alerts' => [
-                    'alerts_count' => (int) call_user_func(
-                        function($user_id, $repo_id) {
-                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-                            $rsm->addScalarResult('alerts_count', 'alerts_count');
-                            $query = $this->em
-                                ->createNativeQuery("SELECT alerts_count FROM vw_repos_alerts WHERE user_id = :user_id AND repo_id = :repo_id", $rsm)
-                                ->setParameter('user_id', $user_id)
-                                ->setParameter('repo_id', $repo_id);
-                            $query_result = $query->getResult();
-                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
-                    }, $user->id, $n->id)
-                ],
-                */
+                'alerts_count' => (int) call_user_func(function($user_id, $repo_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofrepo($user_id, $repo_id);
+                    return $alerts_count;
+                }, $user->id, $n->id),
 
             ], $repos)
         ];

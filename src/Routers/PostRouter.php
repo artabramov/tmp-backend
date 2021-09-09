@@ -2,12 +2,15 @@
 namespace App\Routers;
 use \App\Services\Halt,
     \App\Services\Email,
+    \App\Wrappers\AlertWrapper,
     \App\Wrappers\UserWrapper,
     \App\Wrappers\UserTermWrapper,
     \App\Wrappers\RepoWrapper,
     \App\Wrappers\RepoTermWrapper,
     \App\Wrappers\RoleWrapper,
-    \App\Wrappers\PostWrapper;
+    \App\Wrappers\PostWrapper,
+    \App\Wrappers\PostTermWrapper,
+    \App\Wrappers\PostTagWrapper;
 
 class PostRouter
 {
@@ -35,11 +38,6 @@ class PostRouter
 
     public function insert(string $user_token, int $repo_id, string $post_status, string $post_title, string $post_tags) {
 
-        //$post_tags = explode(',', $post_tags);
-        //$post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
-        //$post_tags = array_filter($post_tags, fn($value) => !empty($value));
-        //$post_tags = array_unique($post_tags);
-
         // auth
         $user_wrapper = new UserWrapper($this->em, $this->time);
         $user = $user_wrapper->auth($user_token);
@@ -56,24 +54,21 @@ class PostRouter
         $post_wrapper = new PostWrapper($this->em, $this->time);
         $post = $post_wrapper->insert($user->id, $repo_id, $post_status, $post_title);
 
+        // post tags
+        $tags_values = call_user_func(function($post_tags) {
+            $post_tags = explode(',', $post_tags);
+            $post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
+            $post_tags = array_filter($post_tags, fn($value) => !empty($value));
+            $post_tags = array_unique($post_tags);
+            return $post_tags;
+        }, $post_tags);
+
+        $post_tag_wrapper = new PostTagWrapper($this->em, $this->time);
+        $post_tag_wrapper->insert($post->id, $tags_values);
+
         // repo cache
         $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
         $repo_term_wrapper->evict($repo->id, $post_status . '_count');
-
-
-        /*
-        // -- Tags --
-        foreach($post_tags as $post_tag) {
-            $tag = new PostTag();
-            $tag->create_date = Flight::datetime();
-            $tag->update_date = new DateTime('1970-01-01 00:00:00');
-            $tag->post_id = $post->id;
-            $tag->tag_value = $post_tag;
-            $tag->post = $post;
-            $this->em->persist($tag);
-            $this->em->flush();
-        }
-        */
 
         return [ 
             'success' => 'true',
@@ -83,52 +78,69 @@ class PostRouter
         ];
     }
 
+    public function update(string $user_token, int $post_id, string $post_status, string $post_title, string $post_tags) {
+
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
+
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($post_id);
+
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
+
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
+
+        // update post
+        $post = $post_wrapper->update($post, $user_role, $post_status, $post_title);
+
+        // post tags
+        $tags_values = call_user_func(function($post_tags) {
+            $post_tags = explode(',', $post_tags);
+            $post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
+            $post_tags = array_filter($post_tags, fn($value) => !empty($value));
+            $post_tags = array_unique($post_tags);
+            return $post_tags;
+        }, $post_tags);
+
+        $post_tag_wrapper = new PostTagWrapper($this->em, $this->time);
+        $post_tag_wrapper->update($post->id, $tags_values);
+
+        // repo cache
+        $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
+        $repo_term_wrapper->evict($repo->id, 'todo_count');
+        $repo_term_wrapper->evict($repo->id, 'doing_count');
+        $repo_term_wrapper->evict($repo->id, 'done_count');
+
+        return [ 
+            'success' => 'true'
+        ];
+    }
+
     public function select(string $user_token, int $post_id) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($post_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $post_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-        }
-
-        // -- Post alerts --
-        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-        $rsm->addScalarResult('alerts_count', 'alerts_count');
-
-        $query = $this->em
-            ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
-            ->setParameter('user_id', $user->id)
-            ->setParameter('post_id', $post->id);
-        $query_result = $query->getResult();
-        $alerts_count = !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
-
-        // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
 
             'post' => [
@@ -139,25 +151,40 @@ class PostRouter
                 'post_status' => $post->post_status,
                 'post_title' => $post->post_title,
 
-                'post_alerts' => [
-                    'alerts_count' => $alerts_count
-                ],
+                'post_terms' => (array) call_user_func(function($post_id) {
+                    $term_wrapper = new PostTermWrapper($this->em, $this->time);
+                    $terms = $term_wrapper->list($post_id);
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $terms), 
+                        array_map(fn($n) => $n->term_value, $terms)
+                    );
+                }, $post->id),
 
-                'post_terms' => call_user_func( 
-                    function($post_terms) {
-                        return array_combine(
-                            array_map(fn($n) => $n->term_key, $post_terms), 
-                            array_map(fn($n) => $n->term_value, $post_terms));
-                    }, $post->post_terms->toArray()),
-    
-                'post_tags' => call_user_func( 
-                    function($post_tags) {
-                        return array_map(fn($n) => $n->tag_value, $post_tags);
-                    }, $post->post_tags->toArray()),
+                'post_tags' => (array) call_user_func(function($post_id) {
+                    $tag_wrapper = new PostTagWrapper($this->em, $this->time);
+                    $tags = $tag_wrapper->list($post_id);
+                    return array_map(fn($n) => $n->tag_value, $tags);
+                }, $post->id),
+
+                'post_terms' => (array) call_user_func(function($post_id) {
+                    $term_wrapper = new PostTermWrapper($this->em, $this->time);
+                    $terms = $term_wrapper->list($post_id);
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $terms), 
+                        array_map(fn($n) => $n->term_value, $terms)
+                    );
+                }, $post->id),
+
+                'alerts_count' => (int) call_user_func(function($user_id, $post_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofpost($user_id, $post_id);
+                    return $alerts_count;
+                }, $user->id, $post->id),
 
                 'user'=> call_user_func(
                     function($user_id) {
-                        $member = $this->em->find('App\Entities\User', $user_id);
+                        $user_wrapper = new UserWrapper($this->em, $this->time);
+                        $member = $user_wrapper->select($user_id);
                         return [
                             'id' => $member->id,
                             'create_date' => $member->create_date->format('Y-m-d H:i:s'),
@@ -167,127 +194,36 @@ class PostRouter
                     }, $post->user_id)
 
             ]
-        ]);
-    }
-
-    public function update(string $user_token, int $post_id, string $post_status, string $post_title, string $post_tags) {
-
-        $post_tags = explode(',', $post_tags);
-        $post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
-        $post_tags = array_filter($post_tags, fn($value) => !empty($value));
-        $post_tags = array_unique($post_tags);
-
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
-
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
-
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
-
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $post_id);
-
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
-
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
-
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($post->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
-        // -- Post --
-        $post->update_date = Flight::datetime();
-        $post->post_status = $post_status;
-        $post->post_title = $post_title;
-        $this->em->persist($post);
-        $this->em->flush();
-
-        // -- Update tags --
-        $qb1 = $this->em->createQueryBuilder();
-        $qb1->select('tag.id')->from('App\Entities\postTag', 'tag')->where($qb1->expr()->eq('tag.post_id', $post->id));
-        $tags = array_map(fn($n) => $this->em->find('App\Entities\PostTag', $n['id']), $qb1->getQuery()->getResult());
-
-        foreach($tags as $tag) {
-            $this->em->remove($tag);
-            $this->em->flush();
-        }
-
-        foreach($post_tags as $post_tag) {
-            $tag = new PostTag();
-            $tag->create_date = Flight::datetime();
-            $tag->update_date = new DateTime('1970-01-01 00:00:00');
-            $tag->post_id = $post->id;
-            $tag->tag_value = $post_tag;
-            $tag->post = $post;
-            $this->em->persist($tag);
-            $this->em->flush();
-        }
-
-        // -- Clear cache: repo terms --
-        foreach($repo->repo_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
-            'success' => 'true'
-        ]);
+        ];
     }
 
     public function delete(string $user_token, int $post_id) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // post
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $post = $post_wrapper->select($post_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($post->repo_id);
 
-        // -- Post --
-        $post = $this->em->find('App\Entities\Post', $post_id);
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id, ['admin', 'editor']);
 
-        if(empty($post)) {
-            throw new AppException('Post not found', 211);
-        }
+        // delete post
+        $post_status = $post->post_status;
+        $post_wrapper->delete($post, $user_role);
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $post->repo_id);
+        // repo cache
+        $repo_term_wrapper = new RepoTermWrapper($this->em, $this->time);
+        $repo_term_wrapper->evict($repo->id, $post_status . '_count');
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-
-        } elseif($user_role->role_status != 'admin' and !($post->user_id == $user->id and $user_role->role_status == 'editor')) {
-            throw new AppException('Action prohibited', 102);
-        }
-
+        /*
         // -- Uploads --
         $qb2 = $this->em->createQueryBuilder();
         $qb2->select('comment.id')
@@ -324,74 +260,33 @@ class PostRouter
                 }
             }
         }
+        */
 
-        // -- Post delete --
-        $this->em->remove($post);
-        $this->em->flush();
 
-        // -- Clear cache: repo terms --
-        foreach($repo->repo_terms->getValues() as $term) {
-            if($this->em->getCache()->containsEntity('\App\Entities\RepoTerm', $term->id)) {
-                $this->em->getCache()->evictEntity('\App\Entities\RepoTerm', $term->id);
-            }
-        }
-
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true'
-        ]);
+        ];
     }
 
     public function list(string $user_token, int $repo_id, string $post_status, int $offset) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // repo
+        $repo_wrapper = new RepoWrapper($this->em, $this->time);
+        $repo = $repo_wrapper->select($repo_id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // user role
+        $role_wrapper = new RoleWrapper($this->em, $this->time);
+        $user_role = $role_wrapper->select($user->id, $repo->id);
 
-        // -- Repo --
-        $repo = $this->em->find('App\Entities\Repo', $repo_id);
+        // posts
+        $post_wrapper = new PostWrapper($this->em, $this->time);
+        $posts = $post_wrapper->list($repo_id, $post_status, $offset);
 
-        if(empty($repo)) {
-            throw new AppException('Repository not found', 205);
-        }
-
-        // -- User role --
-        $user_role = $this->em->getRepository('\App\Entities\UserRole')->findOneBy(['repo_id' => $repo->id, 'user_id' => $user->id]);
-
-        if(empty($user_role)) {
-            throw new AppException('Role not found', 207);
-        }
-
-        $qb1 = $this->em->createQueryBuilder();
-
-        $qb1->select('post.id')->from('App\Entities\Post', 'post')
-            ->where($qb1->expr()->eq('post.repo_id', $repo->id))
-            ->andWhere($qb1->expr()->eq('post.post_status', $this->em->getConnection()->quote($post_status, \Doctrine\DBAL\ParameterType::STRING)))
-            ->orderBy('post.id', 'DESC')
-            ->setFirstResult($offset)
-            ->setMaxResults(self::POST_LIST_LIMIT);
-
-        $posts_count = call_user_func(
-            function($terms, $post_status) {
-
-                $tmp = $terms->filter(function($el) use ($post_status) {
-                    return $el->term_key == $post_status . '_count';
-                })->first();
-                return empty($tmp) ? 0 : $tmp->term_value;
-
-            }, $repo->repo_terms, $post_status
-        );
-
-        $posts = array_map(fn($n) => $this->em->find('App\Entities\Post', $n['id']), $qb1->getQuery()->getResult());
-
-        // -- End --
-        Flight::json([
+        return [
             'success' => 'true',
 
             'repo' => [
@@ -399,13 +294,15 @@ class PostRouter
                 'create_date' => $repo->create_date->format('Y-m-d H:i:s'),
                 'user_id' => $repo->user_id,
                 'repo_name' => $repo->repo_name,
-    
-                'repo_terms' => call_user_func( 
-                    function($repo_terms) {
-                        return array_combine(
-                            array_map(fn($n) => $n->term_key, $repo_terms), 
-                            array_map(fn($n) => $n->term_value, $repo_terms));
-                    }, $repo->repo_terms->toArray()),
+
+                'repo_terms' => (array) call_user_func(function($repo_id) {
+                    $term_wrapper = new RepoTermWrapper($this->em, $this->time);
+                    $terms = $term_wrapper->list($repo_id);
+                    return array_combine(
+                        array_map(fn($m) => $m->term_key, $terms), 
+                        array_map(fn($m) => $m->term_value, $terms)
+                    );
+                }, $repo->id),
 
                 'user_role' => [
                     'id' => $user_role->id,
@@ -416,8 +313,14 @@ class PostRouter
                 ]
             ],
 
-            'posts_limit' => self::POST_LIST_LIMIT,
-            'posts_count' => (int) $posts_count,
+            'posts_limit' => $post_wrapper::LIST_LIMIT,
+
+            'posts_count' => (int) call_user_func( 
+                function($repo_id, $post_status) {
+                    $term_wrapper = new RepoTermWrapper($this->em, $this->time);
+                    $term = $term_wrapper->select($repo_id, $post_status . '_count');
+                    return empty($term) ? 0 : $term->term_value;
+                }, $repo->id, $post_status),
 
             'posts'=> array_map(fn($n) => [
                 'id' => $n->id,
@@ -427,49 +330,31 @@ class PostRouter
                 'post_status' => $n->post_status,
                 'post_title' => $n->post_title,
 
-                'post_alerts' => [
-                    'alerts_count' => (int) call_user_func(
-                        function($user_id, $post_id) {
-                            $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-                            $rsm->addScalarResult('alerts_count', 'alerts_count');
-                            $query = $this->em
-                                ->createNativeQuery("SELECT alerts_count FROM vw_posts_alerts WHERE user_id = :user_id AND post_id = :post_id", $rsm)
-                                ->setParameter('user_id', $user_id)
-                                ->setParameter('post_id', $post_id);
-                            $query_result = $query->getResult();
-                            return !empty($query_result[0]) ? $query_result[0]['alerts_count'] : 0;
-                    }, $user->id, $n->id)
-                ],
+                'alerts_count' => (int) call_user_func(function($user_id, $post_id) {
+                    $alert_wrapper = new AlertWrapper($this->em, $this->time);
+                    $alerts_count = $alert_wrapper->ofpost($user_id, $post_id);
+                    return $alerts_count;
+                }, $user->id, $n->id),
 
-                'post_terms' => call_user_func( 
-                    function($post_id) {
-                        $qb1 = $this->em->createQueryBuilder();
-                        $qb1->select('term.id')->from('App\Entities\PostTerm', 'term')->where($qb1->expr()->eq('term.post_id', $post_id));
-                        $qb1_results = $qb1->getQuery()->getResult();
-                        $post_terms = [];
-                        foreach($qb1_results as $result) {
-                            $term = $this->em->find('App\Entities\PostTerm', $result['id']);
-                            $post_terms[$term->term_key] = $term->term_value;
-                        }
-                        return $post_terms;
-                    }, $n->id),
-                    
+                'post_terms' => (array) call_user_func(function($post_id) {
+                    $term_wrapper = new PostTermWrapper($this->em, $this->time);
+                    $terms = $term_wrapper->list($post_id);
+                    return array_combine(
+                        array_map(fn($n) => $n->term_key, $terms), 
+                        array_map(fn($n) => $n->term_value, $terms)
+                    );
+                }, $n->id),
 
-                    /*
-                    function($post_terms) {
-                        return array_combine(
-                            array_map(fn($m) => $m->term_key, $post_terms), 
-                            array_map(fn($m) => $m->term_value, $post_terms));
-                    }, $n->post_terms->toArray()),
-                    */
-    
-                'post_tags' => call_user_func( 
-                    function($post_tags) {
-                        return array_map(fn($m) => $m->tag_value, $post_tags);
-                    }, $n->post_tags->toArray()),
+                'post_tags' => (array) call_user_func(function($post_id) {
+                    $tag_wrapper = new PostTagWrapper($this->em, $this->time);
+                    $tags = $tag_wrapper->list($post_id);
+                    return array_map(fn($m) => $m->tag_value, $tags);
+                }, $n->id),
 
             ], $posts)
-        ]);
+
+
+        ];
     }
 
     public function bytag(string $user_token, string $post_tag, int $offset) {
