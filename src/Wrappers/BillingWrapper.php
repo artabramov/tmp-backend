@@ -8,7 +8,7 @@ use \DateTime,
     \App\Entities\UserSpace;
     
 
-class UserSpaceWrapper
+class BillingWrapper
 {
     protected $em;
     protected $time;
@@ -34,6 +34,30 @@ class UserSpaceWrapper
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
+    public function select(string $billing_code) {
+
+        $billing = $this->em->getRepository('\App\Entities\Billing')->findOneBy(['billing_code' => $billing_code]);
+
+        if(empty($billing)) {
+            Halt::throw(1301); // billing not found
+        }
+
+        return $billing;
+    }
+
+    public function approve(\App\Entities\Billing $billing, int $user_id) {
+
+        $billing->update_date = $this->time->datetime;
+        $billing->expires_date = $this->time->datetime;
+        $billing->expires_date->add(new DateInterval($billing->space_interval));
+        $billing->billing_status = 'approved';
+        $billing->user_id = $user_id;
+        $this->em->persist($billing);
+        $this->em->flush();
+        return $billing;
+    }
+
+    /*
     // TODO: is user space filled up
     public function crowded(int $user_id) {
 
@@ -47,6 +71,7 @@ class UserSpaceWrapper
         $space = !empty($query_result) ? $this->em->find('App\Entities\UserSpace', $query_result[0]['id']) : null;
         return $space;
     }
+    */
 
 
 }

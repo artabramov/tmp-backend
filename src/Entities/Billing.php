@@ -148,7 +148,7 @@ class Billing
         } elseif(!is_string($this->billing_code) or mb_strlen($this->billing_code) < 2 or mb_strlen($this->billing_code) > 40) {
             Halt::throw(1318); // billing_code is incorrect
 
-        } elseif(!empty($this->billing_sum) and !is_int($this->billing_sum)) {
+        } elseif(!empty($this->billing_sum) and !is_float($this->billing_sum)) {
             Halt::throw(1320); // billing_sum is incorrect
 
         } elseif(empty($this->billing_currency)) {

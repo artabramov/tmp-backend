@@ -57,7 +57,7 @@ class PostRouter
         // post tags
         $tags_values = call_user_func(function($post_tags) {
             $post_tags = explode(',', $post_tags);
-            $post_tags = array_map(fn($value) => trim(mb_strtolower($value)) , $post_tags);
+            $post_tags = array_map(fn($value) => trim(mb_strtolower($value)), $post_tags);
             $post_tags = array_filter($post_tags, fn($value) => !empty($value));
             $post_tags = array_unique($post_tags);
             return $post_tags;

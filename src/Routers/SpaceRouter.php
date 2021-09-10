@@ -1,30 +1,26 @@
 <?php
 namespace App\Routers;
-use \Flight,
-    \DateTime,
-    \DateInterval,
-    \Doctrine\DBAL\Types\Type,
-    \App\Exceptions\AppException,
-    \App\Entities\User,
-    \App\Entities\UserTerm,
-    \App\Entities\Repo,
-    \App\Entities\RepoTerm,
-    \App\Entities\UserRole,
-    \App\Entities\Post,
-    \App\Entities\PostTerm,
-    \App\Entities\PostTag,
-    \App\Entities\PostAlert,
-    \App\Entities\Comment,
-    \App\Entities\Upload,
-    \App\Entities\UserVolume,
-    \App\Entities\Premium;
+use \App\Services\Halt,
+    \App\Services\Email,
+    \App\Wrappers\UserWrapper,
+    \App\Wrappers\UserTermWrapper,
+    \App\Wrappers\RepoWrapper,
+    \App\Wrappers\RepoTermWrapper,
+    \App\Wrappers\RoleWrapper,
+    \App\Wrappers\PostWrapper,
+    \App\Wrappers\PostTermWrapper,
+    \App\Wrappers\CommentWrapper,
+    \App\Wrappers\UploadWrapper,
+    \App\Wrappers\BillingWrapper;
 
-class PremiumRouter
+class SpaceRouter
 {
     protected $em;
+    protected $time;
 
-    public function __construct($em) {
+    public function __construct($em, $time) {
         $this->em = $em;
+        $this->time = $time;
     }
 
     public function __set($key, $value) {
@@ -41,28 +37,25 @@ class PremiumRouter
         return property_exists($this, $key) ? !empty($this->$key) : false;
     }
 
-    public function select(string $user_token, string $premium_code) {
+    public function select(string $user_token, string $billing_code) {
 
-        // -- User auth --
-        $user = $this->em->getRepository('\App\Entities\User')->findOneBy(['user_token' => $user_token]);
+        // auth
+        $user_wrapper = new UserWrapper($this->em, $this->time);
+        $user = $user_wrapper->auth($user_token);
 
-        if(empty($user)) {
-            throw new AppException('User not found', 201);
+        // billing
+        $billing_wrapper = new BillingWrapper($this->em, $this->time);
+        $billing = $billing_wrapper->select($billing_code);
+        $billing = $billing_wrapper->approve($billing, $user->id);
 
-        } elseif($user->user_status == 'trash') {
-            throw new AppException('User deleted', 202);
-        }
+        // user cache
+        $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        $user_term_wrapper->evict($user->id, 'space_size');
+        $user_term_wrapper->evict($user->id, 'space_expires');
 
-        // -- Premium --
-        $premium = $this->em->getRepository('\App\Entities\Premium')->findOneBy(['premium_code' => $premium_code]);
+        //$a = 1;
 
-        if(empty($premium)) {
-            throw new AppException('Premium not found', 217);
-
-        } elseif($premium->premium_status == 'trash') {
-            throw new AppException('Premium deleted', 218);
-        }
-
+        /*
         $premium->user_id = $user->id;
         $premium->premium_status = 'trash';
         $this->em->persist($premium);
@@ -84,11 +77,11 @@ class PremiumRouter
                 $this->em->getCache()->evictEntity('\App\Entities\UserTerm', $term->id);
             }
         }
+        */
 
-        // -- End --
-        Flight::json([ 
+        return [ 
             'success' => 'true'
-        ]);
+        ];
     }
 
 

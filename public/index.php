@@ -521,6 +521,16 @@ Flight::route('DELETE /upload/@upload_id', function($upload_id) {
     ));
 });
 
+// -- Billing select --
+// TODO: add user_term "billing activate errors count"
+Flight::route('GET /space', function() {
+    $router = new \App\Routers\SpaceRouter(Flight::get('em'), Flight::get('time'));
+    Flight::json($router->select(
+        (string) Flight::request()->query['user_token'],
+        (string) Flight::request()->query['billing_code'],
+    ));
+});
+
 
 
 
@@ -566,15 +576,6 @@ Flight::route('GET /bytitle', function() {
         (string) Flight::request()->query['user_token'],
         (string) Flight::request()->query['post_title'],
         (int) Flight::request()->query['offset'],
-    );
-});
-
-// -- Premium select --
-Flight::route('GET /premium', function() {
-    $router = new \App\Routers\PremiumRouter(Flight::get('em'));
-    $router->select(
-        (string) Flight::request()->query['user_token'],
-        (string) Flight::request()->query['premium_code'],
     );
 });
 

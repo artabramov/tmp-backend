@@ -239,7 +239,7 @@ CREATE TABLE IF NOT EXISTS billings (
     expires_date     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT to_timestamp(0),
     user_id          BIGINT REFERENCES users(id) ON DELETE NO ACTION NULL, -- can be null
     space_size       INT NOT NULL,
-    space_interval   VARCHAR(20) NOT NULL, -- '1 year' (postgres interval)
+    space_interval   VARCHAR(20) NOT NULL, -- 'P1Y'
     billing_status   billing_status NOT NULL,
     billing_code     VARCHAR(40) NOT NULL UNIQUE, -- activation (approve) code
     billing_sum      NUMERIC(20,2) NOT NULL,
@@ -766,6 +766,9 @@ CREATE FUNCTION billing_update() RETURNS trigger AS $billing_update$
             ELSIF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
                 INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'space_size', spc_size);
                 INSERT INTO users_terms (user_id, term_key, term_value) VALUES (OLD.user_id, 'space_expires', spc_expires);
+
+            ELSE
+                DELETE FROM users_terms WHERE user_id = OLD.user_id AND (term_key = 'space_size' OR term_key = 'space_expires');
             END IF;
 
         END IF;
@@ -786,6 +789,9 @@ CREATE FUNCTION billing_update() RETURNS trigger AS $billing_update$
             ELSIF spc_size IS NOT NULL AND spc_expires IS NOT NULL THEN
                 INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_size', spc_size);
                 INSERT INTO users_terms (user_id, term_key, term_value) VALUES (NEW.user_id, 'space_expires', spc_expires);
+
+            ELSE
+                DELETE FROM users_terms WHERE user_id = NEW.user_id AND (term_key = 'space_size' OR term_key = 'space_expires');
             END IF;
 
         END IF;
@@ -872,8 +878,8 @@ SELECT * FROM vw_users_relations; SELECT * FROM vw_users_alerts; SELECT * FROM v
 --DELETE FROM uploads WHERE id = 3;
 --DELETE FROM uploads WHERE id = 4;
 
-INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
-VALUES (100, '10 days', 'pending', 'a1', 100, 'RUB');
+INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) VALUES (100, 'P1Y', 'pending', 'A1', 100, 'RUB');
+
 
 INSERT INTO billings (space_size, space_interval, billing_status, billing_code, billing_sum, billing_currency) 
 VALUES (200, '20 days', 'pending', 'a2', 200, 'RUB');
