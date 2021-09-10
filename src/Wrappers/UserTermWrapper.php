@@ -13,6 +13,8 @@ class UserTermWrapper
     protected $em;
     protected $time;
 
+    const SPACE_SIZE = 1000000; // default space size
+
     public function __construct(\Doctrine\ORM\EntityManager $em, \App\Services\Time $time) {
         $this->em = $em;
         $this->time = $time;
@@ -93,6 +95,38 @@ class UserTermWrapper
         $terms = array_map(fn($n) => $this->em->find('App\Entities\UserTerm', $n['id']), $qb1_result);
 
         return $terms;
+    }
+
+    // TODO: is user space filled up
+    public function space_filled(int $user_id, int $upload_size) {
+
+        $user_term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user_id, 'term_key' => 'space_size']);
+        $space_size = !empty($user_term) ? (int) $user_term->term_value : self::SPACE_SIZE;
+
+        $user_term = $this->em->getRepository('\App\Entities\UserTerm')->findOneBy(['user_id' => $user_id, 'term_key' => 'space_expires']);
+        $space_expires = !empty($user_term) ? new DateTime($user_term->term_value) : $this->time->datetime;
+
+        /*
+        if(empty($space_size) or $space_expires < $this->time->datetime) {
+            $space_size = self::SPACE_SIZE;
+        }
+        */
+
+        $a = 1;
+
+        return $space_size;
+
+        /*
+        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
+        $rsm->addScalarResult('id', 'id');
+
+        $query = $this->em->createNativeQuery("SELECT id FROM users_spaces WHERE user_id = :user_id AND expires_date > NOW() ORDER BY space_size DESC LIMIT 1", $rsm)
+            ->setParameter('user_id', $user_id);
+
+        $query_result = $query->getResult();
+        $space = !empty($query_result) ? $this->em->find('App\Entities\UserSpace', $query_result[0]['id']) : null;
+        return $space;
+        */
     }
 
 }

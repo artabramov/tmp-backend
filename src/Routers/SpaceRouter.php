@@ -44,16 +44,30 @@ class SpaceRouter
         $user = $user_wrapper->auth($user_token);
 
         // billing
-        $billing_wrapper = new BillingWrapper($this->em, $this->time);
-        $billing = $billing_wrapper->select($billing_code);
-        $billing = $billing_wrapper->approve($billing, $user->id);
+        //$billing_wrapper = new BillingWrapper($this->em, $this->time);
+        //$billing = $billing_wrapper->select($billing_code);
+        //$billing = $billing_wrapper->approve($billing, $user->id);
 
         // user cache
+        //$user_term_wrapper = new UserTermWrapper($this->em, $this->time);
+        //$user_term_wrapper->evict($user->id, 'space_size');
+        //$user_term_wrapper->evict($user->id, 'space_expires');
+
         $user_term_wrapper = new UserTermWrapper($this->em, $this->time);
-        $user_term_wrapper->evict($user->id, 'space_size');
-        $user_term_wrapper->evict($user->id, 'space_expires');
+        $user_term_wrapper->space_filled($user->id, 100);
 
         //$a = 1;
+
+
+
+
+
+
+
+
+
+
+
 
         /*
         $premium->user_id = $user->id;

@@ -13,8 +13,6 @@ class BillingWrapper
     protected $em;
     protected $time;
 
-    const SIZE_LIMIT = 1000000; // default space size
-
     public function __construct(\Doctrine\ORM\EntityManager $em, \App\Services\Time $time) {
         $this->em = $em;
         $this->time = $time;
@@ -36,7 +34,7 @@ class BillingWrapper
 
     public function select(string $billing_code) {
 
-        $billing = $this->em->getRepository('\App\Entities\Billing')->findOneBy(['billing_code' => $billing_code]);
+        $billing = $this->em->getRepository('\App\Entities\Billing')->findOneBy(['billing_status' => 'pending', 'billing_code' => $billing_code]);
 
         if(empty($billing)) {
             Halt::throw(1301); // billing not found
@@ -56,22 +54,6 @@ class BillingWrapper
         $this->em->flush();
         return $billing;
     }
-
-    /*
-    // TODO: is user space filled up
-    public function crowded(int $user_id) {
-
-        $rsm = new \Doctrine\ORM\Query\ResultSetMapping();
-        $rsm->addScalarResult('id', 'id');
-
-        $query = $this->em->createNativeQuery("SELECT id FROM users_spaces WHERE user_id = :user_id AND expires_date > NOW() ORDER BY space_size DESC LIMIT 1", $rsm)
-            ->setParameter('user_id', $user_id);
-
-        $query_result = $query->getResult();
-        $space = !empty($query_result) ? $this->em->find('App\Entities\UserSpace', $query_result[0]['id']) : null;
-        return $space;
-    }
-    */
 
 
 }
