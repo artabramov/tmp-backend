@@ -5,7 +5,7 @@ from app.core.response_format import response_format
 from app.tasks.user_select import user_select
 from app.tasks.user_insert import user_insert
 
-@app.route('/api/v1/user/', methods=['POST'])
+@app.route('/api/user/', methods=['POST'])
 def user_post():
     try:
         async_result = user_insert.apply_async(args=[
@@ -46,7 +46,7 @@ def user_post():
     return response_format(result)
 
 
-@app.route('/api/v1/user/<int:user_id>', methods=['GET'])
+@app.route('/api/user/<int:user_id>', methods=['GET'])
 def user_get(user_id):
     try:
         result = user_select.apply_async(args=[user_id]).get(timeout=10)
@@ -59,23 +59,3 @@ def user_get(user_id):
         }   
 
     return response_format(result)
-
-
-@app.route('/api/v1/document/', methods=['POST'])
-def document_post():
-    
-    from flask_pymongo import PyMongo
-    mongo = PyMongo(app)
-    db = mongo.db
-
-    document = {
-        'status': 'todo',
-        'content': 'document content'
-    }
-    db.documents.insert_one(document)
-
-    return response_format({
-        'code': 200, 
-        'error': 'OK',
-        'data': {},
-    })

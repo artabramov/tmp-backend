@@ -1,6 +1,7 @@
 from flask import Flask, request
 from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
+from flask_pymongo import PyMongo
 from .config import Config
 import os, pwd, grp
 import logging
@@ -11,6 +12,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 log = log_wrapper(app)
 db = SQLAlchemy(app)
+mongo = PyMongo(app)
 
 """
 def make_celery():
@@ -81,5 +83,5 @@ log = app.logger
 from app.routes import hello
 from app.routes import migrate
 from app.routes import user_routes
-
-
+from app.routes import post_routes
+from app.routes import group_routes
