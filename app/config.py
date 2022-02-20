@@ -1,12 +1,15 @@
+import sys
+
 class Config:
     #DEBUG = True
 
-    LOG_FILENAME = '/var/log/echidna/echidna.log'
+    IS_CELERY = sys.argv and sys.argv[0].endswith('celery') and 'worker' in sys.argv
+
+    LOG_FILENAME = '/var/log/app/celery.log' if IS_CELERY else '/var/log/app/echidna.log'
     LOG_FORMAT = '[%(asctime)s] %(method)s [%(url)s] %(levelname)s [%(name)s in %(filename)s, line %(lineno)d: "%(message)s"]'
     LOG_ROTATE_WHEN = 'H'
     LOG_BACKUP_COUNT = 24
 
-    # dialect+driver://username:password@host:port/database
     #SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres:postgres@host.docker.internal:5432/postgres'
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/echidna'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
