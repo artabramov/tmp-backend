@@ -10,15 +10,15 @@ def log_wrapper(app):
         gid = grp.getgrnam('root').gr_gid
         os.chown(app.config['LOG_FILENAME'], uid, gid)
 
-    #class ContextualFilter(logging.Filter):
-    #    def filter(self, message):
-    #        if has_request_context():
-    #            message.url = request.url
-    #            message.method = request.method
-    #        else:
-    #            message.url = '-'
-    #            message.method = '-'
-    #        return True
+    class ContextualFilter(logging.Filter):
+        def filter(self, message):
+            if has_request_context():
+                message.url = request.url
+                message.method = request.method
+            else:
+                message.url = '-'
+                message.method = '-'
+            return True
 
     while app.logger.hasHandlers():
         app.logger.removeHandler(app.logger.handlers[0])
@@ -27,8 +27,8 @@ def log_wrapper(app):
         filename=app.config['LOG_FILENAME'], 
         when=app.config['LOG_ROTATE_WHEN'], 
         backupCount=app.config['LOG_BACKUP_COUNT'])
-    #handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
+    handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
     app.logger.addHandler(handler)
-    #context_provider = ContextualFilter()
-    #app.logger.addFilter(context_provider)
+    context_provider = ContextualFilter()
+    app.logger.addFilter(context_provider)
     return app.logger

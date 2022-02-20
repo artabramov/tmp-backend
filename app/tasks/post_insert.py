@@ -4,6 +4,7 @@ import werkzeug
 @celery.task(name='app.post_insert', time_limit=10, ignore_result=False)
 def post_insert(post_status, post_content):
     try:
+        log.error('user task')
         post = {
             'post_status': 'todo',
             'post_content': 'post content'

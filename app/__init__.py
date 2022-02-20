@@ -39,13 +39,13 @@ def make_celery():
 celery = make_celery()
 """
 
-#celery = Celery(
-#    broker=app.config['CELERY_BROKER_URL'],
-#    backend=app.config['CELERY_RESULT_BACKEND'],
-#    include=app.config['CELERY_TASK_LIST'],
-#)
-#celery.conf.task_routes = app.config['CELERY_TASK_ROUTES']
-#celery.conf.result_expires = app.config['CELERY_RESULT_EXPIRES']
+celery = Celery(
+    broker=app.config['CELERY_BROKER_URL'],
+    backend=app.config['CELERY_RESULT_BACKEND'],
+    include=app.config['CELERY_TASK_LIST'],
+)
+celery.conf.task_routes = app.config['CELERY_TASK_ROUTES']
+celery.conf.result_expires = app.config['CELERY_RESULT_EXPIRES']
 
 
 """
@@ -77,7 +77,7 @@ log = app.logger
 
 # routes
 from app.routes import hello
-#from app.routes import migrate
-#from app.routes import user_routes
-#from app.routes import post_routes
-#from app.routes import group_routes
+from app.routes import migrate
+from app.routes import user_routes
+from app.routes import post_routes
+from app.routes import group_routes
