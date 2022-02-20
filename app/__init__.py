@@ -10,7 +10,7 @@ from app.core.log_wrapper import log_wrapper
 
 app = Flask(__name__)
 app.config.from_object(Config)
-#log = log_wrapper(app)
+log = log_wrapper(app)
 db = SQLAlchemy(app)
 mongo = PyMongo(app)
 
