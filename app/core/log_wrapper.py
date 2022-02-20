@@ -1,14 +1,14 @@
 from flask import request, has_request_context
 import logging
-import os
+#import os
 #import pwd, grp
 
 def log_wrapper(app):
-    if not os.path.isfile(app.config['LOG_FILENAME']):
-        open(app.config['LOG_FILENAME'], 'a').close()
-        #uid = pwd.getpwnam('www-data').pw_uid
-        #gid = grp.getgrnam('root').gr_gid
-        #os.chown(app.config['LOG_FILENAME'], uid, gid)
+    #if not os.path.isfile(app.config['LOG_FILENAME']):
+    #    open(app.config['LOG_FILENAME'], 'a').close()
+    #    uid = pwd.getpwnam('www-data').pw_uid
+    #    gid = grp.getgrnam('root').gr_gid
+    #    os.chown(app.config['LOG_FILENAME'], uid, gid)
 
     class ContextualFilter(logging.Filter):
         def filter(self, message):
