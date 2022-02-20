@@ -20,15 +20,15 @@ def log_wrapper(app):
     #            message.method = '-'
     #        return True
 
-    while app.logger.hasHandlers():
-        app.logger.removeHandler(app.logger.handlers[0])
+    #while app.logger.hasHandlers():
+    #    app.logger.removeHandler(app.logger.handlers[0])
 
-    handler = logging.handlers.TimedRotatingFileHandler(
-        filename=app.config['LOG_FILENAME'], 
-        when=app.config['LOG_ROTATE_WHEN'], 
-        backupCount=app.config['LOG_BACKUP_COUNT'])
+    #handler = logging.handlers.TimedRotatingFileHandler(
+    #    filename=app.config['LOG_FILENAME'], 
+    #    when=app.config['LOG_ROTATE_WHEN'], 
+    #    backupCount=app.config['LOG_BACKUP_COUNT'])
     #handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
-    app.logger.addHandler(handler)
+    #app.logger.addHandler(handler)
     #context_provider = ContextualFilter()
     #app.logger.addFilter(context_provider)
     return app.logger
