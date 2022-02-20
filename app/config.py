@@ -20,6 +20,3 @@ class Config:
     CELERY_TASK_ROUTES = {
         'app.*': {'queue': 'user'}
     }
-
-    USER_PASSWORD_SALT = 'paSS-$alt!'
-    USER_AUTHCODE_SALT = 'aUTH-$alt?'

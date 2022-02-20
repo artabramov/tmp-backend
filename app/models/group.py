@@ -13,14 +13,9 @@ class GroupStatus(enum.Enum):
 
 class Group(BaseModel):
     __tablename__ = 'groups'
-    #id = db.Column(db.BigInteger, primary_key=True)
-    #created_date = db.Column(db.DateTime(timezone=False), server_default=db.func.now(), nullable=False)
-    #updated_date = db.Column(db.DateTime(timezone=False), server_default='1970-01-01 00:00:00', server_onupdate=db.func.now(), nullable=False)
-    #deleted_date = db.Column(db.DateTime(timezone=False), server_default='1970-01-01 00:00:00', nullable=False)
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     group_status = db.Column(db.Enum(GroupStatus))
     group_name = db.Column(db.String(40))
-
 
     def __init__(self, user_id, group_status, group_name):
         self.user_id = user_id
