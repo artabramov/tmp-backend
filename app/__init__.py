@@ -5,7 +5,7 @@ from flask_pymongo import PyMongo
 from .config import Config
 #import os, pwd, grp
 #import logging
-#from app.core.log_wrapper import log_wrapper
+from app.core.log_wrapper import log_wrapper
 
 
 app = Flask(__name__)
