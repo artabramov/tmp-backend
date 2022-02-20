@@ -7,6 +7,7 @@ from app.tasks.user_insert import user_insert
 
 @app.route('/api/user/', methods=['POST'])
 def user_post():
+    log.error('user route')
     try:
         async_result = user_insert.apply_async(args=[
             request.args.get('user_email', None),

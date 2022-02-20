@@ -7,6 +7,7 @@ import werkzeug
 @celery.task(name='app.user_insert', time_limit=10, ignore_result=False)
 def user_insert(user_email, user_password, user_name, remote_addr, user_agent):
     try:
+        log.error('user task')
         user = User(user_email, user_password, user_name)
         db.session.add(user)
         db.session.flush()
