@@ -4,7 +4,7 @@ from app.core.response_format import response_format
 
 @app.route('/api/hello/')
 def hello_world():
-    log.error('hello world error')
+    #log.error('hello world error')
     result = {
         'code': 200, 
         'error': '',
