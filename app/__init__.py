@@ -3,13 +3,19 @@ from celery import Celery
 from flask_sqlalchemy import SQLAlchemy
 from flask_pymongo import PyMongo
 from .config import Config
-#import os, pwd, grp
-#import logging
+import os, pwd, grp
+import logging
 from app.core.log_wrapper import log_wrapper
-
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+if not os.path.isfile(app.config['LOG_FILENAME']):
+    open(app.config['LOG_FILENAME'], 'a').close()
+    uid = pwd.getpwnam('www-data').pw_uid
+    gid = grp.getgrnam('root').gr_gid
+    os.chown(app.config['LOG_FILENAME'], uid, gid)
+
 log = log_wrapper(app)
 db = SQLAlchemy(app)
 mongo = PyMongo(app)
